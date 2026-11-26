@@ -84,14 +84,14 @@ HOUSEHOLDS = [
     Household("uc_single", "Single, Universal Credit", uc=True),
     Household(
         "uc_one_child",
-        "Lone parent, 1 child, UC or Tax-Free Childcare",
+        "Lone parent, 1 child: UC (no childcare element) or Tax-Free Childcare",
         children=1,
         uc=True,
         childcare_costs=(CHILDCARE,),
     ),
     Household(
         "uc_three_children",
-        "Lone parent, 3 children (2 in childcare), UC or Tax-Free Childcare",
+        "Lone parent, 3 children (2 in childcare): UC (no childcare element) or Tax-Free Childcare",
         children=3,
         uc=True,
         childcare_costs=(CHILDCARE, CHILDCARE),
@@ -303,7 +303,7 @@ def write_svg(series: dict[str, list[tuple[int, float]]], labels: dict[str, str]
                            f'fill="{blue}"/>')
                 left = cx > 0.7 * W  # keep the label inside the chart
                 tx, anchor = (cx - 7, "end") if left else (cx + 7, "start")
-                out.append(f'<text x="{tx:.1f}" y="{cy + 3:.1f}" text-anchor="{anchor}" fill="{ink}">'
+                out.append(f'<text x="{tx:.1f}" y="{cy + 14:.1f}" text-anchor="{anchor}" fill="{ink}">'
                            f"{y * 100:,.0f}% (£{x / 100:,.0f} to £{(x + WINDOW) / 100:,.0f})</text>")
     out.append("</svg>")
     path.write_text("\n".join(out) + "\n")
@@ -335,6 +335,12 @@ def main() -> int:
         "are lost at the same £100,000 as Tax-Free Childcare, but they are in kind and no value is",
         "assumed here, so their cliff is not in these tables: it adds their value to the",
         "£100,000 drop, and lengthens the trap by about that value divided by 0.38.",
+        "",
+        "The model's UC has no childcare costs element (85 % of costs up to £1,071.09 a month for",
+        "one child, £1,836.16 for two or more: SI 2013/376 regs 34 and 36). With it UC would stay",
+        "the better choice to much higher pay, so where the lone-parent households switch from UC",
+        "to Tax-Free Childcare is illustrative, not realistic. The £100,000 cliff does not depend",
+        "on it.",
         "",
         "Every penny where net income can fall is listed by the Lean theorem",
         "`netAll_drop_only_at_steps`, so these tables are complete within the model for each",
@@ -390,7 +396,7 @@ def main() -> int:
         "The rate on each £200 of pay from £0 to £150,000 is in `emr.csv` (the chart's table view);",
         "£200 windows hold one HICBC step each, so the HICBC band shows as a level rate.",
         "Without benefits the rate on a penny between steps is at most 76.6 % (`net_succ_ge`);",
-        "with UC tapering, 55 % of what is left on top makes at most 89.5 %. A rate above 100 % occurs only",
+        "with benefits it is at most 89.47 % (`netAll_succ_ge`: 1 - 0.45 x 0.234). A rate above 100 % occurs only",
         "on the step pennies above.",
         "",
     ]

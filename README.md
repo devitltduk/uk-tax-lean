@@ -6,9 +6,8 @@ for taxpayers in England, Wales and Northern Ireland (not Scottish taxpayers;
 childcare rules are England's), formalised in Lean 4, with proofs about it and a harness that checks it against
 [PolicyEngine UK](https://github.com/PolicyEngine/policyengine-uk).
 
-A draft write-up of the results, with the cliff map and the differences from
-PolicyEngine UK, is in [`docs/writeup.md`](docs/writeup.md) (draft, not for
-publication).
+A write-up of the results, with the cliff map and the differences from
+PolicyEngine UK, is in [`docs/writeup.md`](docs/writeup.md).
 
 ## What is modelled
 
@@ -186,7 +185,9 @@ is assumed: every result below holds for every income.
   Credit, Tax-Free Childcare (whichever is larger) and the funded hours added,
   with one more kind of step: adjusted net income going over £100,000.
   `earned_plus_uc_mono`: earned income plus UC never falls as earned income
-  rises (the taper is 55 %).
+  rises (the taper is 55 %). `netAll_succ_ge`: between steps, a penny more pay
+  raises net income with benefits by at least 0.1053p, so the marginal rate there
+  is at most 1 − 0.45 × 0.234 = 89.47 %.
 
 How the optimality proof works (details at the top of `UkTax/Optimal.lean`): with
 the income fixed, a way of sharing the allowance is a point `(x, w)` (non-savings
@@ -268,8 +269,8 @@ What it finds, for 2026-27:
   £3,999.99 with two, and net income stays below its level at £100,000 for the
   next £5,263 / £10,526 of pay (the loss divided by the 38 % kept in the 60 % band).
   The funded hours go at the same penny and add their value to the drop.
-- **Universal Credit** adds no drops: the 55 % taper on top of tax and NICs takes
-  at most 89.5 % of a penny between steps, and moving between UC and Tax-Free
+- **Universal Credit** adds no drops: with the 55 % taper on top of tax and NICs,
+  the rate between steps is at most 89.47 % (proved: `netAll_succ_ge`), and moving between UC and Tax-Free
   Childcare is smooth because the household takes the larger.
 - No other drops, for any household of this form.
 
@@ -292,10 +293,12 @@ it checks:
 - The personal allowance is the same in both.
 - The personal savings allowance is the same in both.
 - Employee NICs are within the same float32 tolerance (at the employee's pay),
-  plus 0.32p: PolicyEngine stores the weekly thresholds as £241.73 and £966.73
-  (the annual figures ÷ 52) without the round-up to a whole pound in
-  SI 2001/1004 reg 11(4), so over a year its thresholds are 4p below £12,570 and
-  £50,270. The model is compared on its annual basis.
+  plus 0.32p. PolicyEngine works out NICs monthly from weekly thresholds stored
+  as the annual figures ÷ 52 (£241.73 and £966.73; its comments note the reg 10
+  weekly amounts are £242 and £967), so its monthly thresholds are £1,047.50 and
+  £4,189.16, not £1,048 and £4,189 (SI 2001/1004 reg 11(3)(a), (2A)(a)), and over
+  a year they are 4p below £12,570 and £50,270. The model is compared on its
+  annual basis.
 - The High Income Child Benefit Charge is equal (both whole pounds). Child
   Benefit is passed to PolicyEngine as an input so both charge the same amount,
   and the charge is taken off PolicyEngine's `income_tax`, which includes it.
@@ -308,8 +311,8 @@ It writes `harness/out/comparison.csv` and exits non-zero if any check fails.
 
 It runs in CI as well (about 30 s for 3,000 cases). Latest local run:
 7,198 cases (2,198 edge, 5,000 random). Every income tax is within 2 steps
-(worst 1.13 steps, 1.76p), every NIC figure within tolerance (largest difference
-0.39p), and every personal allowance, savings allowance and HICBC agrees. On NixOS, numpy needs
+(worst 1.13 steps, 1.76p), every NIC figure within 2 steps plus the 0.32p gap
+(largest difference 0.39p, 3.35 steps), and every personal allowance, savings allowance and HICBC agrees. On NixOS, numpy needs
 `libstdc++`: run with `LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH` (nix-ld) or from a
 shell that provides it.
 
@@ -318,7 +321,8 @@ shell that provides it.
 `uv run python compare_uc.py` compares the award for a single claimant with 0 to
 4 children and a one-earner couple with 0 to 3 children, from £0 to £80,000 of
 pay. Latest local run: 5,603 cases (2,729 with UC paid), all within 2 float32
-steps plus 0.176p (55 % of the NIC threshold gap above); largest difference 0.43p.
+steps plus 0.176p (55 % of the NIC threshold gap above); largest difference 0.43p
+(2.79 steps, so above 2 steps only because of that gap).
 
 By default PolicyEngine treats the couple as married and claiming the Marriage
 Allowance (its `would_claim_marriage_allowance` take-up flag), which gives the

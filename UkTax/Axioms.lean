@@ -56,3 +56,7 @@ today, so any change to it is seen.
 /-- info: 'UkTax.netAll_drop_only_at_steps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.netAll_drop_only_at_steps
+
+/-- info: 'UkTax.netAll_succ_ge' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.netAll_succ_ge

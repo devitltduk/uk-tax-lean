@@ -9,6 +9,12 @@ are lost at the same £100,000 as Tax-Free Childcare, but they are in kind and n
 assumed here, so their cliff is not in these tables: it adds their value to the
 £100,000 drop, and lengthens the trap by about that value divided by 0.38.
 
+The model's UC has no childcare costs element (85 % of costs up to £1,071.09 a month for
+one child, £1,836.16 for two or more: SI 2013/376 regs 34 and 36). With it UC would stay
+the better choice to much higher pay, so where the lone-parent households switch from UC
+to Tax-Free Childcare is illustrative, not realistic. The £100,000 cliff does not depend
+on it.
+
 Every penny where net income can fall is listed by the Lean theorem
 `netAll_drop_only_at_steps`, so these tables are complete within the model for each
 household, at every pay. A *drop* is the fall in net income from one more penny of pay. The
@@ -56,7 +62,7 @@ the step.
 |---|---|---|---|---|
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
-## Lone parent, 1 child, UC or Tax-Free Childcare
+## Lone parent, 1 child: UC (no childcare element) or Tax-Free Childcare
 
 | kind | where (pay reaching) | drops | each drop | trap after each step |
 |---|---|---|---|---|
@@ -64,7 +70,7 @@ the step.
 | childcare (£100,000) | £100,000.01 | 1 | £1,999.99 | £5,262.75 |
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
-## Lone parent, 3 children (2 in childcare), UC or Tax-Free Childcare
+## Lone parent, 3 children (2 in childcare): UC (no childcare element) or Tax-Free Childcare
 
 | kind | where (pay reaching) | drops | each drop | trap after each step |
 |---|---|---|---|---|
@@ -79,5 +85,5 @@ the step.
 The rate on each £200 of pay from £0 to £150,000 is in `emr.csv` (the chart's table view);
 £200 windows hold one HICBC step each, so the HICBC band shows as a level rate.
 Without benefits the rate on a penny between steps is at most 76.6 % (`net_succ_ge`);
-with UC tapering, 55 % of what is left on top makes at most 89.5 %. A rate above 100 % occurs only
+with benefits it is at most 89.47 % (`netAll_succ_ge`: 1 - 0.45 x 0.234). A rate above 100 % occurs only
 on the step pennies above.

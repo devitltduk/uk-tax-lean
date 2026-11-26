@@ -102,6 +102,18 @@ theorem earned_plus_uc_mono (c : Claims) {e e' : Int} (h : e ≤ e') :
     omega
   · omega
 
+/-- With the taper at 55 %, earned income plus UC keeps at least 45 % of any rise in
+earned income. -/
+theorem earned_plus_uc_gain (c : Claims) {e e' : Int} (h : e ≤ e') :
+    100 * e + ucAward c e + 45 * (e' - e) ≤ 100 * e' + ucAward c e' := by
+  unfold ucAward ucTaperPercent
+  split
+  · dsimp only
+    generalize (if c.ucChildren > 0 then (ucWorkAllowanceHigher : Int) else 0) = wa
+    generalize micro * 12 * _ = m
+    omega
+  · omega
+
 /-- Eligibility is only lost where adjusted net income goes over £100,000. -/
 theorem childcareEligible_succ {pay ani : Nat} (h : childcareEligible pay ani = true) :
     childcareEligible (pay + 1) (ani + 1) = true ∨ ani = childcareIncomeLimit := by
@@ -109,19 +121,32 @@ theorem childcareEligible_succ {pay ani : Nat} (h : childcareEligible pay ani = 
   simp only [Bool.and_eq_true, decide_eq_true_eq] at *
   omega
 
-/-- Between steps, and away from £100,000, net income with benefits does not fall. -/
-theorem netAll_between_steps {p : EarningsPeriod} {cb : Nat} {c : Claims} {s d g : Nat}
+/-- **Marginal rate between steps, with benefits.** Away from the steps, a penny more
+pay raises net income with benefits by at least 0.1053p (105,300 millionths of a
+penny): earned income rises by at least 0.234p (`taxExact_succ_le`,
+`nicExact_succ_le`) and UC takes at most 55 % of that. So the effective marginal
+rate there is at most 1 − 0.45 × 0.234 = 89.47 %. -/
+theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {c : Claims} {s d g : Nat}
     (hPA : personalAllowanceFor (g + 1 + s + d) = personalAllowanceFor (g + s + d))
     (hPSA : Income.psa ⟨g + 1, s, d⟩ = Income.psa ⟨g, s, d⟩)
     (hC : hicbc (g + 1 + s + d) cb = hicbc (g + s + d) cb)
-    (hLim : g + s + d ≠ childcareIncomeLimit)
-    (h : netAll p cb c s d (g + 1) < netAll p cb c s d g) : False := by
+    (hLim : g + s + d ≠ childcareIncomeLimit) :
+    netAll p cb c s d g + 105_300 ≤ netAll p cb c s d (g + 1) := by
   have ht : g + 1 + s + d = (g + s + d) + 1 := by omega
   have htax := taxExact_succ_le hPA hPSA
   have hnic := nicExact_succ_le p g
-  have hearn : earned p s d g ≤ earned p s d (g + 1) := by
-    unfold earned; omega
-  have huc := earned_plus_uc_mono c hearn
+  have hearn : earned p s d g + 2340 ≤ earned p s d (g + 1) := by
+    unfold earned
+    generalize taxExact ⟨g, s, d⟩ = A at *
+    generalize taxExact ⟨g + 1, s, d⟩ = A' at *
+    generalize nicExact p g = B at *
+    generalize nicExact p (g + 1) = B' at *
+    omega
+  have hle : earned p s d g ≤ earned p s d (g + 1) := by
+    generalize earned p s d g = E at *
+    generalize earned p s d (g + 1) = E' at *
+    omega
+  have huc := earned_plus_uc_gain c hle
   have hEl : childcareEligible g (g + s + d) = true →
       childcareEligible (g + 1) (g + 1 + s + d) = true := by
     intro h1; rw [ht]
@@ -149,13 +174,24 @@ theorem netAll_between_steps {p : EarningsPeriod} {cb : Nat} {c : Claims} {s d g
     generalize taxExact _ = A; generalize nicExact p g' = B; generalize hicbc _ cb = C
     omega
   clear hPA hPSA hEl htax hnic
-  unfold netAll at h
-  rw [hsplit, hsplit, hC] at h
+  unfold netAll
+  rw [hsplit, hsplit, hC]
   have : max (ucAward c (earned p s d g)) (tfcTopUp c g (g + s + d)) + 100 * earned p s d g
+      + 105_300
       ≤ max (ucAward c (earned p s d (g + 1))) (tfcTopUp c (g + 1) (g + 1 + s + d))
         + 100 * earned p s d (g + 1) := by
     omega
   generalize hicbc (g + s + d) cb = C at *
+  omega
+
+/-- Between steps, and away from £100,000, net income with benefits does not fall. -/
+theorem netAll_between_steps {p : EarningsPeriod} {cb : Nat} {c : Claims} {s d g : Nat}
+    (hPA : personalAllowanceFor (g + 1 + s + d) = personalAllowanceFor (g + s + d))
+    (hPSA : Income.psa ⟨g + 1, s, d⟩ = Income.psa ⟨g, s, d⟩)
+    (hC : hicbc (g + 1 + s + d) cb = hicbc (g + s + d) cb)
+    (hLim : g + s + d ≠ childcareIncomeLimit)
+    (h : netAll p cb c s d (g + 1) < netAll p cb c s d g) : False := by
+  have := netAll_succ_ge (p := p) (c := c) hPA hPSA hC hLim
   omega
 
 /-- **Where net income with benefits can fall.** For every pay, savings,
