@@ -3,6 +3,7 @@ import UkTax.Charges
 import UkTax.Cliffs
 import UkTax.Benefits
 import UkTax.Profits
+import UkTax.Nics
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -93,3 +94,19 @@ today, so any change to it is seen.
 /-- info: 'UkTax.propertyProfit_succ_room' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.propertyProfit_succ_room
+
+/-- info: 'UkTax.employerNicExact_succ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.employerNicExact_succ
+
+/-- info: 'UkTax.class4Exact_le_pre' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.class4Exact_le_pre
+
+/-- info: 'UkTax.class4Exact_succ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.class4Exact_succ
+
+/-- info: 'UkTax.class4Exact_full_class1' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.class4Exact_full_class1
