@@ -159,6 +159,25 @@ theorem inOrder_feasible (i : Income) : i.inOrder.Feasible i := by
   generalize i.personalAllowance = P
   omega
 
+/-- Every non-empty set of natural numbers has a least element. -/
+private theorem exists_least_nat (P : Nat → Prop) (h : ∃ n, P n) :
+    ∃ m, P m ∧ ∀ k, P k → m ≤ k := by
+  obtain ⟨n, hn⟩ := h
+  induction n using Nat.strongRecOn with
+  | _ n ih =>
+    by_cases hlt : ∃ k, k < n ∧ P k
+    · obtain ⟨k, hk, hPk⟩ := hlt
+      exact ih k hk hPk
+    · refine ⟨n, hn, fun k hk => ?_⟩
+      exact Nat.not_lt.mp fun hkn => hlt ⟨k, hkn, hk⟩
+
+/-- The least tax exists for every income, so `leastTax_mono` is never vacuous. -/
+theorem exists_isLeastTax (i : Income) : ∃ v, IsLeastTax i v := by
+  obtain ⟨v, ⟨a, ha, hv⟩, hmin⟩ :=
+    exists_least_nat (fun v => ∃ a, a.Feasible i ∧ taxWith i a = v)
+      ⟨_, i.inOrder, inOrder_feasible i, rfl⟩
+  exact ⟨v, ⟨a, ha, hv⟩, fun b hb => hmin _ ⟨b, hb, rfl⟩⟩
+
 theorem allocAt_feasible {i : Income} {p : Int × Int} (hp : i.feasibleAt p = true) :
     (i.allocAt p).Feasible i := by
   unfold Income.feasibleAt at hp
@@ -191,9 +210,11 @@ theorem bestAlloc_feasible (i : Income) : i.bestAlloc.Feasible i := by
     · simp only [hp]
       exact hb
 
-/-- **Monotonicity of the computed liability, given the search is optimal.** The
-one step not yet proved in Lean is that the corner search finds the least tax;
-with it, `liability` is monotone in every kind of income. -/
+/-- **Conditional.** If the corner search finds the least tax (argued in
+`Calc.lean` and checked against PolicyEngine UK, but **not proved**), then
+`liability` is monotone in every kind of income. The hypothesis is not discharged
+anywhere: for mixed income, the only proved fact about `liability` is
+`bestAlloc_feasible` (it is never below the least tax). -/
 theorem liability_mono_of_optimal (hopt : ∀ i, IsLeastTax i (taxExact i))
     {i i' : Income} (h : i.Le i') : liability i ≤ liability i' :=
   Nat.div_le_div_right (leastTax_mono h (hopt i) (hopt i'))
