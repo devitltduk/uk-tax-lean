@@ -33,6 +33,21 @@ Optional fields:
   limits (ITA 2007 s414(2), FA 2004 s192(4), (4A)) and come off adjusted net
   income (ITA 2007 s58). Not allowed with `uc` (Universal Credit deducts pension
   contributions from earned income, which is not modelled yet);
+* `net_pay_pension_pence`: pension contributions deducted from pay under a net
+  pay arrangement (FA 2004 s193(2)), part of `employment_pence` (default 0).
+  `non_savings_pence` and `employment_pence` are pay before them: income tax is
+  on pay less them, NICs on the whole pay. Not allowed with the childcare tests
+  (`childcare_costs_pence`, `funded_children`, `partner`);
+* `blind`: gets the blind person's allowance (ITA 2007 s38; default false);
+* `marriage_allowance`: `"transfer"` (has elected to give up £1,260 of personal
+  allowance to a spouse or civil partner, s55C; the election stands only if this
+  taxpayer passes the rate test of s55C(1)(c), (ca)) or `"receive"` (the spouse
+  or civil partner has elected; a tax reduction of £252 if this taxpayer passes
+  the rate test of s55B(2)(b), (ba)). Default none;
+* `married_couples_allowance`: claims the married couple's allowance (s45 or
+  s46: a party born before 6 April 1935; this taxpayer is the husband or the
+  partner with the higher income). Not with `marriage_allowance`
+  (s55B(2)(d)). Default false;
 * `funded_children`: children for the funded hours, e.g.
   `[{"age": "under_2"}, {"age": "3_4", "price_pence_per_hour": 750}]`, ages
   `"under_2"` (9 months to 2), `"2"` and `"3_4"` (until school); the hours are
@@ -47,9 +62,14 @@ the `netAll` of `UkTax/Benefits.lean`: gross
 income less income tax, NICs and HICBC, plus Child Benefit, the better of UC and
 Tax-Free Childcare, and the funded hours.
 
-Output (an array for an array input). `liability_pence` is the liability rounded
-down to the penny; `tax_exact_ten_thousandths_pence` is the exact, unrounded tax
-in units of 1/10 000 of a penny.
+Output (an array for an array input). `liability_pence` is the liability after
+the Step 6 tax reductions, rounded down to the penny;
+`tax_exact_ten_thousandths_pence` is the same, exact and unrounded, in units of
+1/10 000 of a penny; `step5_tax_exact_ten_thousandths_pence` is the tax before
+the reductions; `marriage_allowance_reduction_ten_thousandths_pence` and
+`mca_reduction_ten_thousandths_pence` are the reductions before the limit of
+the tax there is; `marriage_allowance_transfer_valid` says whether a transferor's
+election stands.
 
     {"liability_pence": 748600, "tax_exact_ten_thousandths_pence": 7486000000,
      "personal_allowance_pence": 1257000,
@@ -127,6 +147,21 @@ def parseCase (j : Json) : Except String Case := do
     | .ok "scotland" => pure (false, true)
     | .ok c => throw s!"country must be england, wales, northern_ireland or scotland, not {c}"
     | .error _ => pure (true, false)
+  let netPay ← optField "net_pay_pension_pence"
+  if netPay > employment then
+    throw "net_pay_pension_pence must not exceed employment_pence"
+  if netPay > 0 && (!costs.isEmpty || (j.getObjVal? "funded_children").toOption.isSome
+      || partner.isSome) then
+    throw "net_pay_pension_pence: the childcare tests with net pay contributions are not modelled"
+  let blind := (j.getObjValAs? Bool "blind").toOption.getD false
+  let (maTransfer, maReceive) ← match j.getObjValAs? String "marriage_allowance" with
+    | .ok "transfer" => pure (true, false)
+    | .ok "receive" => pure (false, true)
+    | .ok m => throw s!"marriage_allowance must be transfer or receive, not {m}"
+    | .error _ => pure (false, false)
+  let mca := (j.getObjValAs? Bool "married_couples_allowance").toOption.getD false
+  if mca && (maTransfer || maReceive) then
+    throw "married_couples_allowance: no Marriage Allowance with it (ITA 2007 s55B(2)(d))"
   let relief := (← optField "gift_aid_gross_pence") + (← optField "pension_relief_at_source_gross_pence")
   if uc.isSome && relief > 0 then
     throw "uc: Gift Aid and pension contributions are not modelled with Universal Credit yet"
@@ -152,17 +187,23 @@ def parseCase (j : Json) : Except String Case := do
   let claims : Claims := {
     uc := uc.isSome, couple := ucCouple || partner.isSome, ucChildren := (uc.map (·.2)).getD 0,
     childcareCosts := costs, partner, england, fundedChildren := kids }
-  return ⟨income, { scottish, relief }, employment, period, ← optField "child_benefit_pence", claims⟩
+  let income : Income := { income with nonSavings := income.nonSavings - netPay }
+  let rg : Regime := { scottish, relief, netPay, blind, maTransfer, maReceive, mca }
+  return ⟨income, income.settle rg, employment - netPay, period, ← optField "child_benefit_pence", claims⟩
 
 def result (c : Case) : Json :=
   let i := c.income
   let rg := c.regime
   let a := i.bestAlloc rg
-  let nic := nicExact c.period c.employment
+  let nic := nicExact c.period (c.employment + rg.netPay)
   let ani := i.ani rg
   Json.mkObj [
-    ("liability_pence", toJson (liability rg i)),
-    ("tax_exact_ten_thousandths_pence", toJson (taxExact rg i)),
+    ("liability_pence", toJson (finalLiability rg i)),
+    ("tax_exact_ten_thousandths_pence", toJson (finalTaxExact rg i)),
+    ("step5_tax_exact_ten_thousandths_pence", toJson (taxExact rg i)),
+    ("marriage_allowance_reduction_ten_thousandths_pence", toJson (i.maReduction rg)),
+    ("mca_reduction_ten_thousandths_pence", toJson (i.mcaReduction rg)),
+    ("marriage_allowance_transfer_valid", toJson rg.maTransfer),
     ("adjusted_net_income_pence", toJson ani),
     ("personal_allowance_pence", toJson (i.personalAllowance rg)),
     ("savings_allowance_pence", toJson (savingsAllowanceFor rg (i.total - i.allowanceUsed rg))),

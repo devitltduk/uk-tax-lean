@@ -192,6 +192,14 @@ theorem G_succ_le {rg : Regime} {A T x w : Nat} (hxw : x ≤ w) (hwT : w ≤ T) 
     generalize startingRateLimitSavings = L at *
     omega
 
+/-- The Step 3 allowances move only with the s35 personal allowance. -/
+theorem personalAllowance_congr {rg : Regime} {n s d : Nat}
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.relief)) :
+    Income.personalAllowance rg ⟨n + 1, s, d⟩ = Income.personalAllowance rg ⟨n, s, d⟩ := by
+  unfold Income.personalAllowance Income.ani Income.total
+  rw [hPA]
+
 /-- No income, no tax. -/
 theorem taxOnStep3_zero (rg : Regime) : taxOnStep3 rg 0 0 0 = 0 := by
   unfold taxOnStep3 sliceTax nsTax
@@ -215,7 +223,8 @@ theorem taxExact_succ_le {rg : Regime} {n s d : Nat}
   have hopt := (isLeastTax_taxExact rg ⟨n + 1, s, d⟩).2
   have htot : Income.total ⟨n + 1, s, d⟩ = n + 1 + s + d := rfl
   have htot0 : Income.total ⟨n, s, d⟩ = n + s + d := rfl
-  have hPA' : Income.personalAllowance rg ⟨n + 1, s, d⟩ = Income.personalAllowance rg ⟨n, s, d⟩ := hPA
+  have hPA' : Income.personalAllowance rg ⟨n + 1, s, d⟩ = Income.personalAllowance rg ⟨n, s, d⟩ :=
+    personalAllowance_congr hPA
   by_cases hfull : Income.personalAllowance rg ⟨n, s, d⟩ ≤ n + s + d
   · -- the whole allowance is used on both sides: keep the same share
     have ha := bestAlloc_feasible rg ⟨n, s, d⟩
@@ -267,28 +276,123 @@ theorem taxExact_succ_le {rg : Regime} {n s d : Nat}
     have := hopt _ (inOrder_feasible rg _)
     omega
 
+/-! ## Step 6 between steps -/
+
+/-- The most the married couple's allowance reduction can fall for a penny more
+income, in 1/10 000 pence: 10 % of half a penny, 0.05p, while it tapers. -/
+def Regime.mcaStep (rg : Regime) : Nat := if rg.mca then 500 else 0
+
+theorem mcaReduction_succ (rg : Regime) (n s d : Nat) :
+    Income.mcaReduction rg ⟨n, s, d⟩ ≤ Income.mcaReduction rg ⟨n + 1, s, d⟩ + rg.mcaStep := by
+  unfold Income.mcaReduction Regime.mcaStep Income.ani Income.total mcaRate mcaMin mcaMax
+    mcaIncomeLimit
+  dsimp only
+  split <;> omega
+
+/-- With the allowances and the Marriage Allowance reduction unchanged, a penny
+more non-savings income adds at most `rg.maxStep + rg.mcaStep` to the liability
+after Step 6. -/
+theorem finalTaxExact_succ_le {rg : Regime} {n s d : Nat}
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.relief))
+    (hPSA : Income.psa rg ⟨n + 1, s, d⟩ = Income.psa rg ⟨n, s, d⟩)
+    (hMA : Income.maReduction rg ⟨n + 1, s, d⟩ = Income.maReduction rg ⟨n, s, d⟩) :
+    finalTaxExact rg ⟨n + 1, s, d⟩ ≤ finalTaxExact rg ⟨n, s, d⟩ + rg.maxStep + rg.mcaStep := by
+  have h1 := taxExact_succ_le hPA hPSA
+  have h2 := mcaReduction_succ rg n s d
+  unfold finalTaxExact
+  rw [hMA]
+  omega
+
+/-- Below the Marriage Allowance limit the rate test is passed: with no Step 3
+income above it, nothing is charged above the basic rate (or the Scottish
+intermediate rate). -/
+theorem maOk_of_step3_le {rg : Regime} {i : Income} (h : i.step3 rg ≤ rg.maLimit) :
+    i.maOk rg = true := by
+  have ha := bestAlloc_feasible rg i
+  have hU := allowanceUsed_le rg i
+  have hL : rg.maLimit ≤ rg.brl := by
+    unfold Regime.maLimit Regime.brl scotIntermediateLimit basicRateLimit; split <;> omega
+  unfold Income.step3 at h
+  unfold Alloc.Feasible at ha
+  unfold Income.maOk maRateTest
+  generalize i.bestAlloc rg = a at *
+  have ht : i.total = i.nonSavings + i.savings + i.dividends := rfl
+  simp only [Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq, beq_iff_eq]
+  generalize i.allowanceUsed rg = u at *
+  generalize i.total = t at *
+  refine ⟨⟨by omega, Or.inl (by omega)⟩, Or.inr (by omega)⟩
+
+/-- With pay (or other non-savings income) only, the rate test is exactly Step 3
+income at most the Marriage Allowance limit. Step 3 income never falls as income
+rises, so for such a recipient the reduction is lost at one penny, the crossing
+of the limit, which is how `harness/cliffs.py` finds it. -/
+theorem maOk_payOnly (rg : Regime) (g : Nat) :
+    Income.maOk rg ⟨g, 0, 0⟩ = true ↔ Income.step3 rg ⟨g, 0, 0⟩ ≤ rg.maLimit := by
+  refine ⟨fun h => ?_, maOk_of_step3_le⟩
+  have ha := bestAlloc_feasible rg ⟨g, 0, 0⟩
+  unfold Income.maOk maRateTest at h
+  unfold Income.step3
+  unfold Alloc.Feasible at ha
+  generalize Income.bestAlloc rg ⟨g, 0, 0⟩ = a at *
+  have ht : Income.total ⟨g, 0, 0⟩ = g + 0 + 0 := rfl
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at h
+  dsimp only at *
+  generalize Income.allowanceUsed rg ⟨g, 0, 0⟩ = u at *
+  omega
+
+/-- **The Marriage Allowance step.** If a penny more non-savings income changes the
+Marriage Allowance reduction, Step 3 income after that penny is above the
+Marriage Allowance limit (the basic rate limit, or the top of the Scottish
+intermediate rate): below it the recipient keeps the £252. -/
+theorem maStep_above_limit {rg : Regime} {n s d : Nat}
+    (h : Income.maReduction rg ⟨n + 1, s, d⟩ ≠ Income.maReduction rg ⟨n, s, d⟩) :
+    rg.maLimit < Income.step3 rg ⟨n + 1, s, d⟩ := by
+  apply Nat.lt_of_not_le
+  intro hle
+  have hmono : Income.step3 rg ⟨n, s, d⟩ ≤ Income.step3 rg ⟨n + 1, s, d⟩ := by
+    unfold Income.step3 Income.allowanceUsed Income.total
+    have := personalAllowanceFor_anti (x := n + s + d - rg.relief) (x' := n + 1 + s + d - rg.relief)
+      (by omega)
+    unfold Income.personalAllowance Income.ani Income.total
+    generalize personalAllowanceFor (n + s + d - rg.relief) = A at *
+    generalize personalAllowanceFor (n + 1 + s + d - rg.relief) = A' at *
+    generalize (if rg.maTransfer = true then maTransferable else 0) = m
+    generalize (if rg.blind = true then blindPersonsAllowance else 0) = b
+    dsimp only at *
+    omega
+  have h1 := maOk_of_step3_le (i := ⟨n + 1, s, d⟩) hle
+  have h0 := maOk_of_step3_le (i := ⟨n, s, d⟩) (Nat.le_trans hmono hle)
+  apply h
+  unfold Income.maReduction
+  rw [h1, h0]
+
 /-! ## Net income -/
 
-/-- Net income, in 1/10 000 pence, for pay `g` (all of it employment income) with
-savings interest `s`, dividends `d` and Child Benefit `cb`, paid per period `p`:
-gross income less income tax, employee NICs and the High Income Child Benefit
-Charge (on adjusted net income), plus Child Benefit. Gift Aid and pension
-contributions, being fixed, are left out: they move net income by a constant. -/
+/-- Net income, in 1/10 000 pence, for pay `g` (all of it employment income, after
+any net pay pension contributions) with savings interest `s`, dividends `d` and
+Child Benefit `cb`, paid per period `p`: gross income less income tax (after the
+Step 6 reductions), employee NICs (on pay before net pay contributions) and the
+High Income Child Benefit Charge (on adjusted net income), plus Child Benefit.
+Gift Aid and pension contributions, being fixed, are left out: they move net
+income by a constant. -/
 def net (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d g : Nat) : Int :=
-  10_000 * ((g + s + d : Nat) : Int) + 10_000 * (cb : Int) - (taxExact rg ⟨g, s, d⟩ : Int)
-    - (nicExact p g : Int) - 10_000 * (hicbc (g + s + d - rg.relief) cb : Int)
+  10_000 * ((g + s + d : Nat) : Int) + 10_000 * (cb : Int) - (finalTaxExact rg ⟨g, s, d⟩ : Int)
+    - (nicExact p (g + rg.netPay) : Int) - 10_000 * (hicbc (g + s + d - rg.relief) cb : Int)
 
 theorem nicExact_succ_le (p : EarningsPeriod) (g : Nat) : nicExact p (g + 1) ≤ nicExact p g + 800 := by
   unfold nicExact nicMainRate nicAdditionalRate
   omega
 
 /-- The least net income gained from a penny more pay between steps, in 1/10 000
-pence: a penny less the most income tax (`Regime.maxStep`) and NICs (0.08p) it can
-cost. 0.234p, or 0.214p for a Scottish taxpayer. -/
-def Regime.minGain (rg : Regime) : Nat := 9200 - rg.maxStep
+pence: a penny less the most income tax (`Regime.maxStep`), the most the married
+couple's allowance can taper (`Regime.mcaStep`) and NICs (0.08p) it can cost.
+0.234p, or 0.214p for a Scottish taxpayer, 0.05p less with the married couple's
+allowance. -/
+def Regime.minGain (rg : Regime) : Nat := 9200 - rg.maxStep - rg.mcaStep
 
-theorem Regime.minGain_eq (rg : Regime) : rg.minGain + rg.maxStep = 9200 := by
-  unfold Regime.minGain Regime.maxStep; split <;> omega
+theorem Regime.minGain_eq (rg : Regime) : rg.minGain + rg.maxStep + rg.mcaStep = 9200 := by
+  unfold Regime.minGain Regime.maxStep Regime.mcaStep; split <;> split <;> omega
 
 /-- Between steps, net income never falls: if a penny more pay changes neither
 allowance nor the charge, net income rises by at least `rg.minGain`. -/
@@ -296,10 +400,12 @@ theorem net_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {s d g : Nat}
     (hPA : personalAllowanceFor (g + 1 + s + d - rg.relief)
       = personalAllowanceFor (g + s + d - rg.relief))
     (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
+    (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
     (hC : hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb) :
     net p cb rg s d g + rg.minGain ≤ net p cb rg s d (g + 1) := by
-  have h1 := taxExact_succ_le hPA hPSA
-  have h2 := nicExact_succ_le p g
+  have h1 := finalTaxExact_succ_le hPA hPSA hMA
+  have h2 := nicExact_succ_le p (g + rg.netPay)
+  rw [show g + rg.netPay + 1 = g + 1 + rg.netPay by omega] at h2
   have h3 := rg.minGain_eq
   unfold net
   rw [hC]
@@ -338,7 +444,7 @@ theorem psa_succ {rg : Regime} {n s d : Nat}
     Income.psa rg ⟨n + 1, s, d⟩ = Income.psa rg ⟨n, s, d⟩ ∨
       Income.step3 rg ⟨n, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨n, s, d⟩ = rg.hrl := by
   have hPA' : Income.personalAllowance rg ⟨n + 1, s, d⟩
-      = Income.personalAllowance rg ⟨n, s, d⟩ := hPA
+      = Income.personalAllowance rg ⟨n, s, d⟩ := personalAllowance_congr hPA
   unfold Income.psa Income.step3 Income.allowanceUsed
   rw [hPA']
   have htot : Income.total ⟨n + 1, s, d⟩ = n + 1 + s + d := rfl
@@ -352,6 +458,13 @@ theorem psa_succ {rg : Regime} {n s d : Nat}
   repeat' split
   all_goals omega
 
+/-- A penny more pay changes the Marriage Allowance reduction: the recipient fails
+the rate test (s55B(2)(b), (ba)), losing £252 at once. `maStep_above_limit` shows
+this happens only with Step 3 income above the basic rate limit, or for a Scottish
+taxpayer above the top of the intermediate rate. -/
+def MaStep (rg : Regime) (s d g : Nat) : Prop :=
+  Income.maReduction rg ⟨g + 1, s, d⟩ ≠ Income.maReduction rg ⟨g, s, d⟩
+
 /-- One penny more income moves adjusted net income up one penny, or (while the
 reliefs exceed income) leaves it at nil. Either way the allowance and the charge
 change only at a step of adjusted net income. -/
@@ -363,14 +476,21 @@ theorem ani_succ (rg : Regime) (t : Nat) :
 /-- **Where net income can fall.** If a penny more pay lowers net income, then at
 that penny the personal allowance falls by £1, the charge goes up 1 % (with some
 Child Benefit), or Step 3 income passes the basic or the higher rate limit (where
-the personal savings allowance falls); the allowance and the charge step with
+the personal savings allowance falls), or a Marriage Allowance recipient fails the
+rate test (above the basic rate limit); the allowance and the charge step with
 adjusted net income, and the limits are raised by Gift Aid and pension
 contributions relieved at source. This holds for every pay, savings, dividends,
 Child Benefit, pay period, reliefs, and for Scottish taxpayers. -/
 theorem net_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d g : Nat)
     (h : net p cb rg s d (g + 1) < net p cb rg s d g) :
     PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) ∨
-      Income.step3 rg ⟨g, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g, s, d⟩ = rg.hrl := by
+      Income.step3 rg ⟨g, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g, s, d⟩ = rg.hrl ∨
+      MaStep rg s d g := by
+  by_cases hMA : MaStep rg s d g
+  · exact Or.inr (Or.inr (Or.inr (Or.inr hMA)))
+  unfold MaStep at hMA
+  have hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩ :=
+    Classical.not_not.mp hMA
   have ht : g + 1 + s + d = (g + s + d) + 1 := by omega
   have hA : (personalAllowanceFor (g + 1 + s + d - rg.relief)
         = personalAllowanceFor (g + s + d - rg.relief) ∧
@@ -389,10 +509,10 @@ theorem net_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s 
     · left; rw [ha, hb]; exact ⟨rfl, rfl⟩
   rcases hA with ⟨hPA, hC⟩ | hA
   · rcases psa_succ hPA with hPSA | hT | hT
-    · have := net_succ_ge (p := p) hPA hPSA hC
+    · have := net_succ_ge (p := p) hPA hPSA hMA hC
       omega
     · exact Or.inr (Or.inr (Or.inl hT))
-    · exact Or.inr (Or.inr (Or.inr hT))
+    · exact Or.inr (Or.inr (Or.inr (Or.inl hT)))
   · rcases hA with hA | hA
     · exact Or.inl hA
     · exact Or.inr (Or.inl hA)

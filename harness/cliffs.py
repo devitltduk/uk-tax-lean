@@ -11,8 +11,11 @@ Completeness comes from the Lean theorem `netAll_drop_only_at_steps`: one more
 penny of pay can lower net income only at a step of the personal allowance
 (total income reaching a multiple of £2 in (£100,000, £125,140]), of the HICBC
 (a multiple of £200 in [£60,200, £80,000], with Child Benefit), of the personal
-savings allowance (Step 3 income at £37,700 or £125,140), or where adjusted net
-income goes over £100,000 (Tax-Free Childcare and funded hours). This script
+savings allowance (Step 3 income at £37,700 or £125,140), where a Marriage
+Allowance recipient fails the rate test, or where adjusted net income goes over
+£100,000 (Tax-Free Childcare and funded hours). For a recipient with pay only the
+rate test is Step 3 income at most £37,700, or £31,092 for a Scottish taxpayer
+(`maOk_payOnly`), so that step is one penny, found like the savings allowance's. This script
 lists every such penny, so it checks every place a drop can happen and finds
 the drops exactly; it samples nothing. Between steps net income never falls
 (`netAll_between_steps`), which is what makes the recovery search below exact.
@@ -62,6 +65,8 @@ class Household:
     childcare_costs: tuple[int, ...] = ()
     funded_children: tuple[str, ...] = ()  # age bands: "under_2", "2", "3_4"
     partner_pay: int | None = None  # a working partner (pay = adjusted net income), fixed
+    country: str = "england"
+    marriage_allowance: str | None = None  # "receive": the spouse has elected to transfer
 
     @property
     def cb(self) -> int:
@@ -71,6 +76,8 @@ class Household:
 # Childcare costs for Tax-Free Childcare are an illustrative assumption: £10,000 a
 # year per child, enough to reach the £2,000 top-up cap (20 % of £10,000).
 CHILDCARE = 1_000_000
+
+BRL_SCOT_INTERMEDIATE = 3_109_200  # top of the Scottish intermediate rate, Step 3 income
 
 HOUSEHOLDS = [
     Household("single", "Single, pay only"),
@@ -109,6 +116,17 @@ HOUSEHOLDS = [
         funded_children=("3_4",),
         partner_pay=4_000_000,
     ),
+    Household(
+        "ma_receive",
+        "Married, spouse has no income and gives the Marriage Allowance",
+        marriage_allowance="receive",
+    ),
+    Household(
+        "ma_receive_scotland",
+        "Married in Scotland, spouse has no income and gives the Marriage Allowance",
+        marriage_allowance="receive",
+        country="scotland",
+    ),
 ]
 
 
@@ -129,7 +147,10 @@ class Model:
             "dividends_pence": self.h.dividends,
             "child_benefit_pence": self.h.cb,
             "childcare_costs_pence": list(self.h.childcare_costs),
+            "country": self.h.country,
         }
+        if self.h.marriage_allowance:
+            base["marriage_allowance"] = self.h.marriage_allowance
         if self.h.uc:
             base["uc"] = {"couple": False, "children": self.h.children}
         if self.h.funded_children:
@@ -188,6 +209,12 @@ def step_pennies(m: Model) -> dict[int, str]:
         g = first_at_least(m, limit, 0, MAX_PAY)
         if g is not None and m.step3(g) == limit:
             steps[g] = "savings allowance"
+    if h.marriage_allowance == "receive":
+        assert not other, "maOk_payOnly locates the Marriage Allowance step for pay only"
+        limit = BRL_SCOT_INTERMEDIATE if h.country == "scotland" else BRL
+        g = first_at_least(m, limit, 0, MAX_PAY)
+        if g is not None and m.step3(g) == limit:
+            steps[g] = "Marriage Allowance"
     return steps
 
 
@@ -248,7 +275,7 @@ MIN_EARNINGS = 4 * 264_368  # childcare minimum earnings, £10,574.72 a year
 # One-off cliffs, drawn as drops with their £ amount. The other kinds repeat in
 # bands of small steps (the personal allowance every £2, the HICBC every £200)
 # and are described once per band; their average effect is a rate.
-ONE_OFF = ("childcare (£100,000)", "savings allowance")
+ONE_OFF = ("childcare (£100,000)", "savings allowance", "Marriage Allowance")
 BANDS = ("HICBC", "personal allowance")
 
 
@@ -363,6 +390,21 @@ def seed_checks(binary: pathlib.Path) -> list[str]:
     cliff = {d.pay: d for d in find_drops(lone)}.get(10_000_000)
     if cliff is None or cliff.kind != "childcare (£100,000)" or cliff.drop != 1_214_599_420_000:
         fails.append(f"lone parent, child aged 2: £100,000 drop should be £12,145.9942, got {cliff}")
+    # Marriage Allowance recipient, pay only, 1p over £50,270 (Step 3 income 1p over
+    # £37,700): the higher rate is charged, so s55B(2)(b) fails and the £252
+    # reduction goes; the penny keeps 1 - 0.4 (tax) - 0.02 (NICs above the upper
+    # earnings limit) = 0.58p: £251.9942.
+    ma = Model(binary, next(h for h in HOUSEHOLDS if h.key == "ma_receive"))
+    cliff = {d.pay: d for d in find_drops(ma)}.get(5_027_000)
+    if cliff is None or cliff.kind != "Marriage Allowance" or cliff.drop != 25_199_420_000:
+        fails.append(f"Marriage Allowance: drop at £50,270.01 should be £251.9942, got {cliff}")
+    # In Scotland, 1p over £43,662 (Step 3 income 1p over the top of the 21 %
+    # intermediate rate, £31,092): the 42 % higher rate is charged and the £252
+    # goes; the penny keeps 1 - 0.42 - 0.08 (NICs) = 0.5p: £251.995.
+    ma = Model(binary, next(h for h in HOUSEHOLDS if h.key == "ma_receive_scotland"))
+    cliff = {d.pay: d for d in find_drops(ma)}.get(4_366_200)
+    if cliff is None or cliff.kind != "Marriage Allowance" or cliff.drop != 25_199_500_000:
+        fails.append(f"Marriage Allowance, Scotland: drop at £43,662.01 should be £251.995, got {cliff}")
     return fails
 
 

@@ -315,6 +315,16 @@ def Income.maOk (rg : Regime) (i : Income) : Bool :=
   maRateTest rg (i.nonSavings - a.toNonSavings) (i.savings - a.toSavings)
     (i.dividends - a.toDividends)
 
+/-- The transferor's election stands only if, with their personal allowance
+reduced by the transferable amount, they would be liable at no rate other than
+those s55B(2)(b) allows, the dividends tested as if s13A were omitted (s55C(1)(c),
+(ca): the same list and the same test as for the recipient). If it fails, no
+election can be made and the allowance is not reduced. `Regime.maTransfer` is the
+wish to elect; this is the regime that applies. Only the transferor's own side is
+settled here: the partner's reduction is an input (`maReceive`). -/
+def Income.settle (rg : Regime) (i : Income) : Regime :=
+  if rg.maTransfer && !i.maOk rg then { rg with maTransfer := false } else rg
+
 /-- The Marriage Allowance reduction, in 1/10 000 pence: 20 % of £1,260, £252
 (s55B(1)), if received and the rate test is passed. -/
 def Income.maReduction (rg : Regime) (i : Income) : Nat :=

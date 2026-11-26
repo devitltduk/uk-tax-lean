@@ -107,6 +107,22 @@ the step.
 - childcare (£100,000): one more penny over £100,000.00 costs £5,767.69, once; net income is back to its level at £115,177.42 of pay.
 - Reaching the minimum earnings (£10,574.72) *gains* £5,767.71, once (the working-parent hours start, and Tax-Free Childcare where it beats Universal Credit).
 
+## Married, spouse has no income and gives the Marriage Allowance
+
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
+|---|---|---|---|---|
+| personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
+
+- Marriage Allowance: one more penny over £50,270.00 costs £251.99, once; net income is back to its level at £50,704.49 of pay.
+
+## Married in Scotland, spouse has no income and gives the Marriage Allowance
+
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
+|---|---|---|---|---|
+| personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.44 | £0.84 to £0.89 |
+
+- Marriage Allowance: one more penny over £43,662.00 costs £252.00, once; net income is back to its level at £44,166.00 of pay.
+
 ## Charts
 
 A cliff is a one-off loss: one more penny of pay costs a fixed sum, once, and net income
