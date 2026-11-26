@@ -6,6 +6,10 @@ for taxpayers in England, Wales and Northern Ireland (not Scottish taxpayers;
 childcare rules are England's), formalised in Lean 4, with proofs about it and a harness that checks it against
 [PolicyEngine UK](https://github.com/PolicyEngine/policyengine-uk).
 
+A draft write-up of the results, with the cliff map and the differences from
+PolicyEngine UK, is in [`docs/writeup.md`](docs/writeup.md) (draft, not for
+publication).
+
 ## What is modelled
 
 Wales is included because for 2026-27 every Welsh rate is 10p in the pound
