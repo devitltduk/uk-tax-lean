@@ -9,6 +9,11 @@ childcare rules are England's), formalised in Lean 4, with proofs about it and a
 A write-up of the results, with the cliff map and the differences from
 PolicyEngine UK, is in [`docs/writeup.md`](docs/writeup.md).
 
+What PolicyEngine UK models and how much of it is formalised here, programme by
+programme, is in [`docs/coverage.md`](docs/coverage.md); every difference found
+from PolicyEngine, with its classification, is in
+[`docs/findings.md`](docs/findings.md).
+
 ## What is modelled
 
 Wales is included because for 2026-27 every Welsh rate is 10p in the pound
