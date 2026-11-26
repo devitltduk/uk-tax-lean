@@ -158,7 +158,7 @@ their band's rate (62 % from £100,000 to £125,140 with NICs). Table view:
 
 ![Earn one penny over £100,000, lose £12,146: a lone parent with a 2-year-old](cliff-100k.png)
 
-[`cliff-100k.png`](cliff-100k.png) (1200 × 1200) is the lone parent with a
+[`cliff-100k.png`](cliff-100k.png) (1200 × 1500) is the lone parent with a
 2-year-old on its own, from £80,000 to £140,000 of pay, for sharing.
 
 | Step | Where | Drop | Trap | Households |

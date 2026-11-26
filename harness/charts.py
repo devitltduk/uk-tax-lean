@@ -11,15 +11,18 @@ Writes, under docs/:
   band of small repeated steps (the allowance taper, the HICBC) gets one label.
 * rates.svg: the marginal rate on each £200 of pay with the one-off cliffs and
   gains taken out; they are markers with their £ amount, not rates.
-* cliff-100k.png: one panel, 1200 x 1200, for sharing: the lone parent with a
-  2-year-old, £80,000 to £140,000 of pay.
+* cliff-100k.png: 1200 x 1500, for sharing: the lone parent with a 2-year-old,
+  £80,000 to £140,000 of pay, drawn by share.py (`--variants DIR` draws every
+  design there for comparison).
 
-Output is byte-for-byte reproducible (CI checks it): fonts come only from
-matplotlib's own bundled DejaVu Sans, and the files carry no dates.
+Output is byte-for-byte reproducible (CI checks it): the SVGs use only
+matplotlib's own bundled DejaVu Sans, the PNG uses Inter loaded from
+harness/fonts, and the files carry no dates.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import pathlib
@@ -30,6 +33,8 @@ matplotlib.use("Agg")
 import matplotlib.font_manager as fm  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.ticker import FuncFormatter  # noqa: E402
+
+import share  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
 DOCS = HERE.parent / "docs"
@@ -145,56 +150,21 @@ def draw_rates(hs: list[dict], path: pathlib.Path) -> None:
     plt.close(fig)
 
 
-def draw_share(h: dict, path: pathlib.Path) -> None:
-    """One panel for a phone screen: the £100,000 cliff and its recovery."""
-    (c,) = [c for c in h["cliffs"] if c["kind"].startswith("childcare")]
-    pts = [(x, y) for x, y in h["net"] if 80_000 <= x <= 140_000]
-    xs, ys = zip(*pts)
-    after = min(y for x, y in pts if x > c["at"] - 1)
-    fig = plt.figure(figsize=(12, 12), dpi=100)
-    fig.text(0.06, 0.94, f"Earn one penny over £100,000,\nlose {money(c['lost'])}", fontsize=40, color=INK,
-             fontweight="bold", va="top", linespacing=1.15)
-    fig.text(0.06, 0.80, "A single parent with a 2-year-old in England, 2026-27", fontsize=21, color=SUB, va="top")
-    ax = fig.add_axes((0.13, 0.17, 0.82, 0.57))
-    ax.plot(xs, ys, color=BLUE, linewidth=4, solid_joinstyle="miter")
-    ax.plot([c["at"], c["recovered_at"]], [c["before"]] * 2, color=INK, linewidth=2, linestyle=(0, (4, 3)))
-    ax.plot([c["recovered_at"]], [c["before"]], "o", color=INK, markersize=11)
-    ax.plot([c["at"]], [c["before"]], "o", color=INK, markersize=11)
-    ax.annotate(f"At £100,000 of pay:\n{money(c['before'])} a year", (c["at"], c["before"]), xytext=(-16, 14),
-                textcoords="offset points", ha="right", fontsize=22, color=INK)
-    ax.annotate(f"1p more: {money(after)}\nTax-Free Childcare and\n30 free hours a week\nare gone",
-                (c["at"], after), xytext=(24, -10), textcoords="offset points", ha="left", va="top", fontsize=22,
-                color=INK)
-    ax.annotate(f"Back to {money(c['before'])} only at\n{money(c['recovered_at'])} of pay: a\n"
-                f"{money(c['recovered_at'] - math.floor(c['at']))} raise to stand still",
-                (c["recovered_at"], c["before"]), xytext=(-14, 22), textcoords="offset points", ha="right",
-                va="bottom", fontsize=22, color=INK, fontweight="bold")
-    ax.grid(axis="y", color=GRID, linewidth=1.2)
-    ax.set_axisbelow(True)
-    ax.tick_params(length=0, labelsize=19)
-    ax.xaxis.set_major_formatter(FuncFormatter(k))
-    ax.yaxis.set_major_formatter(FuncFormatter(k))
-    ax.set_xlim(80_000, 140_000)
-    lo, hi = math.floor(min(ys) / 10_000) * 10_000, math.ceil(max(ys) / 10_000) * 10_000
-    ax.set_ylim(lo - 5_000, hi)
-    ax.set_yticks(range(lo, hi + 1, 5_000))  # no tick at the bottom corner
-    ax.set_xlabel("Gross pay a year", fontsize=20, color=SUB, labelpad=12)
-    ax.set_ylabel("Net income a year", fontsize=20, color=SUB, labelpad=12)
-    fig.text(0.06, 0.035,
-             "Net income: pay after income tax and National Insurance, plus Child Benefit, Tax-Free Childcare\n"
-             "(£10,000 a year of paid childcare) and 30 free hours a week valued at the £8.90 an hour the\n"
-             "government pays councils for a 2-year-old. Exact model of the 2026-27 rules.",
-             fontsize=14, color=SUB, va="bottom", linespacing=1.4)
-    fig.savefig(path, dpi=100, metadata={"Software": None})
-    plt.close(fig)
-
-
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--variants", type=pathlib.Path, help="also draw every design of the shared image into this directory")
+    args = ap.parse_args()
     hs = json.loads(DATA.read_text())
     draw_net(hs, DOCS / "net.svg")
     draw_rates(hs, DOCS / "rates.svg")
-    draw_share(next(h for h in hs if h["key"] == "uc_one_child"), DOCS / "cliff-100k.png")
-    print(f"wrote {DOCS / 'net.svg'}, {DOCS / 'rates.svg'} and {DOCS / 'cliff-100k.png'}")
+    cliff = share.cliff_of(next(h for h in hs if h["key"] == "uc_one_child"))
+    share.DESIGNS[share.DESIGN](cliff, DOCS / "cliff-100k.png")
+    print(f"wrote {DOCS / 'net.svg'}, {DOCS / 'rates.svg'} and {DOCS / 'cliff-100k.png'} ({share.DESIGN})")
+    if args.variants:
+        args.variants.mkdir(parents=True, exist_ok=True)
+        for name, draw in share.DESIGNS.items():
+            draw(cliff, args.variants / f"cliff-100k-{name}.png")
+        print(f"wrote {len(share.DESIGNS)} designs to {args.variants.resolve()}")
 
 
 if __name__ == "__main__":

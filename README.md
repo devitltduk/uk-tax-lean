@@ -302,7 +302,10 @@ lower), the tables `docs/net.csv` and `docs/rates.csv`, and the data `charts.py`
 - [`docs/rates.svg`](docs/rates.svg): the marginal rate between the cliffs, with
   the cliffs as markers carrying their £ amount;
 - [`docs/cliff-100k.png`](docs/cliff-100k.png): the lone parent with a 2-year-old,
-  £80,000 to £140,000, 1200 × 1200, for sharing.
+  £80,000 to £140,000, 1200 × 1500, for sharing (drawn by `harness/share.py`;
+  `charts.py --variants out/linkedin` also draws the other designs into
+  `harness/out/linkedin/` for comparison). Its font is Inter, vendored in
+  `harness/fonts/` under the SIL Open Font License.
 
 A cliff is a one-off loss of a fixed sum, not a rate: one penny more pay costs that
 sum once, and net income then rises again at the ordinary rate. Shown as a
