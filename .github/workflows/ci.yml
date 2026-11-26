@@ -22,6 +22,12 @@ jobs:
         run: lake build --wfail
       - name: Golden cases
         run: python3 tests/golden.py
+      # Seed checks (hand-worked cliff sizes), then regenerate the cliff map and
+      # fail if docs/ no longer matches the model.
+      - name: Cliff map
+        run: |
+          python3 harness/cliffs.py
+          git diff --exit-code -- docs/cliffs.md docs/emr.svg docs/emr.csv
       - uses: actions/upload-artifact@v4
         with:
           name: uktax

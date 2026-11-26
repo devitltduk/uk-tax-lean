@@ -136,6 +136,15 @@ is assumed: every result below holds for every income.
   earnings-period basis.
 - `hicbc_mono_income`, `hicbc_le`: the charge never goes down when adjusted net
   income goes up, and never exceeds the Child Benefit it is on.
+- `net_drop_only_at_steps` (`UkTax/Cliffs.lean`): for every pay, savings,
+  dividends, Child Benefit and pay period, if one more penny of pay lowers net
+  income (gross − income tax − NICs − HICBC + Child Benefit), that penny is a step
+  of the personal allowance (total income reaching a multiple of £2 in
+  (£100,000, £125,140]), of the HICBC (a multiple of £200 in [£60,200, £80,000])
+  or of the personal savings allowance (Step 3 income at £37,700 or £125,140).
+  It rests on `taxExact_succ_le` (with both allowances fixed, a penny more pay
+  adds at most 0.686p of income tax) and `net_succ_ge` (between steps net income
+  rises at least 0.234p per penny, so the marginal rate there is at most 76.6 %).
 
 How the optimality proof works (details at the top of `UkTax/Optimal.lean`): with
 the income fixed, a way of sharing the allowance is a point `(x, w)` (non-savings
@@ -186,7 +195,34 @@ HICBC: 1p below and at the first 1 % step, 99 % and 100 %, two children with a
 benefit that is not whole pounds, and income from dividends counting towards
 adjusted net income.
 
-### Comparing with PolicyEngine UK
+### Where earning more lowers net income
+
+`python3 harness/cliffs.py` writes [`docs/cliffs.md`](docs/cliffs.md) (every drop,
+by household type, with its size and the pay range after it where net income stays
+lower) and [`docs/emr.svg`](docs/emr.svg) with its table `docs/emr.csv` (effective
+marginal rates on each £200 of pay). It evaluates net income exactly at every
+step penny that `net_drop_only_at_steps` allows, so the list is complete within
+the model; nothing is sampled. CI checks that the docs match the model, and the
+script's seed checks hold figures worked out by hand: every personal allowance
+step costs 39.42p, £100,000 to £125,140 keeps exactly 38 % (the 60 % band plus
+2 % NICs), and the first HICBC step with one child costs £13.9942.
+
+What it finds, for 2026-27:
+
+- **The 60 % band is a staircase of small cliffs.** Because s35(3) rounds the
+  tapered allowance *up* to a whole pound, it falls £1 at every £2 of income from
+  £100,002 to £125,140. Each of those 12,570 pennies costs 39.42p of net income, and
+  for about 68p of pay after each step net income is below its level before it.
+  Over any whole £2 the rate is the familiar 60 % (62 % with NICs).
+- **HICBC**: 100 drops, at each £200 from £60,200 to £80,000, each 1 % of the
+  Child Benefit in whole pounds (£13.99 to £14.99 with one child, £31.99 to £32.99
+  with three), each followed by a £24 to £57 pay range where net income is lower.
+- **Personal savings allowance**: with savings income, crossing the basic rate
+  limit costs £100 (£500 of interest moving from 0 % to 20 %) and crossing
+  £125,140 costs £200 (£500 at 40 %), with traps of about £140 to £380 of pay.
+- No other drops, for any household of this form.
+
+## Comparing with PolicyEngine UK
 
 ```sh
 lake build

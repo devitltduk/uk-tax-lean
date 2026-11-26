@@ -1,5 +1,6 @@
 import UkTax.Optimal
 import UkTax.Charges
+import UkTax.Cliffs
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -38,3 +39,11 @@ today, so any change to it is seen.
 /-- info: 'UkTax.hicbc_le' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.hicbc_le
+
+/-- info: 'UkTax.taxExact_succ_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.taxExact_succ_le
+
+/-- info: 'UkTax.net_drop_only_at_steps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.net_drop_only_at_steps
