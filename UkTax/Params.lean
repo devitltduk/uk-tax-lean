@@ -75,7 +75,9 @@ def nonSavingsRates : Rates := ⟨2000, 4000, 4500⟩
 
 /-- Basic, higher and additional savings rates for 2026-27: 20 %, 40 % and 45 %.
 Finance Act 2026 s3 <https://www.legislation.gov.uk/ukpga/2026/11> (ITA 2007 s7A).
-The rise to 22 / 42 / 47 % (FA 2026 s5) starts in 2027-28, not 2026-27. -/
+2027-28 is out of scope. As enacted, FA 2026 s5 sets 22 / 42 / 47 % from 6 April
+2027; Budget 2026 (para 6.247) announced a further 2 points, so the pinned
+PolicyEngine UK models 24 / 44 / 49 % from that date. Neither applies to 2026-27. -/
 def savingsRates : Rates := ⟨2000, 4000, 4500⟩
 
 /-- Dividend ordinary, upper and additional rates for 2026-27: 10.75 %, 35.75 % and
