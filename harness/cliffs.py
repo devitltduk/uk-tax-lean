@@ -2,7 +2,7 @@
 
 Net income = gross income - income tax - employee NICs - High Income Child
 Benefit Charge + Child Benefit + the better of Universal Credit and Tax-Free
-Childcare + funded hours: the `netAll` of UkTax/Benefits.lean, exact, in
+Childcare + funded hours (valued at DfE's national average funding rates): the `netAll` of UkTax/Benefits.lean, exact, in
 1/1 000 000 of a penny, read from the `uktax` binary. Pay varies; each
 household's savings, dividends, Child Benefit and claims are fixed; NICs on the
 annual basis.
@@ -59,6 +59,8 @@ class Household:
     children: int = 0
     uc: bool = False
     childcare_costs: tuple[int, ...] = ()
+    funded_children: tuple[str, ...] = ()  # age bands: "under_2", "2", "3_4"
+    partner_pay: int | None = None  # a working partner (pay = adjusted net income), fixed
 
     @property
     def cb(self) -> int:
@@ -84,17 +86,27 @@ HOUSEHOLDS = [
     Household("uc_single", "Single, Universal Credit", uc=True),
     Household(
         "uc_one_child",
-        "Lone parent, 1 child: UC (no childcare element) or Tax-Free Childcare",
+        "Lone parent, 1 child aged 2: UC (no childcare element) or Tax-Free Childcare, funded hours",
         children=1,
         uc=True,
         childcare_costs=(CHILDCARE,),
+        funded_children=("2",),
     ),
     Household(
-        "uc_three_children",
-        "Lone parent, 3 children (2 in childcare): UC (no childcare element) or Tax-Free Childcare",
-        children=3,
+        "uc_two_children",
+        "Lone parent, 2 children aged 1 and 3: UC (no childcare element) or Tax-Free Childcare, funded hours",
+        children=2,
         uc=True,
         childcare_costs=(CHILDCARE, CHILDCARE),
+        funded_children=("under_2", "3_4"),
+    ),
+    Household(
+        "couple_child_3",
+        "Couple, partner earns £40,000, 1 child aged 3: Tax-Free Childcare, funded hours",
+        children=1,
+        childcare_costs=(CHILDCARE,),
+        funded_children=("3_4",),
+        partner_pay=4_000_000,
     ),
 ]
 
@@ -119,6 +131,10 @@ class Model:
         }
         if self.h.uc:
             base["uc"] = {"couple": False, "children": self.h.children}
+        if self.h.funded_children:
+            base["funded_children"] = [{"age": a} for a in self.h.funded_children]
+        if self.h.partner_pay is not None:
+            base["partner"] = {"pay_pence": self.h.partner_pay, "adjusted_net_income_pence": self.h.partner_pay}
         payload = [{"non_savings_pence": g, "employment_pence": g, **base} for g in todo]
         out = subprocess.run(
             [str(self.binary)], input=json.dumps(payload), capture_output=True, text=True, check=True
@@ -165,7 +181,7 @@ def step_pennies(m: Model) -> dict[int, str]:
     if h.cb:
         for k in range(100):
             add(6_020_000 + 20_000 * k, "HICBC")
-    if h.childcare_costs:
+    if h.childcare_costs or h.funded_children:
         add(10_000_001, "childcare (£100,000)")
     for limit in (BRL, HRL):
         g = first_at_least(m, limit, 0, MAX_PAY)
@@ -260,6 +276,13 @@ def seed_checks(binary: pathlib.Path) -> list[str]:
         fails.append(f"one child: drop at £60,200 should be £13.9942, got {first}")
     if sum(1 for d in d1.values() if d.kind == "HICBC") != 100:
         fails.append("one child: expected 100 HICBC drops")
+    # Lone parent, child aged 2, £10,000 of childcare, 1p over £100,000: loses
+    # Tax-Free Childcare £2,000 and 30 h x 38 weeks x £8.90 = £10,146 of funded
+    # hours, and keeps 0.58p of the penny (40 % tax, 2 % NICs): £12,145.9942.
+    lone = Model(binary, next(h for h in HOUSEHOLDS if h.key == "uc_one_child"))
+    cliff = {d.pay: d for d in find_drops(lone)}.get(10_000_000)
+    if cliff is None or cliff.kind != "childcare (£100,000)" or cliff.drop != 1_214_599_420_000:
+        fails.append(f"lone parent, child aged 2: £100,000 drop should be £12,145.9942, got {cliff}")
     return fails
 
 
@@ -278,8 +301,8 @@ def write_svg(series: dict[str, list[tuple[int, float]]], labels: dict[str, str]
         f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
         f'<text x="{L}" y="18" font-size="14" fill="{ink}" font-weight="600">Effective marginal rate on '
         "£200 more pay, 2026-27</text>",
-        f'<text x="{L}" y="34" fill="{sub}">Income tax + NICs + HICBC, less Child Benefit, UC and Tax-Free Childcare; '
-        "above 100% the extra £200 leaves the household worse off</text>",
+        f'<text x="{L}" y="34" fill="{sub}">Tax + NICs + HICBC, less Child Benefit, UC, Tax-Free Childcare and funded hours; '
+        "above 100% the extra £200 leaves you worse off</text>",
     ]
     for k, (key, pts) in enumerate(series.items()):
         top = T + k * (PH + GAP) + 18
@@ -331,10 +354,12 @@ def main() -> int:
         "income tax, employee NICs (annual basis) and the High Income Child Benefit Charge, plus",
         "Child Benefit (52 weeks at £27.05 / £17.90), plus, where claimed, the better of Universal",
         "Credit and Tax-Free Childcare (childcare costs £10,000 a year per child, an illustrative",
-        "assumption). Pay varies; everything else is fixed. The funded hours for working parents",
-        "are lost at the same £100,000 as Tax-Free Childcare, but they are in kind and no value is",
-        "assumed here, so their cliff is not in these tables: it adds their value to the",
-        "£100,000 drop, and lengthens the trap by about that value divided by 0.38.",
+        "assumption), plus the funded hours (England) for the children's ages, valued at DfE's",
+        "2026-27 national average local authority funding rates (£12.04 an hour under 2, £8.90 at",
+        "2, £6.61 at 3 and 4) for 38 weeks. Pay varies; everything else is fixed. Over £100,000",
+        "the working-parent hours go (30 a week under 3; the 15 on top of the universal 15 at 3",
+        "and 4); the universal 15 hours stay. Reaching the minimum earnings gains Tax-Free",
+        "Childcare and the working-parent hours, so it is a rise, not a drop.",
         "",
         "The model's UC has no childcare costs element (85 % of costs up to £1,071.09 a month for",
         "one child, £1,836.16 for two or more: SI 2013/376 regs 34 and 36). With it UC would stay",

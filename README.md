@@ -101,14 +101,43 @@ dividends or other income for UC households.
 
 ### Tax-Free Childcare and the funded hours (England)
 
-A lone parent is eligible when they expect to earn at least £10,574.72 a year
-(16 hours a week at the £12.71 National Living Wage, as £2,643.68 a quarter) and
-their adjusted net income is not over £100,000. Tax-Free Childcare adds 20 % of
-each child's childcare costs (£2 for every £8 paid in), up to £2,000 a child a
-year. It can't be had with Universal Credit, so net income counts whichever is
-larger. The working-parent funded hours are lost at the same £100,000; they are
-in kind, so their yearly value is an input (`funded_hours_value_pence`) with no
-default figure.
+A parent is eligible when they, and their partner if they have one, each expect
+to earn at least £10,574.72 a year (16 hours a week at the £12.71 National Living
+Wage, as £2,643.68 a quarter) and each have adjusted net income not over
+£100,000. The partner's pay and income are an input (`partner`), fixed while the
+parent's pay varies; a UC couple's partner has no pay, so fails. Tax-Free
+Childcare adds 20 % of each child's childcare costs (£2 for every £8 paid in), up
+to £2,000 a child a year. It can't be had with Universal Credit, so net income
+counts whichever is larger.
+
+The funded hours are England's (`country`, default England; Tax-Free Childcare is
+UK-wide). Each child is given an age band (`funded_children`):
+
+| age band | universal hours (any income) | working-parent hours (if eligible) | DfE rate | a year, at that rate |
+|---|---|---|---|---|
+| 9 months to 2 (`under_2`) | none | 30 a week | £12.04 | £13,725.60 |
+| 2 (`2`) | none | 30 a week | £8.90 | £10,146.00 |
+| 3 and 4, until school (`3_4`) | 15 a week | 15 more a week | £6.61 | £3,767.70 + £3,767.70 |
+
+Hours are counted for 38 weeks (570 hours a year for 15 a week, 1,140 for 30).
+Each hour is valued at the Department for Education's 2026-27 national average of
+local authority hourly funding rates for the age band (technical note, Table 6),
+or at a local nursery price per hour given for the child
+(`price_pence_per_hour`). Over £100,000 only the working-parent hours go; a 3 or
+4-year-old keeps the universal 15. Reaching the minimum earnings gains the
+working-parent hours, so it is a rise in net income, not a drop.
+
+Why the national average local authority rate. DfE pays each local authority an
+hourly rate per entitlement and publishes their national average; it publishes no
+national figure for what providers are paid. Authorities must pass at least 97 %
+of the funding through to providers, for each entitlement, so the average
+provider rate is between 97 % and 100 % of these figures, with local variation
+(no local authority gets less than £6.20 an hour for 3 and 4-year-olds in
+2026-27, technical note section 3; there is no floor for younger children). The
+national average is the one published national figure per age band, it is what
+the state spends on an hour, and it is the figure PolicyEngine UK uses, so the
+comparison is like for like. A nursery's own price for an hour can be higher;
+to value the hours at what they would cost the family, give the local price.
 
 ### 2026-27 figures for NICs and HICBC
 
@@ -128,6 +157,10 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26; each is in
 | Childcare income limit | adjusted net income over £100,000 | [SI 2015/448 reg 15](https://www.legislation.gov.uk/uksi/2015/448/regulation/15); [GOV.UK funded hours](https://www.gov.uk/free-childcare-if-working/check-youre-eligible) |
 | Childcare minimum earnings | £2,643.68 a quarter (21 or over) | [GOV.UK](https://www.gov.uk/tax-free-childcare/check-if-youre-eligible); NLW £12.71 [GOV.UK](https://www.gov.uk/national-minimum-wage-rates) |
 | Tax-Free Childcare top-up | £2 per £8 paid in, up to £2,000 a child a year | [GOV.UK](https://www.gov.uk/tax-free-childcare) |
+| Working-parent hours: income limit, minimum earnings | each parent: adjusted net income not over £100,000; £2,643.68 a quarter (21 or over) | [SI 2022/1134 regs 14, 15, 18](https://www.legislation.gov.uk/uksi/2022/1134/regulation/14); [GOV.UK](https://www.gov.uk/free-childcare-if-working/check-youre-eligible) ("You (and your partner, if you have one) must each expect to earn...") |
+| Funded hours | universal 570 a year at 3 and 4 (no income test); working parents 1,140 a year from 9 months, universal hours included; over no fewer than 38 weeks | [Childcare Act 2006 s7](https://www.legislation.gov.uk/ukpga/2006/21/section/7); [Childcare Act 2016 s1](https://www.legislation.gov.uk/ukpga/2016/5/section/1); SI 2022/1134 reg 44; [DfE statutory guidance, April 2026](https://www.gov.uk/government/publications/early-education-and-childcare--2/early-education-and-childcare-valid-from-1-april-2026), paras A1.6, A1.10, A1.11, A1.16 |
+| DfE hourly funding rates (national average of local authority rates) | £12.04 under 2s, £8.90 2-year-olds, £6.61 3 and 4-year-olds | [2026 to 2027 early years national funding formulae: technical note](https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/2026-to-2027-early-years-national-funding-formulae-technical-note), section 3.8, Table 6 (and 3.3) |
+| Pass-through to providers | at least 97 %, each entitlement | [Early years entitlements: local authority funding operational guide 2026 to 2027](https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/early-years-entitlements-local-authority-funding-operational-guide-2026-to-2027), section 4.1; statutory guidance para A4.6 |
 
 ## Out of scope
 
@@ -137,8 +170,12 @@ in 2026-27), National Insurance other than employee Class 1 primary contribution
 beyond the minimal model (housing, childcare, disability and carer elements,
 capital, unearned income, the benefit cap, the minimum income floor, under-25
 rates, the first-child rate for children born before 6 April 2017, monthly
-rounding, couples where both work), Tax-Free Childcare for couples and for
-disabled children, legacy benefits, reliefs and deductions (pension
+rounding, couples where both work), Tax-Free Childcare and the funded hours for
+disabled children, the childcare tests' routes for a partner who is disabled or a
+carer, the lower minimum earnings for parents under 21 or apprentices, the 15
+hours for disadvantaged 2-year-olds (which depend on benefits), a child changing
+age band during the year (the model takes one band for the year), Wales's,
+Scotland's and Northern Ireland's own childcare schemes, legacy benefits, reliefs and deductions (pension
 contributions, Gift Aid, losses, the trading and property allowances), Marriage
 Allowance and Blind Person's Allowance, other tax reductions, property income's
 own rates (from 2027-28), the default rates for non-residents, top-slicing relief,
@@ -183,7 +220,13 @@ is assumed: every result below holds for every income.
   rises at least 0.234p per penny, so the marginal rate there is at most 76.6 %).
 - `netAll_drop_only_at_steps` (`UkTax/Benefits.lean`): the same with Universal
   Credit, Tax-Free Childcare (whichever is larger) and the funded hours added,
-  with one more kind of step: adjusted net income going over £100,000.
+  with one more kind of step: adjusted net income going over £100,000. The
+  minimum earnings test adds no step: reaching it gains Tax-Free Childcare and the
+  working-parent hours.
+- `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
+  hours are worth exactly the universal hours, and for a parent eligible at
+  £100,000 the penny over loses exactly the working-parent hours, never the
+  universal 15.
   `earned_plus_uc_mono`: earned income plus UC never falls as earned income
   rises (the taper is 55 %). `netAll_succ_ge`: between steps, a penny more pay
   raises net income with benefits by at least 0.1053p, so the marginal rate there
@@ -225,7 +268,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 28 cases with the expected figures worked out by hand
+`tests/golden.json` holds 50 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -236,7 +279,10 @@ and both s25(2) choices. For NICs: 1p over the primary threshold, each
 earnings-period basis, above the upper earnings limit, and pay plus pension. For
 HICBC: 1p below and at the first 1 % step, 99 % and 100 %, two children with a
 benefit that is not whole pounds, and income from dividends counting towards
-adjusted net income.
+adjusted net income. For the funded hours: each age band at £100,000 and 1p over
+(a 3-year-old keeping the universal hours), 1p under the minimum earnings, a local
+price, a couple where the partner is 1p over £100,000 or 1p under the minimum
+earnings, a UC couple, Wales, and net income either side of the £100,000 cliff.
 
 ### Where earning more lowers net income
 
@@ -265,10 +311,19 @@ What it finds, for 2026-27:
   limit costs £100 (£500 of interest moving from 0 % to 20 %) and crossing
   £125,140 costs £200 (£500 at 40 %), with traps of about £140 to £380 of pay.
 - **The £100,000 childcare cliff**: going 1p over £100,000 of adjusted net income
-  loses Tax-Free Childcare, £1,999.99 with one child in £10,000 of childcare and
-  £3,999.99 with two, and net income stays below its level at £100,000 for the
-  next £5,263 / £10,526 of pay (the loss divided by the 38 % kept in the 60 % band).
-  The funded hours go at the same penny and add their value to the drop.
+  loses Tax-Free Childcare and the working-parent funded hours (at DfE rates, £10,000
+  of childcare a child on top):
+
+  | household | lost at £100,000.01 | net income back to its £100,000 level at pay |
+  |---|---|---|
+  | lone parent, child aged 2 | £12,145.99 (TFC £2,000 + hours £10,146) | £130,032.08 |
+  | lone parent, children aged 1 and 3 | £21,493.29 (TFC £4,000 + hours £13,725.60 + £3,767.70) | £147,668.50 |
+  | couple (partner £40,000), child aged 3 | £5,767.69 (TFC £2,000 + hours £3,767.70) | £115,177.42 |
+
+  Up to £125,140 each extra pound keeps 38p (the 60 % band and 2 % NICs), after it
+  53p, so a loss over £9,553.20 takes until well past £125,140 to recover. Before
+  the funded hours were priced the cliff was £1,999.99 and £3,999.99 with £5,263 and
+  £10,526 of pay to recover.
 - **Universal Credit** adds no drops: with the 55 % taper on top of tax and NICs,
   the rate between steps is at most 89.47 % (proved: `netAll_succ_ge`), and moving between UC and Tax-Free
   Childcare is smooth because the household takes the larger.
@@ -330,10 +385,30 @@ earner £1,260 of the partner's allowance: £252 less tax and £138.60 more UC a
 year. That's a default, not an error. The model has no Marriage Allowance, so the
 harness sets it to 0 for couples.
 
+### Funded hours against PolicyEngine
+
+`uv run python compare_childcare.py` compares the funded hours' yearly value for a
+lone parent or a couple (partner's pay fixed at 0 to £100,000.01, including 1p
+either side of the minimum earnings) with children aged 1, 2, 3, 1 and 3, or 2
+and 3, in England and in Wales, from £0 to £150,000 of pay. PolicyEngine values
+the hours the same way (its `gov.dfe.childcare_funding_rate` holds the same Table 6
+rates, 38 weeks), so it checks the eligibility and the hours. Latest local run:
+6,090 cases (1,413 with working-parent hours); 6,068 agree within 2 float32 steps
+a child (largest difference 0.12p). The other 22 differ only by PolicyEngine's 15
+hours for disadvantaged 2-year-olds (£5,073 at £8.90), which it gives a family
+on Universal Credit with low earnings and which the model leaves out.
+
+PolicyEngine works term by term: a child counts from the term after it reaches
+the minimum age, at the rate for its age that term, and stops when it starts
+school. The model takes one age band for the year. So the harness uses children
+born so that they stay in one band in all three terms; for a child who changes
+band during the year PolicyEngine gives a blend (a 2-year-old born in April 2024,
+under 2 in the April term, gets £11,339.20 there, not £10,146).
+
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
-comparisons (income tax, NICs and HICBC; Universal Credit) with 1,000 random cases
-each.
+comparisons (income tax, NICs and HICBC; Universal Credit; funded hours) with
+1,000 random cases each.

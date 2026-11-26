@@ -60,3 +60,11 @@ today, so any change to it is seen.
 /-- info: 'UkTax.netAll_succ_ge' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.netAll_succ_ge
+
+/-- info: 'UkTax.fundedHours_over_limit' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.fundedHours_over_limit
+
+/-- info: 'UkTax.fundedHours_drop_at_limit' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.fundedHours_drop_at_limit

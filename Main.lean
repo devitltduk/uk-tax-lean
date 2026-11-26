@@ -20,8 +20,17 @@ Optional fields:
   not allowed with savings or dividends);
 * `childcare_costs_pence`: yearly childcare costs per child, for Tax-Free
   Childcare (default none);
-* `funded_hours_value_pence`: yearly value of the working-parent funded hours
-  (default 0).
+* `partner`: `{"pay_pence": 3000000, "adjusted_net_income_pence": 3000000}`, a
+  partner who must also pass the childcare tests (minimum earnings, £100,000);
+  fixed. Not allowed with a UC couple, whose partner has no pay. A UC couple
+  with no `partner` fails the tests;
+* `country`: `"england"` (default), `"wales"` or `"northern_ireland"`; the
+  funded hours are England's;
+* `funded_children`: children for the funded hours, e.g.
+  `[{"age": "under_2"}, {"age": "3_4", "price_pence_per_hour": 750}]`, ages
+  `"under_2"` (9 months to 2), `"2"` and `"3_4"` (until school); the hours are
+  valued at DfE's 2026-27 national average rate for the age unless a local price
+  per hour is given.
 
 Benefit outputs are in 1/1 000 000 of a penny: `uc_millionths_pence`,
 `tfc_millionths_pence` (Tax-Free Childcare can't be had with Universal Credit;
@@ -93,9 +102,44 @@ def parseCase (j : Json) : Except String Case := do
       if (j.getObjVal? "childcare_costs_pence").toOption.isSome then
         throw "childcare_costs_pence must be an array of whole numbers of pence"
       else pure []
+  let ucCouple := (uc.map (·.1)).getD false
+  let partner ← match j.getObjVal? "partner" with
+    | .ok pj => do
+      if ucCouple then
+        throw "partner: a UC couple where both work is not modelled (the UC couple's partner has no pay)"
+      let f (k : String) : Except String Nat :=
+        match pj.getObjValAs? Nat k with
+        | .ok v => .ok v
+        | .error _ => .error s!"partner.{k} must be a non-negative whole number of pence"
+      pure (some (← f "pay_pence", ← f "adjusted_net_income_pence"))
+    | .error _ => pure none
+  let england ← match j.getObjValAs? String "country" with
+    | .ok "england" => pure true
+    | .ok "wales" | .ok "northern_ireland" => pure false
+    | .ok c => throw s!"country must be england, wales or northern_ireland, not {c}"
+    | .error _ => pure true
+  let kids ← match j.getObjValAs? (Array Json) "funded_children" with
+    | .ok xs => xs.toList.mapM fun k => do
+      let band ← match k.getObjValAs? String "age" with
+        | .ok "under_2" => pure AgeBand.under2
+        | .ok "2" => pure .two
+        | .ok "3_4" => pure .threeFour
+        | _ => throw "funded_children: age must be \"under_2\", \"2\" or \"3_4\""
+      let price ← match k.getObjVal? "price_pence_per_hour" with
+        | .ok _ => match k.getObjValAs? Nat "price_pence_per_hour" with
+          | .ok v => pure (some v)
+          | .error _ => throw "funded_children: price_pence_per_hour must be a whole number of pence"
+        | .error _ => pure none
+      pure ({ band, price } : FundedChild)
+    | .error _ =>
+      if (j.getObjVal? "funded_children").toOption.isSome then
+        throw "funded_children must be an array"
+      else pure []
+  if (j.getObjVal? "funded_hours_value_pence").toOption.isSome then
+    throw "funded_hours_value_pence is replaced by funded_children"
   let claims : Claims := {
-    uc := uc.isSome, couple := (uc.map (·.1)).getD false, ucChildren := (uc.map (·.2)).getD 0,
-    childcareCosts := costs, fundedHoursValue := ← optField "funded_hours_value_pence" }
+    uc := uc.isSome, couple := ucCouple || partner.isSome, ucChildren := (uc.map (·.2)).getD 0,
+    childcareCosts := costs, partner, england, fundedChildren := kids }
   return ⟨income, employment, period, ← optField "child_benefit_pence", claims⟩
 
 def result (c : Case) : Json :=
@@ -117,7 +161,7 @@ def result (c : Case) : Json :=
     ("uc_millionths_pence", toJson (ucAward c.claims (earned c.period i.savings i.dividends c.employment))),
     ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment i.total)),
     ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment i.total)),
-    ("childcare_eligible", toJson (childcareEligible c.employment i.total)),
+    ("childcare_eligible", toJson (childcareEligible c.claims c.employment i.total)),
     -- `netAll` takes all non-savings income as pay
     ("net_income_millionths_pence",
       if c.employment = i.nonSavings then

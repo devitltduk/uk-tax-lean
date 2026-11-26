@@ -470,5 +470,273 @@
     },
     "tfc_millionths_pence": 200000000000,
     "childcare_eligible": true
+  },
+  {
+    "name": "Funded hours: 2-year-old at exactly 100,000, working parent hours valued at 8.90",
+    "source": "https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/2026-to-2027-early-years-national-funding-formulae-technical-note (Table 6); SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible",
+    "working": "30 h x 38 weeks x 8.90 = 10,146.00",
+    "input": {
+      "non_savings_pence": 10000000,
+      "employment_pence": 10000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "funded_children": [
+        {
+          "age": "2"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 1014600000000,
+    "childcare_eligible": true
+  },
+  {
+    "name": "Funded hours: 2-year-old, 1p over 100,000 loses all 30 hours",
+    "source": "SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible",
+    "working": "adjusted net income 100,000.01 is over 100,000; a 2-year-old has no universal hours",
+    "input": {
+      "non_savings_pence": 10000001,
+      "employment_pence": 10000001,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "funded_children": [
+        {
+          "age": "2"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 0
+  },
+  {
+    "name": "Funded hours: 3-year-old at 100,000 gets universal 15 + working parent 15 at 6.61",
+    "source": "https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/2026-to-2027-early-years-national-funding-formulae-technical-note (Table 6); statutory guidance A1.6, A1.10",
+    "working": "15 x 38 x 6.61 = 3,767.70 universal + 3,767.70 working parent = 7,535.40",
+    "input": {
+      "non_savings_pence": 10000000,
+      "employment_pence": 10000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "funded_children": [
+        {
+          "age": "3_4"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 753540000000
+  },
+  {
+    "name": "Funded hours: 3-year-old 1p over 100,000 keeps the universal 15 hours",
+    "source": "Childcare Act 2006 s7 (no income test); SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible",
+    "working": "working parent hours lost; universal 15 x 38 x 6.61 = 3,767.70 kept",
+    "input": {
+      "non_savings_pence": 10000001,
+      "employment_pence": 10000001,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "funded_children": [
+        {
+          "age": "3_4"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 376770000000
+  },
+  {
+    "name": "Funded hours: 3-year-old, parent 1p under the minimum earnings: universal hours only",
+    "source": "SI 2022/1134 reg 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible (21 or over: 2,643.68 over 3 months)",
+    "working": "10,574.71 < 4 x 2,643.68 = 10,574.72; universal 3,767.70",
+    "input": {
+      "non_savings_pence": 1057471,
+      "employment_pence": 1057471,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "funded_children": [
+        {
+          "age": "3_4"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 376770000000,
+    "childcare_eligible": false
+  },
+  {
+    "name": "Funded hours: under-2 valued at a local nursery price of 15.00 an hour",
+    "source": "SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible",
+    "working": "30 x 38 x 15.00 = 17,100.00",
+    "input": {
+      "non_savings_pence": 5000000,
+      "employment_pence": 5000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "funded_children": [
+        {
+          "age": "under_2",
+          "price_pence_per_hour": 1500
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 1710000000000
+  },
+  {
+    "name": "Couple: both working and under 100,000, under-2 and 4-year-old",
+    "source": "https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/2026-to-2027-early-years-national-funding-formulae-technical-note (Table 6); SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible",
+    "working": "under-2: 30 x 38 x 12.04 = 13,725.60; 4-year-old: 30 x 38 x 6.61 = 7,535.40; total 21,261.00",
+    "input": {
+      "non_savings_pence": 5000000,
+      "employment_pence": 5000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "partner": {
+        "pay_pence": 3000000,
+        "adjusted_net_income_pence": 3000000
+      },
+      "funded_children": [
+        {
+          "age": "under_2"
+        },
+        {
+          "age": "3_4"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 2126100000000,
+    "childcare_eligible": true
+  },
+  {
+    "name": "Couple: partner's adjusted net income 1p over 100,000 loses the working parent hours and TFC",
+    "source": "SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible; SI 2015/448 reg 15",
+    "working": "the limit applies to each parent; universal 3,767.70 kept; TFC 0",
+    "input": {
+      "non_savings_pence": 5000000,
+      "employment_pence": 5000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "partner": {
+        "pay_pence": 10000001,
+        "adjusted_net_income_pence": 10000001
+      },
+      "funded_children": [
+        {
+          "age": "3_4"
+        }
+      ],
+      "childcare_costs_pence": [
+        1000000
+      ]
+    },
+    "funded_hours_millionths_pence": 376770000000,
+    "tfc_millionths_pence": 0,
+    "childcare_eligible": false
+  },
+  {
+    "name": "Couple: partner 1p under the minimum earnings",
+    "source": "SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible",
+    "working": "partner 10,574.71 < 10,574.72: not eligible; a 2-year-old has no universal hours",
+    "input": {
+      "non_savings_pence": 5000000,
+      "employment_pence": 5000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "partner": {
+        "pay_pence": 1057471,
+        "adjusted_net_income_pence": 1057471
+      },
+      "funded_children": [
+        {
+          "age": "2"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 0,
+    "childcare_eligible": false
+  },
+  {
+    "name": "UC couple (partner not working): no TFC and no working parent hours",
+    "source": "SI 2015/448 reg 9 (each partner must be in qualifying paid work); SI 2022/1134 regs 14, 15, 18; https://www.gov.uk/free-childcare-if-working/check-youre-eligible",
+    "working": "the partner has no pay, so fails the minimum earnings; universal 3,767.70 for the 3-year-old",
+    "input": {
+      "non_savings_pence": 3000000,
+      "employment_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "uc": {
+        "couple": true,
+        "children": 1
+      },
+      "childcare_costs_pence": [
+        1000000
+      ],
+      "funded_children": [
+        {
+          "age": "3_4"
+        }
+      ]
+    },
+    "tfc_millionths_pence": 0,
+    "funded_hours_millionths_pence": 376770000000,
+    "childcare_eligible": false
+  },
+  {
+    "name": "Wales: no English funded hours, Tax-Free Childcare still paid",
+    "source": "https://www.gov.uk/free-childcare-if-working ('you must live in England'); https://www.gov.uk/tax-free-childcare",
+    "working": "funded hours 0; TFC 20% x 10,000 = 2,000",
+    "input": {
+      "non_savings_pence": 5000000,
+      "employment_pence": 5000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "childcare_costs_pence": [
+        1000000
+      ],
+      "funded_children": [
+        {
+          "age": "3_4"
+        }
+      ]
+    },
+    "funded_hours_millionths_pence": 0,
+    "tfc_millionths_pence": 200000000000
+  },
+  {
+    "name": "The 100,000 cliff, lone parent, 2-year-old, 10,000 childcare: net income at 100,000",
+    "source": "ITA 2007 ss 10, 35; SI 2001/1004; ITEPA 2003 s681C; SI 2015/448 reg 15; https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/2026-to-2027-early-years-national-funding-formulae-technical-note (Table 6)",
+    "working": "tax 37,700 x 20% + 49,730 x 40% = 27,432; NICs 3,016 + 994.60 = 4,010.60; CB 1,406.60, HICBC 1,406; TFC 2,000; funded 10,146. Net 100,000 - 27,432 - 4,010.60 - 1,406 + 1,406.60 + 2,000 + 10,146 = 80,704.00",
+    "input": {
+      "non_savings_pence": 10000000,
+      "employment_pence": 10000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_pence": 140660,
+      "childcare_costs_pence": [
+        1000000
+      ],
+      "funded_children": [
+        {
+          "age": "2"
+        }
+      ]
+    },
+    "net_income_millionths_pence": 8070400000000
+  },
+  {
+    "name": "The 100,000 cliff: 1p more pay, net income falls 12,145.9942",
+    "source": "as above; ITA 2007 s35(3) (allowance 12,569.995 rounds up to 12,570)",
+    "working": "the penny: 40% tax 0.4p, 2% NICs 0.02p, keeps 0.58p; TFC and funded hours lost. Net 68,558.00 + 0.0058 = 68,558.0058",
+    "input": {
+      "non_savings_pence": 10000001,
+      "employment_pence": 10000001,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_pence": 140660,
+      "childcare_costs_pence": [
+        1000000
+      ],
+      "funded_children": [
+        {
+          "age": "2"
+        }
+      ]
+    },
+    "net_income_millionths_pence": 6855800580000
   }
 ]

@@ -172,23 +172,89 @@ def ucTaperPercent : Nat := 55
 
 /-! ## Tax-Free Childcare and the working-parent funded hours (England) -/
 
-/-- The £100,000 limit: a parent who expects adjusted net income to exceed it
-is not eligible. Tax-Free Childcare: Childcare Payments (Eligibility)
-Regulations 2015 (SI 2015/448) reg 15(1)
+/-- The £100,000 limit: a parent, or their partner, who expects adjusted net
+income to exceed it is not eligible. Tax-Free Childcare: Childcare Payments
+(Eligibility) Regulations 2015 (SI 2015/448) reg 15(1)
 <https://www.legislation.gov.uk/uksi/2015/448/regulation/15>. Funded hours for
-working parents: GOV.UK <https://www.gov.uk/free-childcare-if-working/check-youre-eligible>
-("over £100,000"). -/
+working parents: The Childcare (Free of Charge for Working Parents) (England)
+Regulations 2022 (SI 2022/1134) regs 14(3)(c)(i) and 15(3)(b)(i)
+<https://www.legislation.gov.uk/uksi/2022/1134/regulation/14>; GOV.UK
+<https://www.gov.uk/free-childcare-if-working/check-youre-eligible> ("You will not be
+eligible if either ... you or your partner's expected adjusted net income ... is
+over £100,000"). The universal 15 hours for 3 and 4-year-olds have no income
+limit (Childcare Act 2006 s7). -/
 def childcareIncomeLimit : Nat := 10_000_000
 
 /-- Minimum expected earnings, as a year: £2,643.68 over three months for a parent
 aged 21 or over (16 hours a week at the National Living Wage, £12.71 from April
-2026), times four. GOV.UK <https://www.gov.uk/tax-free-childcare/check-if-youre-eligible>,
-<https://www.gov.uk/national-minimum-wage-rates>. -/
+2026, for 13 weeks), times four. The same figure for both schemes, and for each
+parent of a couple: SI 2015/448 reg 9 and SI 2022/1134 reg 18(3) ("minimum weekly
+income" of 16 hours at the minimum wage)
+<https://www.legislation.gov.uk/uksi/2022/1134/regulation/18>. GOV.UK
+<https://www.gov.uk/tax-free-childcare/check-if-youre-eligible>,
+<https://www.gov.uk/free-childcare-if-working/check-youre-eligible> ("Over 21 years |
+£2,643.68"), <https://www.gov.uk/national-minimum-wage-rates>. Parents under 21 or
+apprentices have lower figures (£2,256.80, £1,664), not modelled. -/
 def childcareMinimumEarnings : Nat := 4 * 264_368
 
 /-- Tax-Free Childcare top-up cap per child, £500 a quarter, £2,000 a year (child
 not disabled). GOV.UK <https://www.gov.uk/tax-free-childcare>. The top-up is £2 for
 every £8 the parent pays in, i.e. 20 % of the childcare paid for. -/
 def tfcCapPerChild : Nat := 200_000
+
+/-! ## Funded early education and childcare hours (England), 2026-27
+
+Hours. The universal entitlement for 3 and 4-year-olds is 570 hours a year
+(Childcare Act 2006 s7; The Local Authority (Duty to Secure Early Years Provision
+Free of Charge) Regulations 2014 (SI 2014/2147) reg 4), and the working-parent
+entitlement is 1,140 hours a year from 9 months old (SI 2022/1134 reg 44(2)(b);
+Childcare Act 2016 s1), the universal hours counting towards it (Childcare Act 2016
+s1(6)(a), SI 2022/1134 reg 44(3)). Both are secured "over no fewer than 38 weeks of
+the year": DfE statutory guidance "Early education and childcare", valid from 1
+April 2026, paras A1.6, A1.10 and A1.16
+<https://www.gov.uk/government/publications/early-education-and-childcare--2/early-education-and-childcare-valid-from-1-april-2026>.
+GOV.UK: "30 hours per week of free childcare for 38 weeks of the year"
+<https://www.gov.uk/free-childcare-if-working/check-youre-eligible>. So the model
+counts 15 or 30 hours a week for 38 weeks: 570 or 1,140 hours a year.
+
+Value. The hours are in kind. Each is valued at the Department for Education's
+2026-27 national average of local authority hourly funding rates, for the child's
+age band: "2026 to 2027 early years national funding formulae: technical note",
+section 3.8, Table 6, and section 3.3 (published 15 December 2025, updated 13
+January 2026)
+<https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/2026-to-2027-early-years-national-funding-formulae-technical-note>.
+These are the rates DfE pays local authorities. Authorities must pass at least
+97 % of it through to providers, for each entitlement separately ("For 2026 to
+2027, we are increasing the minimum pass-through rate to 97%": "Early years
+entitlements: local authority funding operational guide 2026 to 2027", section
+4.1
+<https://www.gov.uk/government/publications/early-years-funding-2026-to-2027/early-years-entitlements-local-authority-funding-operational-guide-2026-to-2027>;
+statutory guidance para A4.6), so the average provider gets between 97 % and
+100 % of these rates, and the rate a provider gets varies by authority and by
+supplement. DfE publishes no national average
+of provider rates, so the national average local authority rate is the one
+published national figure per hour for each age band. A local nursery price can
+be given instead (per child). -/
+
+/-- Weeks a year over which the funded hours are counted: 38. -/
+def fundedWeeks : Nat := 38
+
+/-- Universal hours a week for a 3 or 4-year-old: 15 (570 a year over 38 weeks). -/
+def universalHoursWeekly : Nat := 15
+
+/-- Working-parent hours a week from 9 months old to school age, universal hours
+included: 30 (1,140 a year over 38 weeks). -/
+def workingParentHoursWeekly : Nat := 30
+
+/-- Under 2s (9 months to 2), working parent entitlement: £12.04 an hour (Table 6). -/
+def eyRateUnder2 : Nat := 1_204
+
+/-- 2-year-olds, combined average of the working parent and disadvantaged
+entitlements: £8.90 an hour (Table 6). -/
+def eyRate2 : Nat := 890
+
+/-- 3 and 4-year-olds, combined average for the universal and additional hours:
+£6.61 an hour (Table 6). -/
+def eyRate34 : Nat := 661
 
 end UkTax
