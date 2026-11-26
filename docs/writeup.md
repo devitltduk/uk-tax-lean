@@ -24,13 +24,14 @@ The main results:
    pay can lower net income only at four kinds of penny
    (`netAll_drop_only_at_steps`). The cliff map evaluates every such penny
    exactly, so it is complete within the model.
+3. **The "60 % band" between £100,000 and £125,140 is a staircase of 12,570
+   small cliffs**, not a smooth 60 % rate, because the tapered personal allowance
+   is rounded *up* to a whole pound (ITA 2007 s35(3)).
 4. **Priced at DfE's funding rates, the £100,000 childcare cliff is about six
    times the Tax-Free Childcare loss alone.** A lone parent with a 2-year-old
    loses £12,145.99 at £100,000.01 and needs £130,032.08 of pay to get back to
    where they were; with children aged 1 and 3, £21,493.29 and £147,668.50.
-3. **The "60 % band" between £100,000 and £125,140 is a staircase of 12,570
-   small cliffs**, not a smooth 60 % rate, because the tapered personal allowance
-   is rounded *up* to a whole pound (ITA 2007 s35(3)).
+   A cliff is a one-off sum lost, not a rate, so the charts show it in £.
 5. **PolicyEngine UK agrees** on income tax, NICs, HICBC, UC and the funded hours
    on about 18,900 cases, to within its float32 precision (plus, for NICs and UC, a documented
    gap of under half a penny). The one difference that looks like a
@@ -127,12 +128,38 @@ pull request.
 
 ## The cliff map
 
-Full tables: [`cliffs.md`](cliffs.md). Chart: [`emr.svg`](emr.svg) (table view
-[`emr.csv`](emr.csv)). Net income here is gross income less income tax,
+Full tables: [`cliffs.md`](cliffs.md). Net income here is gross income less income tax,
 employee NICs and the HICBC, plus Child Benefit, the better of UC and Tax-Free
 Childcare, and the funded hours at DfE rates. A *drop* is the fall in net income from one more
 penny of pay; the *trap* is the pay range after it where net income stays below
 its level just before the step.
+
+A cliff is a one-off loss of a fixed sum, not a rate. Earn one penny past it and
+the household is that many pounds worse off, once; above it net income climbs
+again at the ordinary marginal rate until it is back where it was. Stating a
+cliff as a "marginal rate" makes its size depend on how wide a slice of pay it is
+spread over: the £12,146 cliff is 6,073 % of a £200 slice, 1,215 % of £1,000 and
+about 40 % of £30,000. So the charts show cliffs in £, with where net income
+recovers, and show rates only between them.
+
+![Net income against gross pay, by household, with each cliff labelled](net.svg)
+
+[`net.svg`](net.svg): net income against gross pay, £0 to £150,000, exact from
+the model every £50 and on both sides of each cliff (table view
+[`net.csv`](net.csv)). Each one-off cliff is labelled with the £ lost and the
+recovery pay; the bands of small repeated steps (the allowance taper, the HICBC)
+get one label each.
+
+[`rates.svg`](rates.svg) shows the marginal rate on each £200 of pay with the
+one-off cliffs (and the one-off gain at the childcare minimum earnings) taken
+out and marked with their £ amount; the small repeated steps are averaged into
+their band's rate (62 % from £100,000 to £125,140 with NICs). Table view:
+[`rates.csv`](rates.csv).
+
+![Earn one penny over £100,000, lose £12,146: a lone parent with a 2-year-old](cliff-100k.png)
+
+[`cliff-100k.png`](cliff-100k.png) (1200 × 1200) is the lone parent with a
+2-year-old on its own, from £80,000 to £140,000 of pay, for sharing.
 
 | Step | Where | Drop | Trap | Households |
 |---|---|---|---|---|

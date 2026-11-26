@@ -25,75 +25,107 @@ the step.
 
 ## Single, pay only
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
+
 ## Pay only, 1 child
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | HICBC | £60,200.00 to £80,000.00 | 100 | £13.99 to £14.99 | £24.13 to £25.86 |
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
+
 ## Pay only, 3 children
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | HICBC | £60,200.00 to £80,000.00 | 100 | £31.99 to £32.99 | £55.17 to £56.89 |
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
+
 ## Pay + £2,000 savings interest
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | savings allowance | £48,270.01 to £123,140.01 | 2 | £99.99 to £199.99 | £138.88 to £377.35 |
 | personal allowance | £98,002.00 to £123,140.00 | 12,570 | £0.39 | £0.68 to £378.11 |
 
+- savings allowance: one more penny over £48,270.00 costs £99.99, once; net income is back to its level at £48,408.89 of pay.
+- savings allowance: one more penny over £123,140.00 costs £199.99, once; net income is back to its level at £123,517.36 of pay.
+
 ## Pay + £2,000 interest + £10,000 dividends, 2 children
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | savings allowance | £38,270.01 to £113,140.01 | 2 | £100.00 to £199.99 | £212.76 to £367.64 |
 | HICBC | £48,200.00 to £68,000.00 | 100 | £22.99 to £23.99 | £39.65 to £46.15 |
 | personal allowance | £88,002.00 to £113,140.00 | 12,570 | £0.39 | £0.68 to £368.38 |
 
+- savings allowance: one more penny over £38,270.00 costs £100.00, once; net income is back to its level at £38,482.77 of pay.
+- savings allowance: one more penny over £113,140.00 costs £199.99, once; net income is back to its level at £113,507.65 of pay.
+
 ## Single, Universal Credit
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
+
 ## Lone parent, 1 child aged 2: UC (no childcare element) or Tax-Free Childcare, funded hours
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | HICBC | £60,200.00 to £80,000.00 | 100 | £13.99 to £14.99 | £24.13 to £25.86 |
 | childcare (£100,000) | £100,000.01 | 1 | £12,145.99 | £30,032.07 |
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
+- childcare (£100,000): one more penny over £100,000.00 costs £12,145.99, once; net income is back to its level at £130,032.08 of pay.
+- Reaching the minimum earnings (£10,574.72) *gains* £10,146.00, once (the working-parent hours start, and Tax-Free Childcare where it beats Universal Credit).
+
 ## Lone parent, 2 children aged 1 and 3: UC (no childcare element) or Tax-Free Childcare, funded hours
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | HICBC | £60,200.00 to £80,000.00 | 100 | £22.99 to £23.99 | £39.65 to £41.37 |
 | childcare (£100,000) | £100,000.01 | 1 | £21,493.29 | £47,668.49 |
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
+- childcare (£100,000): one more penny over £100,000.00 costs £21,493.29, once; net income is back to its level at £147,668.50 of pay.
+- Reaching the minimum earnings (£10,574.72) *gains* £17,493.30, once (the working-parent hours start, and Tax-Free Childcare where it beats Universal Credit).
+
 ## Couple, partner earns £40,000, 1 child aged 3: Tax-Free Childcare, funded hours
 
-| kind | where (pay reaching) | drops | each drop | trap after each step |
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
 |---|---|---|---|---|
 | HICBC | £60,200.00 to £80,000.00 | 100 | £13.99 to £14.99 | £24.13 to £25.86 |
 | childcare (£100,000) | £100,000.01 | 1 | £5,767.69 | £15,177.41 |
 | personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
 
-## Effective marginal rate
+- childcare (£100,000): one more penny over £100,000.00 costs £5,767.69, once; net income is back to its level at £115,177.42 of pay.
+- Reaching the minimum earnings (£10,574.72) *gains* £5,767.71, once (the working-parent hours start, and Tax-Free Childcare where it beats Universal Credit).
 
-![Effective marginal rate on £200 more pay, by household](emr.svg)
+## Charts
 
-The rate on each £200 of pay from £0 to £150,000 is in `emr.csv` (the chart's table view);
-£200 windows hold one HICBC step each, so the HICBC band shows as a level rate.
+A cliff is a one-off loss: one more penny of pay costs a fixed sum, once, and net income
+then climbs back at the usual rate. It is not a rate, so the charts show it as a drop in
+£, with the pay at which net income is back to where it was.
+
+![Net income against gross pay, by household, with each cliff labelled](net.svg)
+
+Net income against gross pay from £0 to £150,000, exact from the model every £50 and on
+both sides of each cliff (table view: `net.csv`, every £1,000). The bands of small
+repeated steps (the personal allowance taper, every £2; the HICBC, every £200) are
+described once each rather than drawn.
+
+![Effective marginal rate between the cliffs, by household](rates.svg)
+
+The marginal rate on each £200 of pay with the one-off cliffs and gains taken out (they
+are the markers, with their £ amount); the small repeated steps stay in, as the band's
+average rate: 62 % from £100,000 to £125,140 with NICs. Table view: `rates.csv`.
 Without benefits the rate on a penny between steps is at most 76.6 % (`net_succ_ge`);
-with benefits it is at most 89.47 % (`netAll_succ_ge`: 1 - 0.45 x 0.234). A rate above 100 % occurs only
-on the step pennies above.
+with benefits it is at most 89.47 % (`netAll_succ_ge`: 1 - 0.45 x 0.234).
+
+![Lone parent with a 2-year-old: net income from £80,000 to £140,000 of pay](cliff-100k.png)

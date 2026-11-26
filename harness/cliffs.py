@@ -21,7 +21,8 @@ For each drop it reports the size, and the "trap": the pay range above the step
 where net income is below what it was just before the step, i.e. where earning
 less would leave the household better off.
 
-    python3 harness/cliffs.py                    # writes docs/cliffs.md, docs/emr.svg
+    python3 harness/cliffs.py                    # writes docs/cliffs.md, docs/net.csv, docs/rates.csv
+                                                 # and harness/out/chart-data.json for charts.py
     python3 harness/cliffs.py --check-only       # seed checks only
 
 Stdlib only. Exits non-zero if a seed check fails.
@@ -240,13 +241,92 @@ def pounds(p: float) -> str:
 
 
 WINDOW = 20_000  # £200: one HICBC step per window, so its 1 % steps do not alias
+TOP = 15_000_000  # charts run from £0 to £150,000 of pay
+GRID = 5_000  # net income is drawn from its exact value every £50 of pay
+MIN_EARNINGS = 4 * 264_368  # childcare minimum earnings, £10,574.72 a year
+
+# One-off cliffs, drawn as drops with their £ amount. The other kinds repeat in
+# bands of small steps (the personal allowance every £2, the HICBC every £200)
+# and are described once per band; their average effect is a rate.
+ONE_OFF = ("childcare (£100,000)", "savings allowance")
+BANDS = ("HICBC", "personal allowance")
 
 
-def emr_series(m: Model, window: int = WINDOW, top: int = 15_000_000) -> list[tuple[int, float]]:
-    """Effective marginal rate over each £200 of pay up to £150,000."""
-    xs = list(range(0, top + 1, window))
+@dataclass
+class Gain:
+    pay: int  # net(pay + 1) > net(pay) by a one-off amount
+    gain: int  # millionths of a penny
+
+
+def find_gains(m: Model) -> list[Gain]:
+    """One-off rises: reaching the childcare minimum earnings gains Tax-Free
+    Childcare and the working-parent hours."""
+    h = m.h
+    if not (h.childcare_costs or h.funded_children):
+        return []
+    g = MIN_EARNINGS - 1
+    jump = m.net(g + 1) - m.net(g)
+    return [Gain(g, jump)] if jump > 1_000 * UNIT else []  # more than £10: not a smooth rise
+
+
+def net_series(m: Model, drops: list[Drop], gains: list[Gain]) -> list[tuple[int, int]]:
+    """Exact net income every £50 of pay to £150,000, plus both sides of every
+    one-off cliff, so the drop is vertical where it happens."""
+    xs = set(range(0, TOP + 1, GRID))
+    xs |= {p for d in drops if d.kind in ONE_OFF for p in (d.pay, d.pay + 1)}
+    xs |= {p for g in gains for p in (g.pay, g.pay + 1)}
+    xs = sorted(x for x in xs if x <= TOP)
     m.fetch(xs)
-    return [(x, 1 - (m.net(x + window) - m.net(x)) / (UNIT * window)) for x in xs[:-1]]
+    return [(x, m.net(x)) for x in xs]
+
+
+def rate_series(m: Model, drops: list[Drop], gains: list[Gain]) -> list[tuple[int, float]]:
+    """Effective marginal rate over each £200 of pay to £150,000, without the
+    one-off cliffs and gains: those are amounts, not rates, and are shown as
+    markers. The small repeated steps stay in, as the band's average rate."""
+    xs = list(range(0, TOP + 1, WINDOW))
+    m.fetch(xs)
+    out = []
+    for x in xs[:-1]:
+        d_net = m.net(x + WINDOW) - m.net(x)
+        d_net += sum(d.drop for d in drops if d.kind in ONE_OFF and x <= d.pay < x + WINDOW)
+        d_net -= sum(g.gain for g in gains if x <= g.pay < x + WINDOW)
+        out.append((x, 1 - d_net / (UNIT * WINDOW)))
+    return out
+
+
+def chart_data(h: Household, drops: list[Drop], gains: list[Gain], net, rates) -> dict:
+    """What harness/charts.py draws, in pounds."""
+    bands = []
+    for kind in BANDS:
+        ds = [d for d in drops if d.kind == kind]
+        if ds:
+            bands.append({
+                "kind": kind,
+                "from": (ds[0].pay + 1) / 100,
+                "to": (ds[-1].pay + 1) / 100,
+                "count": len(ds),
+                "drop_min": min(d.drop for d in ds) / UNIT / 100,
+                "drop_max": max(d.drop for d in ds) / UNIT / 100,
+            })
+    return {
+        "key": h.key,
+        "label": h.label,
+        "net": [[x / 100, n / UNIT / 100] for x, n in net],
+        "rates": [[x / 100, r] for x, r in rates],
+        "cliffs": [
+            {
+                "kind": d.kind,
+                "at": (d.pay + 1) / 100,
+                "before": m_before / UNIT / 100,
+                "lost": d.drop / UNIT / 100,
+                "recovered_at": d.trap_end / 100,
+            }
+            for d, m_before in ((d, dict(net).get(d.pay)) for d in drops if d.kind in ONE_OFF)
+        ],
+        "gains": [{"at": (g.pay + 1) / 100, "gained": g.gain / UNIT / 100} for g in gains],
+        "bands": bands,
+    }
 
 
 # Seed checks: figures worked out by hand, not by the model.
@@ -284,52 +364,6 @@ def seed_checks(binary: pathlib.Path) -> list[str]:
     if cliff is None or cliff.kind != "childcare (£100,000)" or cliff.drop != 1_214_599_420_000:
         fails.append(f"lone parent, child aged 2: £100,000 drop should be £12,145.9942, got {cliff}")
     return fails
-
-
-def write_svg(series: dict[str, list[tuple[int, float]]], labels: dict[str, str], path: pathlib.Path) -> None:
-    """Small multiples, one panel per household: effective marginal rate on £100
-    of extra pay, 0 to £150,000."""
-    W, PH, GAP, L, R, T = 760, 140, 58, 56, 16, 48
-    n = len(series)
-    H = T + n * (PH + GAP)
-    # Fixed 0-120 % scale; any window above it is marked with an arrow and its value.
-    xmax, ymin, ymax = 15_000_000, 0.0, 1.2
-    ink, sub, grid, base, blue = "#1f1f1f", "#666666", "#e7e7e7", "#c2c2c2", "#257de0"
-    out = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
-        'font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11">',
-        f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
-        f'<text x="{L}" y="18" font-size="14" fill="{ink}" font-weight="600">Effective marginal rate on '
-        "£200 more pay, 2026-27</text>",
-        f'<text x="{L}" y="34" fill="{sub}">Tax + NICs + HICBC, less Child Benefit, UC, Tax-Free Childcare and funded hours; '
-        "above 100% the extra £200 leaves you worse off</text>",
-    ]
-    for k, (key, pts) in enumerate(series.items()):
-        top = T + k * (PH + GAP) + 18
-        sx = lambda x: L + (W - L - R) * x / xmax  # noqa: E731
-        sy = lambda y: top + PH * (1 - (min(max(y, ymin), ymax) - ymin) / (ymax - ymin))  # noqa: E731
-        out.append(f'<text x="{L}" y="{top - 6}" fill="{ink}" font-weight="600">{labels[key]}</text>')
-        for y in [i / 5 for i in range(int(ymax * 5) + 1)]:
-            c = base if y == 0 else grid
-            dash = ' stroke-dasharray="3 3"' if y == 1.0 else ""
-            out.append(f'<line x1="{L}" x2="{W - R}" y1="{sy(y):.1f}" y2="{sy(y):.1f}" stroke="{c}"{dash}/>')
-            out.append(f'<text x="{L - 6}" y="{sy(y) + 4:.1f}" text-anchor="end" fill="{sub}">{int(y * 100)}%</text>')
-        for x in range(0, xmax + 1, 2_500_000):
-            out.append(f'<text x="{sx(x):.1f}" y="{top + PH + 14}" text-anchor="middle" fill="{sub}">'
-                       f"£{x // 100_000}k</text>")
-        d = " ".join(f"{'M' if i == 0 else 'L'}{sx(x):.1f},{sy(y):.1f}" for i, (x, y) in enumerate(pts))
-        out.append(f'<path d="{d}" fill="none" stroke="{blue}" stroke-width="1.5" stroke-linejoin="round"/>')
-        for x, y in pts:
-            if y > ymax:
-                cx, cy = sx(x), sy(ymax)
-                out.append(f'<path d="M{cx - 4:.1f},{cy + 2:.1f} L{cx:.1f},{cy - 5:.1f} L{cx + 4:.1f},{cy + 2:.1f} Z" '
-                           f'fill="{blue}"/>')
-                left = cx > 0.7 * W  # keep the label inside the chart
-                tx, anchor = (cx - 7, "end") if left else (cx + 7, "start")
-                out.append(f'<text x="{tx:.1f}" y="{cy + 14:.1f}" text-anchor="{anchor}" fill="{ink}">'
-                           f"{y * 100:,.0f}% (£{x / 100:,.0f} to £{(x + WINDOW) / 100:,.0f})</text>")
-    out.append("</svg>")
-    path.write_text("\n".join(out) + "\n")
 
 
 def main() -> int:
@@ -374,12 +408,14 @@ def main() -> int:
         "the step.",
         "",
     ]
-    series, labels, rows = {}, {}, []
+    charts, rows = [], []
     for h in HOUSEHOLDS:
         m = Model(args.binary, h)
         drops = find_drops(m)
-        labels[h.key] = h.label
-        series[h.key] = emr_series(m)
+        gains = find_gains(m)
+        net = net_series(m, drops, gains)
+        rates = rate_series(m, drops, gains)
+        charts.append(chart_data(h, drops, gains, net, rates))
         for d in drops:
             rows.append(
                 {
@@ -396,7 +432,7 @@ def main() -> int:
         if not drops:
             md += ["No drops.", ""]
             continue
-        md += ["| kind | where (pay reaching) | drops | each drop | trap after each step |", "|---|---|---|---|---|"]
+        md += ["| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |", "|---|---|---|---|---|"]
         for kind in ("savings allowance", "HICBC", "childcare (£100,000)", "personal allowance"):
             ds = [d for d in drops if d.kind == kind]
             if not ds:
@@ -413,32 +449,63 @@ def main() -> int:
             trap = pounds(wl) if wl == wh else f"{pounds(wl)} to {pounds(wh)}"
             md.append(f"| {kind} | {where} | {len(ds):,} | {each} | {trap} |")
         md.append("")
+        for d in (d for d in drops if d.kind in ONE_OFF):
+            md.append(
+                f"- {d.kind}: one more penny over {pounds(d.pay)} costs {pounds(d.drop / UNIT)}, once; "
+                f"net income is back to its level at {pounds(d.trap_end)} of pay."
+            )
+        for g in gains:
+            md.append(
+                f"- Reaching the minimum earnings ({pounds(g.pay + 1)}) *gains* {pounds(g.gain / UNIT)}, once "
+                "(the working-parent hours start, and Tax-Free Childcare where it beats Universal Credit)."
+            )
+        md.append("")
     md += [
-        "## Effective marginal rate",
+        "## Charts",
         "",
-        "![Effective marginal rate on £200 more pay, by household](emr.svg)",
+        "A cliff is a one-off loss: one more penny of pay costs a fixed sum, once, and net income",
+        "then climbs back at the usual rate. It is not a rate, so the charts show it as a drop in",
+        "£, with the pay at which net income is back to where it was.",
         "",
-        "The rate on each £200 of pay from £0 to £150,000 is in `emr.csv` (the chart's table view);",
-        "£200 windows hold one HICBC step each, so the HICBC band shows as a level rate.",
+        "![Net income against gross pay, by household, with each cliff labelled](net.svg)",
+        "",
+        "Net income against gross pay from £0 to £150,000, exact from the model every £50 and on",
+        "both sides of each cliff (table view: `net.csv`, every £1,000). The bands of small",
+        "repeated steps (the personal allowance taper, every £2; the HICBC, every £200) are",
+        "described once each rather than drawn.",
+        "",
+        "![Effective marginal rate between the cliffs, by household](rates.svg)",
+        "",
+        "The marginal rate on each £200 of pay with the one-off cliffs and gains taken out (they",
+        "are the markers, with their £ amount); the small repeated steps stay in, as the band's",
+        "average rate: 62 % from £100,000 to £125,140 with NICs. Table view: `rates.csv`.",
         "Without benefits the rate on a penny between steps is at most 76.6 % (`net_succ_ge`);",
-        "with benefits it is at most 89.47 % (`netAll_succ_ge`: 1 - 0.45 x 0.234). A rate above 100 % occurs only",
-        "on the step pennies above.",
+        "with benefits it is at most 89.47 % (`netAll_succ_ge`: 1 - 0.45 x 0.234).",
+        "",
+        "![Lone parent with a 2-year-old: net income from £80,000 to £140,000 of pay](cliff-100k.png)",
         "",
     ]
     (args.docs / "cliffs.md").write_text("\n".join(md))
-    write_svg(series, labels, args.docs / "emr.svg")
-    with (args.docs / "emr.csv").open("w", newline="") as f:
+    with (args.docs / "net.csv").open("w", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["pay_from_pence", "pay_to_pence"] + [h.key for h in HOUSEHOLDS])
-        for i, (x, _) in enumerate(series[HOUSEHOLDS[0].key]):
-            w.writerow([x, x + WINDOW] + [f"{series[h.key][i][1]:.4f}" for h in HOUSEHOLDS])
+        w.writerow(["pay_pounds"] + [c["key"] for c in charts])
+        grids = [{x: n for x, n in c["net"]} for c in charts]
+        for x in range(0, TOP // 100 + 1, 1_000):
+            w.writerow([x] + [f"{g[float(x)]:.2f}" for g in grids])
+    with (args.docs / "rates.csv").open("w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["pay_from_pounds", "pay_to_pounds"] + [c["key"] for c in charts])
+        for i, (x, _) in enumerate(charts[0]["rates"]):
+            w.writerow([int(x), int(x) + WINDOW // 100] + [f"{c['rates'][i][1]:.4f}" for c in charts])
     out = HERE / "out"
     out.mkdir(exist_ok=True)
+    (out / "chart-data.json").write_text(json.dumps(charts))
     with (out / "cliffs.csv").open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    print(f"{len(rows):,} drops; wrote {args.docs / 'cliffs.md'}, emr.svg, emr.csv and {out / 'cliffs.csv'}")
+    print(f"{len(rows):,} drops; wrote {args.docs / 'cliffs.md'}, net.csv, rates.csv, {out / 'cliffs.csv'} "
+          f"and {out / 'chart-data.json'} (draw with charts.py)")
     return 0
 
 

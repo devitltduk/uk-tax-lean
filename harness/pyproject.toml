@@ -10,3 +10,7 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+[dependency-groups]
+# Only for drawing the charts in harness/charts.py (CI runs it with --only-group charts).
+charts = ["matplotlib==3.10.7"]
