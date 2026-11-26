@@ -22,12 +22,16 @@ jobs:
         run: lake build --wfail
       - name: Golden cases
         run: python3 tests/golden.py
+      - uses: astral-sh/setup-uv@v6
       # Seed checks (hand-worked cliff sizes), then regenerate the cliff map and
-      # fail if docs/ no longer matches the model.
-      - name: Cliff map
+      # its charts and fail if docs/ no longer matches the model.
+      - name: Cliff map and charts
         run: |
           python3 harness/cliffs.py
-          git diff --exit-code -- docs/cliffs.md docs/emr.svg docs/emr.csv
+          (cd harness && uv run --frozen --only-group charts python charts.py)
+          git status --porcelain -- docs
+          git diff --exit-code -- docs
+          test -z "$(git status --porcelain -- docs)"
       - uses: actions/upload-artifact@v4
         with:
           name: uktax

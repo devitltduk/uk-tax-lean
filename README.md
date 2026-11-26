@@ -286,13 +286,33 @@ earnings, a UC couple, Wales, and net income either side of the £100,000 cliff.
 
 ### Where earning more lowers net income
 
-`python3 harness/cliffs.py` (about 2 minutes) writes [`docs/cliffs.md`](docs/cliffs.md) (every drop,
-by household type, with its size and the pay range after it where net income stays
-lower) and [`docs/emr.svg`](docs/emr.svg) with its table `docs/emr.csv` (effective
-marginal rates on each £200 of pay). Net income there is the proved `netAll`, read from
+```sh
+python3 harness/cliffs.py                                           # about 3 minutes
+(cd harness && uv run --frozen --only-group charts python charts.py)  # the charts
+```
+
+`cliffs.py` (stdlib only) writes [`docs/cliffs.md`](docs/cliffs.md) (every drop, by
+household type, with its size and the pay range after it where net income stays
+lower), the tables `docs/net.csv` and `docs/rates.csv`, and the data `charts.py`
+(matplotlib, pinned in the harness's `charts` dependency group) draws:
+
+- [`docs/net.svg`](docs/net.svg): net income against gross pay, £0 to £150,000, a
+  panel per household, each one-off cliff labelled with the £ lost and the pay at
+  which net income has recovered;
+- [`docs/rates.svg`](docs/rates.svg): the marginal rate between the cliffs, with
+  the cliffs as markers carrying their £ amount;
+- [`docs/cliff-100k.png`](docs/cliff-100k.png): the lone parent with a 2-year-old,
+  £80,000 to £140,000, 1200 × 1200, for sharing.
+
+A cliff is a one-off loss of a fixed sum, not a rate: one penny more pay costs that
+sum once, and net income then rises again at the ordinary rate. Shown as a
+"marginal rate" its size would depend only on how wide a slice of pay it is spread
+over (the £12,146 cliff is 6,073 % of £200 of pay, about 40 % of £30,000), so the charts
+give it in £. Net income there is the proved `netAll`, read from
 `uktax` (`net_income_millionths_pence`), and the script evaluates it exactly at every
 step penny that `netAll_drop_only_at_steps` allows, so the list is complete within
-the model; nothing is sampled. CI checks that the docs match the model, and the
+the model; nothing is sampled. CI regenerates the tables and charts and checks
+that `docs/` matches them byte for byte, and the
 script's seed checks hold figures worked out by hand: every personal allowance
 step costs 39.42p, £100,000 to £125,140 keeps exactly 38 % (the 60 % band plus
 2 % NICs), and the first HICBC step with one child costs £13.9942.
@@ -408,7 +428,7 @@ under 2 in the April term, gets £11,339.20 there, not £10,146).
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
-proofs and the axiom guard, runs the golden cases, regenerates the cliff map
+proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
 comparisons (income tax, NICs and HICBC; Universal Credit; funded hours) with
 1,000 random cases each.
