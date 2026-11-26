@@ -145,9 +145,8 @@ continuous and linear between lines on which `x`, `w` or `w - x` is constant:
 
 A linear function is least at a corner, so the least tax is at a point where two
 of these lines cross, all of which are integers. `candidates` lists every such
-crossing; the search keeps the feasible ones and takes the least tax. (That this
-finds the least tax is argued here and checked against PolicyEngine UK, which
-does the same search; it is **not proved in Lean**. See `Proofs.lean`.)
+crossing; the search keeps the feasible ones and takes the least tax.
+`Optimal.lean` proves that this finds the least tax (`isLeastTax_taxExact`).
 -/
 
 /-- The constant-`x` lines. -/

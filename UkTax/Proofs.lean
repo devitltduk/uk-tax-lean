@@ -160,7 +160,7 @@ theorem inOrder_feasible (i : Income) : i.inOrder.Feasible i := by
   omega
 
 /-- Every non-empty set of natural numbers has a least element. -/
-private theorem exists_least_nat (P : Nat → Prop) (h : ∃ n, P n) :
+theorem exists_least_nat (P : Nat → Prop) (h : ∃ n, P n) :
     ∃ m, P m ∧ ∀ k, P k → m ≤ k := by
   obtain ⟨n, hn⟩ := h
   induction n using Nat.strongRecOn with
@@ -210,37 +210,11 @@ theorem bestAlloc_feasible (i : Income) : i.bestAlloc.Feasible i := by
     · simp only [hp]
       exact hb
 
-/-- **Conditional.** If the corner search finds the least tax (argued in
-`Calc.lean` and checked against PolicyEngine UK, but **not proved**), then
-`liability` is monotone in every kind of income. The hypothesis is not discharged
-anywhere: for mixed income, the only proved fact about `liability` is
-`bestAlloc_feasible` (it is never below the least tax). -/
+/-- If the corner search finds the least tax, `liability` is monotone in every
+kind of income. `Optimal.lean` proves the hypothesis (`isLeastTax_taxExact`), so
+`liability_mono` there states this with no hypothesis. -/
 theorem liability_mono_of_optimal (hopt : ∀ i, IsLeastTax i (taxExact i))
     {i i' : Income} (h : i.Le i') : liability i ≤ liability i' :=
   Nat.div_le_div_right (leastTax_mono h (hopt i) (hopt i'))
-
-/-- With only non-savings income there is one legal share, so the search is
-trivially optimal. -/
-theorem isLeastTax_nonSavings_only (n : Nat) :
-    IsLeastTax ⟨n, 0, 0⟩ (taxExact ⟨n, 0, 0⟩) := by
-  have hb := bestAlloc_feasible ⟨n, 0, 0⟩
-  refine ⟨⟨_, hb, rfl⟩, fun a ha => ?_⟩
-  have : a = (Income.bestAlloc ⟨n, 0, 0⟩) := by
-    unfold Alloc.Feasible at ha hb
-    obtain ⟨_, ha2, ha3, ha4⟩ := ha
-    obtain ⟨_, hb2, hb3, hb4⟩ := hb
-    cases a; cases h : Income.bestAlloc ⟨n, 0, 0⟩
-    rw [h] at hb2 hb3 hb4
-    simp only [] at *
-    congr <;> omega
-  rw [this]; exact Nat.le_refl _
-
-/-- **Monotone in non-savings income**, for someone with only non-savings income:
-proved outright for the computed liability. -/
-theorem liability_mono_nonSavings_only {n n' : Nat} (h : n ≤ n') :
-    liability ⟨n, 0, 0⟩ ≤ liability ⟨n', 0, 0⟩ :=
-  Nat.div_le_div_right (leastTax_mono (i := ⟨n, 0, 0⟩) (i' := ⟨n', 0, 0⟩)
-    ⟨h, Nat.le_refl _, Nat.le_refl _⟩
-    (isLeastTax_nonSavings_only n) (isLeastTax_nonSavings_only n'))
 
 end UkTax
