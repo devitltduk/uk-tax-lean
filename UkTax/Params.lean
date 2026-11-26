@@ -232,10 +232,11 @@ def hicbcStep : Nat := 20_000
 
 /-! ## Child Benefit weekly rates, 2026-27
 
-Used only to build example households (the model takes the Child Benefit received
-as an input). £27.05 for the eldest or only child, £17.90 for each other child.
-GOV.UK <https://www.gov.uk/child-benefit-rates> and
-<https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance>. -/
+£27.05 for the eldest or only child ("the enhanced rate"), £17.90 for each other
+child: Child Benefit (Rates) Regulations 2006 (SI 2006/965) reg 2(1), as amended
+by the Child Benefit and Guardian's Allowance Up-rating Order 2026 (SI 2026/232)
+art 2, from 6 April 2026
+<https://www.legislation.gov.uk/uksi/2026/232/made>. Checked 2026-11-26. -/
 def childBenefitEldestWeekly : Nat := 2_705
 def childBenefitOtherWeekly : Nat := 1_790
 
@@ -434,5 +435,84 @@ def capSingle : Nat := 1_475_300
 hours a week at the National Living Wage (£12.71, SI 2026/357), × 52 / 12:
 £881.21, which reg 6(1A)(za) rounds down to £881 a month. -/
 def capEarningsMonthly : Nat := 88_100
+
+/-! ## Non-means-tested benefits, 2026-27 (weekly amounts, pence)
+
+Social Security Benefits Up-rating Order 2026 (SI 2026/148)
+<https://www.legislation.gov.uk/uksi/2026/148/made>, in force from 6 April 2026
+(art 1(3)); GOV.UK "Benefit and pension rates 2026 to 2027"
+<https://www.gov.uk/government/publications/benefit-and-pension-rates-2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027>.
+Checked 2026-11-26. -/
+
+/-- Child Benefit weeks in 2026-27: 53. A Child Benefit week begins on a Monday
+(SSCBA 1992 s147(1)), and so does a week for the High Income Child Benefit Charge,
+which is "in a tax year if (and only if) the Monday with which it begins is in the
+tax year" (ITEPA 2003 s681H(3)). 6 April 2026 and 5 April 2027 are both Mondays
+(SI 2026/232's explanatory note: 6 April 2026 is "the first Monday in the tax year
+2026-27"), so 53 weeks begin in 2026-27. -/
+def childBenefitWeeks : Nat := 53
+
+/-- Weeks in a year of the other weekly benefits: 52. The tax year 2026-27 has 53
+Mondays and 52 of every other day of the week, so 52 weeks of a benefit whose
+week starts on any day but Monday begin in it; the model, like PolicyEngine,
+takes 52. -/
+def benefitWeeks : Nat := 52
+
+/-- PIP daily living component, standard £76.70 and enhanced £114.60; mobility
+component, standard £30.30 and enhanced £80.00 (SI 2013/377 reg 24; SI 2026/148
+art 15). -/
+def pipDailyStandard : Nat := 7_670
+def pipDailyEnhanced : Nat := 11_460
+def pipMobilityStandard : Nat := 3_030
+def pipMobilityEnhanced : Nat := 8_000
+
+/-- DLA care component, highest £114.60, middle £76.70, lowest £30.30; mobility
+component, higher £80.00, lower £30.30 (SI 1991/2890 reg 4; SI 2026/148 art 14). -/
+def dlaCareHighest : Nat := 11_460
+def dlaCareMiddle : Nat := 7_670
+def dlaCareLowest : Nat := 3_030
+def dlaMobilityHigher : Nat := 8_000
+def dlaMobilityLower : Nat := 3_030
+
+/-- Attendance Allowance, higher £114.60 and lower £76.70 (SSCBA 1992 Sch 4 Part III
+para 1, s65(3); SI 2026/148 art 3, Sch 1). -/
+def aaHigher : Nat := 11_460
+def aaLower : Nat := 7_670
+
+/-- Carer's Allowance £86.45 (SSCBA 1992 Sch 4 Part III para 4; SI 2026/148 art 3,
+Sch 1). Earnings limit: not entitled in a week after one whose earnings "exceeded
+£204" (SI 1976/409 reg 8(1), as amended by the Social Security Benefits Up-rating
+Regulations 2026, SI 2026/218 reg 4
+<https://www.legislation.gov.uk/uksi/2026/218/made>); earnings are net earnings,
+gross pay less income tax, primary Class 1 contributions and half of pension
+contributions (SI 1996/2745 reg 10(4)), a fraction of a penny disregarded where
+that favours the claimant (reg 5). -/
+def caRate : Nat := 8_645
+def caEarningsLimit : Nat := 20_400
+
+/-- Maternity Allowance: the lower of 90 % of average weekly earnings and £194.32
+(SSCBA 1992 s35A(1); SI 1986/1960 reg 6; SI 2026/148 art 9), for average weekly
+earnings of at least the £30 maternity allowance threshold (s35(1)(c), (6A)). -/
+def maRateStandard : Nat := 19_432
+def maThreshold : Nat := 3_000
+
+/-- New style JSA (SI 2013/378 reg 49(1); SI 2026/148 art 28): £75.65 under 25,
+£95.55 from 25. Earnings above £5 a week (reg 50, Schedule para 5) and pension
+payments above £50 a week (reg 51(1)) are deducted. -/
+def jsaUnder25 : Nat := 7_565
+def jsa25 : Nat := 9_555
+def jsaEarningsDisregard : Nat := 500
+def jsaPensionThreshold : Nat := 5_000
+
+/-- New style ESA (SI 2013/379 reg 62; SI 2026/148 art 31): £95.55, or £75.65 for a
+claimant under 25 in the assessment phase; the support component £50.35. Pension
+payments above £85 a week reduce it by half the excess (reg 67(1)). -/
+def esaRate : Nat := 9_555
+def esaAssessmentUnder25 : Nat := 7_565
+def esaSupport : Nat := 5_035
+def esaPensionThreshold : Nat := 8_500
+
+/-- Sure Start Maternity Grant: £500 (SI 2005/3061 reg 5(1)). -/
+def ssmgAmount : Nat := 50_000
 
 end UkTax

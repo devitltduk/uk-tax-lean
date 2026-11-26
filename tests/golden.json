@@ -1692,5 +1692,187 @@
     "source": "SI 2013/376 regs 22, 55",
     "working": "claimant: 15,000 - tax 486 - NICs 194.40 = 14,319.60; with partner 24,319.60; 12 x (666.97 + 303.94) = 11,650.92; 55% x (24,319.60 - 8,520) = 8,689.78; 2,961.14",
     "uc_millionths_pence": 296114000000
+  },
+  {
+    "name": "Child Benefit, one child, a whole 2026-27 (53 weeks) and HICBC at £70,000",
+    "input": {
+      "non_savings_pence": 7000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 7000000,
+      "child_benefit_children": 1
+    },
+    "source": "SI 2006/965 reg 2(1) (SI 2026/232); SSCBA 1992 s147(1); ITEPA 2003 ss 681C, 681H(3)",
+    "working": "6 April 2026 and 5 April 2027 are Mondays: 53 weeks x £27.05 = £1,433.65; HICBC: (70,000 - 60,000) / 200 = 50 %; £1,433 x 50 % = £716.50, rounded down £716",
+    "child_benefit_pence": 143365,
+    "hicbc_pence": 71600
+  },
+  {
+    "name": "Child Benefit, three children, 53 weeks",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_children": 3
+    },
+    "source": "SI 2006/965 reg 2(1) (SI 2026/232)",
+    "working": "53 x (27.05 + 2 x 17.90) = 53 x 62.85 = £3,331.05",
+    "child_benefit_pence": 333105
+  },
+  {
+    "name": "PIP, both components at the enhanced rate",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "disability": {
+        "pip_daily_living": "enhanced",
+        "pip_mobility": "enhanced"
+      }
+    },
+    "source": "SI 2013/377 reg 24 (SI 2026/148 art 15)",
+    "working": "(114.60 + 80.00) x 52 = £10,119.20",
+    "disability_benefits_pence": 1011920
+  },
+  {
+    "name": "DLA middle care and lower mobility, Attendance Allowance not with them",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "disability": {
+        "dla_care": "middle",
+        "dla_mobility": "lower"
+      }
+    },
+    "source": "SI 1991/2890 reg 4 (SI 2026/148 art 14)",
+    "working": "(76.70 + 30.30) x 52 = 107.00 x 52 = £5,564",
+    "disability_benefits_pence": 556400
+  },
+  {
+    "name": "Attendance Allowance at the lower rate",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "disability": {
+        "attendance_allowance": "lower"
+      }
+    },
+    "source": "SSCBA 1992 Sch 4 Part III para 1 (SI 2026/148 Sch 1)",
+    "working": "76.70 x 52 = £3,988.40",
+    "disability_benefits_pence": 398840
+  },
+  {
+    "name": "Carer's Allowance, net earnings 1p a year under 52 x £204.01",
+    "input": {
+      "non_savings_pence": 1060851,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1060851,
+      "carers_allowance": {}
+    },
+    "source": "SSCBA 1992 s70; SI 1976/409 reg 8(1) (SI 2026/218 reg 4); SI 1996/2745 regs 5, 10(4); ITEPA 2003 s660",
+    "working": "no tax or NICs on £10,608.51 of pay; a week's net earnings £204.0098, the fraction disregarded: £204.00, not over £204, so 52 x £86.45 = £4,495.40. Net income: income £15,103.91 taxed at 20 % above £12,570 = £506.782; £15,103.91 - £506.782 = £14,597.128",
+    "carers_allowance_pence": 449540,
+    "net_income_carer_ten_thousandths_pence": 14597128000
+  },
+  {
+    "name": "Carer's Allowance cliff: 1p more pay loses all of it",
+    "input": {
+      "non_savings_pence": 1060852,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1060852,
+      "carers_allowance": {}
+    },
+    "source": "SI 1976/409 reg 8(1)",
+    "working": "£10,608.52 / 52 = £204.01, over £204: no allowance; net income £10,608.52 (no tax or NICs), £3,988.608 less than at 1p less pay",
+    "carers_allowance_pence": 0,
+    "net_income_carer_ten_thousandths_pence": 10608520000
+  },
+  {
+    "name": "Carer's Allowance: half the net pay pension contributions off earnings, a £50 overlapping benefit",
+    "input": {
+      "non_savings_pence": 1100000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1100000,
+      "net_pay_pension_pence": 120000,
+      "carers_allowance": {
+        "overlapping_weekly_pence": 5000
+      }
+    },
+    "source": "SI 1996/2745 reg 10(4)(b); SI 1979/597 reg 12",
+    "working": "pay £11,000, contributions £1,200: tax on £9,800 nil, NICs nil; net earnings £11,000 - £600 = £10,400, £200 a week, under £204; (86.45 - 50) x 52 = £1,895.40; income for tax £9,800 + £1,895.40 = £11,695.40 under the allowance",
+    "carers_allowance_pence": 189540,
+    "net_income_carer_ten_thousandths_pence": 11695400000
+  },
+  {
+    "name": "Maternity Allowance 1p under the £30 threshold; JSA with earnings and a pension; ESA support group with a pension; SSMG for twins",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "maternity_allowance": {
+        "average_weekly_earnings_pence": 2999
+      },
+      "jsa_contrib": {
+        "earnings_weekly_pence": 3000,
+        "pension_weekly_pence": 6000
+      },
+      "esa_contrib": {
+        "support_group": true,
+        "pension_weekly_pence": 10000
+      },
+      "ssmg": {
+        "qualifying_benefit": true,
+        "babies": 2
+      }
+    },
+    "source": "SSCBA 1992 s35(1)(c); SI 2013/378 regs 49-51, Sch para 5; SI 2013/379 regs 62, 67(1); SI 2005/3061 regs 5, 5A",
+    "working": "MA: £29.99 < £30, nil. JSA: 95.55 - (30 - 5) - (60 - 50) = £60.55. ESA: 95.55 + 50.35 - 50 % x (100 - 85) = 145.90 - 7.50 = £138.40. SSMG: 2 x £500",
+    "maternity_allowance_weekly_tenths_pence": 0,
+    "jsa_contrib_weekly_pence": 6055,
+    "esa_contrib_weekly_tenths_pence": 138400,
+    "ssmg_pence": 100000
+  },
+  {
+    "name": "Maternity Allowance at the threshold; JSA under 25 below the 10p minimum; SSMG with an existing child",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "maternity_allowance": {
+        "average_weekly_earnings_pence": 3000
+      },
+      "jsa_contrib": {
+        "under_25": true,
+        "earnings_weekly_pence": 8064
+      },
+      "ssmg": {
+        "qualifying_benefit": true,
+        "existing_children_under_16": 1
+      }
+    },
+    "source": "SSCBA 1992 s35A(1); SI 2013/378 reg 52; SI 2005/3061 reg 5A(4)",
+    "working": "MA: 90 % x £30 = £27 (under £194.32). JSA: 75.65 - (80.64 - 5) = 1p, under 10p, not payable. SSMG: a member under 16, none",
+    "maternity_allowance_weekly_tenths_pence": 27000,
+    "jsa_contrib_weekly_pence": 0,
+    "ssmg_pence": 0
+  },
+  {
+    "name": "Maternity Allowance capped at £194.32",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "maternity_allowance": {
+        "average_weekly_earnings_pence": 50000
+      }
+    },
+    "source": "SSCBA 1992 s35A(1)(b); SI 1986/1960 reg 6",
+    "working": "90 % x £500 = £450, more than £194.32",
+    "maternity_allowance_weekly_tenths_pence": 194320
   }
 ]

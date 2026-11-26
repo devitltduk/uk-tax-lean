@@ -5,7 +5,9 @@ relieved at source and under net pay, the Marriage Allowance, the married
 couple's allowance, the blind person's allowance, and trading and property
 income with the trading and property allowances and rent-a-room relief),
 National Insurance (employee and employer Class 1, Class 1A, 2, 3 and 4), the High Income Child Benefit
-Charge, a minimal Universal Credit and the £100,000 childcare cliff for 2026-27,
+Charge, Universal Credit, Child Benefit, PIP, DLA, Attendance Allowance, Carer's
+Allowance, Maternity Allowance, new style JSA and ESA, the Sure Start Maternity Grant
+and the £100,000 childcare cliff for 2026-27,
 for taxpayers anywhere in the UK (childcare rules are England's), formalised in
 Lean 4, with proofs about it and a harness that checks it against
 [PolicyEngine UK](https://github.com/PolicyEngine/policyengine-uk).
@@ -194,6 +196,46 @@ one; rounding each month (reg 6), the grace period of the cap, self-employment
 and the minimum income floor are not modelled. Pay only: no savings, dividends or
 other income of the claimant beyond the unearned income given.
 
+### Non-means-tested benefits (`UkTax/Disability.lean`)
+
+Weekly rates from 6 April 2026 (checked against legislation.gov.uk and GOV.UK on
+2026-11-26; each is in `UkTax/Params.lean` with its citation):
+
+| Benefit | 2026-27 a week | Source |
+|---|---|---|
+| Child Benefit | £27.05 eldest or only child, £17.90 each other | [SI 2006/965 reg 2(1)](https://www.legislation.gov.uk/uksi/2006/965/regulation/2) ([SI 2026/232 art 2](https://www.legislation.gov.uk/uksi/2026/232/made)) |
+| PIP | daily living £76.70 / £114.60; mobility £30.30 / £80.00 | [SI 2013/377 reg 24](https://www.legislation.gov.uk/uksi/2013/377/regulation/24) (SI 2026/148 art 15) |
+| DLA | care £30.30 / £76.70 / £114.60; mobility £30.30 / £80.00 | [SI 1991/2890 reg 4](https://www.legislation.gov.uk/uksi/1991/2890/regulation/4) (SI 2026/148 art 14) |
+| Attendance Allowance | £76.70 / £114.60 | SSCBA 1992 Sch 4 Part III para 1 (SI 2026/148 Sch 1) |
+| Carer's Allowance | £86.45; not payable after a week whose net earnings exceeded £204 | SSCBA 1992 Sch 4 para 4; [SI 1976/409 reg 8(1)](https://www.legislation.gov.uk/uksi/1976/409/regulation/8) ([SI 2026/218 reg 4](https://www.legislation.gov.uk/uksi/2026/218/made)); [SI 1996/2745 regs 5, 10](https://www.legislation.gov.uk/uksi/1996/2745/regulation/10) |
+| Maternity Allowance | lower of 90 % of average weekly earnings and £194.32, from £30 of earnings | [SSCBA 1992 ss 35, 35A](https://www.legislation.gov.uk/ukpga/1992/4/section/35A); SI 1986/1960 reg 6 |
+| New style JSA | £75.65 under 25, £95.55 from 25; less earnings over £5 and pensions over £50; nil under 10p | [SI 2013/378 regs 49-52](https://www.legislation.gov.uk/uksi/2013/378/regulation/49), Sch para 5 |
+| New style ESA | £95.55 (£75.65 under 25 in the assessment phase), support component £50.35; less half of pensions over £85 | [SI 2013/379 regs 62, 67](https://www.legislation.gov.uk/uksi/2013/379/regulation/62) |
+| Sure Start Maternity Grant | £500 a baby, with a qualifying benefit and no other child under 16 | [SI 2005/3061 regs 5, 5A](https://www.legislation.gov.uk/uksi/2005/3061/regulation/5) |
+
+- **Child Benefit for a whole 2026-27 is 53 weeks**, not 52: a Child Benefit week
+  begins on a Monday (SSCBA 1992 s147(1)), and 6 April 2026 and 5 April 2027 are
+  both Mondays. The HICBC counts the same weeks (ITEPA 2003 s681H(3)). Input
+  `child_benefit_children` gives 53 weeks for that many children (findings #19);
+  `child_benefit_pence` still takes any amount.
+- **PIP, DLA and Attendance Allowance** (`disability`): the rate of each
+  component is an input, a year is 52 weeks (2026-27 has 52 of every weekday
+  but Monday).
+- **Carer's Allowance** (`carers_allowance`, pay only): £86.45 a week less any
+  overlapping benefit, for a carer who meets the caring conditions, unless a
+  week's net earnings exceed £204. Net earnings are pay less the income tax on
+  the pay alone, primary Class 1 and half the net pay pension contributions,
+  over 52 weeks, a fraction of a penny disregarded. The allowance is taxable
+  (ITEPA 2003 s660), so `net_income_carer_ten_thousandths_pence` adds it to
+  non-savings income for income tax (no NICs). Not with Universal Credit, where
+  it would be unearned income, yet.
+- **Maternity Allowance**, **new style JSA and ESA** and the **Sure Start
+  Maternity Grant** as weekly amounts (or the grant) from the inputs above.
+
+The Carer's Allowance limit is a cliff: with pay only, £10,608.51 a year keeps
+the whole £4,495.40; £10,608.52 (£204.01 a week) loses it, and net income falls by
+£3,988.61 (the allowance less the income tax on it).
+
 ### Tax-Free Childcare and the funded hours (England)
 
 A parent is eligible when they, and their partner if they have one, each expect
@@ -342,6 +384,19 @@ relief-at-source contributions.
   with one more kind of step: adjusted net income going over £100,000. The
   minimum earnings test adds no step: reaching it gains Tax-Free Childcare and the
   working-parent hours.
+- `caYear_cliff`, `caYear_anti`, `caYear_change` (`UkTax/Disability.lean`): more
+  net earnings never give more Carer's Allowance, it changes only where a week's
+  net earnings pass £204, and there the whole allowance goes at once.
+  `netCarer_drop_only_at_steps` extends the cliff theorem to a carer: with the
+  allowance taxed as income, a penny more pay lowers net income only where net
+  earnings cross the limit, or, with the allowance unchanged, at a step of
+  `net_drop_only_at_steps` at total income including it.
+- `ma_threshold_cliff`, `ma_mono`: Maternity Allowance is nil 1p below £30 of
+  average weekly earnings and £27 at £30, and never falls above it.
+  `jsa_total_succ`: earnings plus new style JSA never fall by more than 9p as
+  earnings rise (the 10p minimum of reg 52; otherwise the deduction is pound for
+  pound). `esa_total_gain`: pension plus new style ESA keeps at least half of
+  any rise in pension.
 - `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
@@ -391,7 +446,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 117 cases with the expected figures worked out by hand
+`tests/golden.json` holds 128 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -410,7 +465,11 @@ For the reliefs: net pay contributions, the blind person's allowance through the
 taper, the Marriage Allowance for each spouse (each rate test, 1p over the
 limit, savings and dividends, Scotland), the married couple's allowance taper
 and floor, and the trading, property and rent-a-room reliefs (within and above
-each limit, the halved limit, and a rent-a-room loss set against other letting).
+each limit, the halved limit, and a rent-a-room loss set against other letting). For the non-means-tested
+benefits: 53 weeks of Child Benefit with the HICBC on it, each disability benefit,
+Carer's Allowance 1p either side of the earnings limit (and net income across it),
+with pension contributions and an overlapping benefit, Maternity Allowance at the
+threshold and the cap, JSA's 10p minimum, ESA's pension deduction and the grant.
 
 ### Where earning more lowers net income
 
@@ -592,6 +651,18 @@ round-up); 95 pay £6.90 to £252 more in PolicyEngine, where the transferor's
 income above the reduced allowance is taxed below 20 % (findings #12, a known
 PolicyEngine issue).
 
+### Non-means-tested benefits against PolicyEngine
+
+`uv run python compare_disability.py` compares every combination of PIP, DLA and
+Attendance Allowance rates, Carer's Allowance for a carer with pay and net pay
+pension contributions (edge cases 1p either side of the limit and random pay),
+and Child Benefit for 1 to 4 children. Latest local run: 324 of 324 rate
+combinations and 1,007 of 1,007 carers (508 paid) agree within 2 float32 steps.
+Child Benefit agrees on the weekly rate and differs by one week a year:
+PolicyEngine pays 52 weeks, the law 53 in 2026-27 (findings #19, a draft issue).
+Maternity Allowance, new style JSA and ESA and the Sure Start Maternity Grant are
+reported amounts in PolicyEngine, so there is nothing to compare (findings #20).
+
 ### Funded hours against PolicyEngine
 
 `uv run python compare_childcare.py` compares the funded hours' yearly value for a
@@ -617,5 +688,5 @@ under 2 in the April term, gets £11,339.20 there, not £10,146).
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
-comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full and NICs, with
-1,000 random cases each; reliefs and allowances).
+comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs and
+non-means-tested benefits, with 1,000 random cases each; reliefs and allowances).

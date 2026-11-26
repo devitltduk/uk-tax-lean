@@ -86,6 +86,25 @@ Optional fields:
   valued at DfE's 2026-27 national average rate for the age unless a local price
   per hour is given.
 
+* `child_benefit_children`: Child Benefit for a whole 2026-27 (53 weeks) for that
+  many children, in place of `child_benefit_pence` (output `child_benefit_pence`);
+* `disability`: `{"pip_daily_living": "standard" | "enhanced", "pip_mobility": ...,
+  "dla_care": "lowest" | "middle" | "highest", "dla_mobility": "lower" | "higher",
+  "attendance_allowance": "lower" | "higher"}` (outputs
+  `disability_benefits_weekly_pence`, `disability_benefits_pence` for 52 weeks);
+* `carers_allowance`: `{"overlapping_weekly_pence": 0}` for a carer meeting the
+  caring conditions; pay only, not with `uc` (outputs `carers_allowance_pence`,
+  `carers_allowance_weekly_net_earnings_pence`, and
+  `net_income_carer_ten_thousandths_pence`, the `netCarer` of
+  `UkTax/Disability.lean`, with the allowance taxed as non-savings income);
+* `maternity_allowance`: `{"average_weekly_earnings_pence": n}` (output
+  `maternity_allowance_weekly_tenths_pence`); `jsa_contrib`: `{"under_25": false,
+  "earnings_weekly_pence": n, "pension_weekly_pence": n}` (output
+  `jsa_contrib_weekly_pence`); `esa_contrib`: `{"assessment_under_25": false,
+  "support_group": false, "pension_weekly_pence": n}` (output
+  `esa_contrib_weekly_tenths_pence`); `ssmg`: `{"qualifying_benefit": true,
+  "existing_children_under_16": 0, "babies": 1}` (output `ssmg_pence`).
+
 Benefit outputs are in 1/1 000 000 of a penny: `uc_millionths_pence`,
 `tfc_millionths_pence` (Tax-Free Childcare can't be had with Universal Credit;
 `net_income_millionths_pence` counts the larger), `funded_hours_millionths_pence`,
@@ -131,6 +150,12 @@ structure Case where
   class1A : Nat := 0
   class2Weeks : Nat := 0
   class3Weeks : Nat := 0
+  disability : Disability := {}
+  carer : Option Nat := none
+  maAwe : Option Nat := none
+  jsa : Option (Bool × Nat × Nat) := none
+  esa : Option (Bool × Bool × Nat) := none
+  ssmgIn : Option (Bool × Nat × Nat) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -249,7 +274,12 @@ def parseCase (j : Json) : Except String Case := do
       else pure []
   if (j.getObjVal? "funded_hours_value_pence").toOption.isSome then
     throw "funded_hours_value_pence is replaced by funded_children"
-  let cb ← optField "child_benefit_pence"
+  let cb ← match j.getObjVal? "child_benefit_children" with
+    | .ok _ => do
+      if (j.getObjVal? "child_benefit_pence").toOption.isSome then
+        throw "give child_benefit_children or child_benefit_pence, not both"
+      pure (childBenefitFor (← field "child_benefit_children") childBenefitWeeks)
+    | .error _ => optField "child_benefit_pence"
   let claims : Claims := {
     ext with
     uc := uc.isSome, couple := ucCouple || partner.isSome, ucChildren := (uc.map (·.2.1)).getD 0,
@@ -269,11 +299,72 @@ def parseCase (j : Json) : Except String Case := do
   let income : Income :=
     { income with nonSavings := income.nonSavings - netPay + profits }
   let rg : Regime := { scottish, relief, netPay, blind, maTransfer, maReceive, mca }
-  return ⟨income, income.settle rg, employment - netPay, period, ← optField "child_benefit_pence", claims,
-    tradeProfit tr te, propertyProfit shared pr pe rr re,
-    (j.getObjValAs? Bool "employer_zero_rated").toOption.getD false,
-    ← optField "class_1a_benefits_pence", ← optField "class_2_voluntary_weeks",
-    ← optField "class_3_weeks"⟩
+  let obj (k : String) : Option Json := (j.getObjVal? k).toOption
+  let sub (o : Json) (k : String) : Except String Nat :=
+    match o.getObjVal? k with
+    | .ok _ => match o.getObjValAs? Nat k with
+      | .ok v => .ok v
+      | .error _ => .error s!"{k} must be a non-negative whole number"
+    | .error _ => .ok 0
+  let subB (o : Json) (k : String) : Bool := (o.getObjValAs? Bool k).toOption.getD false
+  let disability ← match obj "disability" with
+    | some o => do
+      let pipR (k : String) : Except String PipRate := match o.getObjValAs? String k with
+        | .ok "standard" => pure .standard | .ok "enhanced" => pure .enhanced
+        | .ok "none" => pure .none | .error _ => pure .none
+        | .ok v => throw s!"disability.{k} must be none, standard or enhanced, not {v}"
+      let care ← match o.getObjValAs? String "dla_care" with
+        | .ok "lowest" => pure DlaCare.lowest | .ok "middle" => pure .middle
+        | .ok "highest" => pure .highest | .ok "none" => pure .none | .error _ => pure .none
+        | .ok v => throw s!"disability.dla_care must be none, lowest, middle or highest, not {v}"
+      let mob ← match o.getObjValAs? String "dla_mobility" with
+        | .ok "lower" => pure DlaMobility.lower | .ok "higher" => pure .higher
+        | .ok "none" => pure .none | .error _ => pure .none
+        | .ok v => throw s!"disability.dla_mobility must be none, lower or higher, not {v}"
+      let aa ← match o.getObjValAs? String "attendance_allowance" with
+        | .ok "lower" => pure AaRate.lower | .ok "higher" => pure .higher
+        | .ok "none" => pure .none | .error _ => pure .none
+        | .ok v => throw s!"disability.attendance_allowance must be none, lower or higher, not {v}"
+      pure ({ pipDaily := ← pipR "pip_daily_living", pipMobility := ← pipR "pip_mobility",
+              dlaCare := care, dlaMobility := mob, aa } : Disability)
+    | none => pure {}
+  let carer ← match obj "carers_allowance" with
+    | some o => do
+      if income.savings + income.dividends > 0 || employment - netPay ≠ income.nonSavings then
+        throw "carers_allowance: only pay is modelled (employment_pence must equal non_savings_pence, with no savings or dividends)"
+      if uc.isSome || relief > 0 || tr + te + pr + pe + rr + re > 0 then
+        throw "carers_allowance: not modelled with uc, Gift Aid, relief at source, or trading and property income"
+      pure (some (← sub o "overlapping_weekly_pence"))
+    | none => pure none
+  let maAwe ← match obj "maternity_allowance" with
+    | some o => pure (some (← sub o "average_weekly_earnings_pence"))
+    | none => pure none
+  let jsa ← match obj "jsa_contrib" with
+    | some o => pure (some (subB o "under_25", ← sub o "earnings_weekly_pence", ← sub o "pension_weekly_pence"))
+    | none => pure none
+  let esa ← match obj "esa_contrib" with
+    | some o => pure (some (subB o "assessment_under_25", subB o "support_group", ← sub o "pension_weekly_pence"))
+    | none => pure none
+  let ssmgIn ← match obj "ssmg" with
+    | some o => do
+      let babies ← if (o.getObjVal? "babies").toOption.isSome then sub o "babies" else pure 1
+      let existing ← sub o "existing_children_under_16"
+      if existing > 0 && babies > 1 then
+        throw "ssmg: a multiple birth with existing children under 16 (reg 5A(5)-(7)) is not modelled"
+      pure (some (subB o "qualifying_benefit", existing, babies))
+    | none => pure none
+  let c1 ← optField "class_1a_benefits_pence"
+  let c2 ← optField "class_2_voluntary_weeks"
+  let c3 ← optField "class_3_weeks"
+  let res : Case := {
+    income := income, regime := income.settle rg, employment := employment - netPay,
+    period := period, childBenefit := cb, claims := claims,
+    tradeProfit := tradeProfit tr te, propertyProfit := propertyProfit shared pr pe rr re,
+    zeroRated := (j.getObjValAs? Bool "employer_zero_rated").toOption.getD false,
+    class1A := c1, class2Weeks := c2,
+    class3Weeks := c3, disability := disability, carer := carer,
+    maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn }
+  return res
 
 def result (c : Case) : Json :=
   let i := c.income
@@ -281,7 +372,7 @@ def result (c : Case) : Json :=
   let a := i.bestAlloc rg
   let nic := nicExact c.period (c.employment + rg.netPay)
   let ani := i.ani rg
-  Json.mkObj [
+  [
     ("liability_pence", toJson (finalLiability rg i)),
     ("tax_exact_ten_thousandths_pence", toJson (finalTaxExact rg i)),
     ("step5_tax_exact_ten_thousandths_pence", toJson (taxExact rg i)),
@@ -316,7 +407,31 @@ def result (c : Case) : Json :=
     ("net_income_millionths_pence",
       if c.employment = i.nonSavings then
         toJson (netAll c.period c.childBenefit rg c.claims i.savings i.dividends c.employment)
-      else Json.null)]
+      else Json.null),
+    ("child_benefit_pence", toJson c.childBenefit),
+    ("disability_benefits_weekly_pence", toJson c.disability.weekly),
+    ("disability_benefits_pence", toJson c.disability.year)]
+    ++ (match c.carer with
+      | some ov => [
+        ("carers_allowance_pence", toJson (caYear true ov (caEarnings c.period rg c.employment))),
+        ("carers_allowance_weekly_net_earnings_pence",
+          toJson (caWeeklyEarnings (caEarnings c.period rg c.employment))),
+        ("net_income_carer_ten_thousandths_pence",
+          toJson (netCarer c.period c.childBenefit rg true ov 0 0 c.employment))]
+      | none => [])
+    ++ (match c.maAwe with
+      | some a => [("maternity_allowance_weekly_tenths_pence", toJson (maWeeklyTenths a))]
+      | none => [])
+    ++ (match c.jsa with
+      | some (u, e, pn) => [("jsa_contrib_weekly_pence", toJson (jsaWeekly u e pn))]
+      | none => [])
+    ++ (match c.esa with
+      | some (a, sp, pn) => [("esa_contrib_weekly_tenths_pence", toJson (esaWeeklyTenths a sp pn))]
+      | none => [])
+    ++ (match c.ssmgIn with
+      | some (q, ex, b) => [("ssmg_pence", toJson (ssmg q ex b))]
+      | none => [])
+    |> Json.mkObj
 
 def run (input : String) : Except String Json := do
   let j ← Json.parse input
