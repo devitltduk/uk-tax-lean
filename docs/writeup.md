@@ -171,7 +171,7 @@ their band's rate (62 % from £100,000 to £125,140 with NICs). Table view:
 | Step | Where | Drop | Trap | Households |
 |---|---|---|---|---|
 | Personal allowance (s35(3) round-up) | every £2 of total income, £100,002 to £125,140 (12,570 steps) | 39.42p each | about £0.68 each | everyone |
-| HICBC | every £200, £60,200 to £80,000 (100 steps) | 1 % of the Child Benefit in whole pounds: £13.99-£14.99 (1 child), £31.99-£32.99 (3 children) | £24-£57 | with Child Benefit |
+| HICBC | every £200, £60,200 to £80,000 (100 steps) | 1 % of the Child Benefit in whole pounds: £13.99-£14.99 (1 child), £32.99-£33.99 (3 children) | £24-£59 | with Child Benefit |
 | Personal savings allowance | Step 3 income past £37,700; past £125,140 | £99.99-£100.00; £199.99 | £139-£378 | with savings interest |
 | Tax-Free Childcare and working-parent hours | adjusted net income past £100,000 | £12,145.99 (lone parent, child aged 2, £10,000 of childcare), £21,493.29 (children aged 1 and 3), £5,767.69 (couple, child aged 3) | £30,032; £47,668; £15,177 | parents using childcare |
 
