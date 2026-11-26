@@ -110,3 +110,15 @@ today, so any change to it is seen.
 /-- info: 'UkTax.class4Exact_full_class1' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.class4Exact_full_class1
+
+/-- info: 'UkTax.earned_plus_uc_gain' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.earned_plus_uc_gain
+
+/-- info: 'UkTax.childcareMicro_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.childcareMicro_mono
+
+/-- info: 'UkTax.capApplies_anti' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.capApplies_anti

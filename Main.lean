@@ -17,7 +17,20 @@ Optional fields:
   their partner, on which the taxpayer pays the High Income Child Benefit
   Charge (default 0);
 * `uc`: `{"couple": false, "children": 2}` to claim Universal Credit (pay only:
-  not allowed with savings or dividends);
+  not allowed with savings or dividends). Optional fields of `uc`:
+  `under_25` (single claimant, or both joint claimants, under 25),
+  `first_child_pre_2017` (responsible for a child born before 6 April 2017),
+  `disabled_children_lower`, `disabled_children_higher` (counts),
+  `health` (`"none"`, `"new"` or `"protected"`: the LCWRA element), `carers`
+  (0 to 2), `childcare_monthly_pence` and `childcare_children`, `rent_monthly_pence`
+  with `lha_monthly_pence` (private renter) or `spare_rooms` (social renter) and
+  `non_dependants`, `capital_pence`, `unearned_monthly_pence`,
+  `partner_earned_pence` (the partner's earned income for the year, net of their
+  tax and NICs), `cannot_provide_childcare` and
+  `partner_cannot_provide_childcare` (reg 32(1)(b): limited capability for work,
+  caring or absent, so the childcare work condition does not need that member in
+  paid work), `london` and `cap_exempt` (for the benefit cap, which also counts
+  `child_benefit_pence`);
 * `childcare_costs_pence`: yearly childcare costs per child, for Tax-Free
   Childcare (default none);
 * `partner`: `{"pay_pence": 3000000, "adjusted_net_income_pence": 3000000}`, a
@@ -147,7 +160,33 @@ def parseCase (j : Json) : Except String Case := do
         | .error _ => throw "uc.children must be a non-negative whole number"
       if income.savings + income.dividends > 0 || employment ≠ income.nonSavings then
         throw "uc: only pay is modelled for Universal Credit (employment_pence must equal non_savings_pence, with no savings or dividends)"
-      pure (some (couple, children))
+      let b (k : String) : Bool := (u.getObjValAs? Bool k).toOption.getD false
+      let n (k : String) : Except String Nat :=
+        match u.getObjVal? k with
+        | .ok _ => match u.getObjValAs? Nat k with
+          | .ok v => .ok v
+          | .error _ => .error s!"uc.{k} must be a non-negative whole number"
+        | .error _ => .ok 0
+      let health ← match u.getObjValAs? String "health" with
+        | .ok "none" => pure Health.none
+        | .ok "new" => pure .newClaim
+        | .ok "protected" => pure .protectedRate
+        | .ok h => throw s!"uc.health must be none, new or protected, not {h}"
+        | .error _ => pure .none
+      let lha ← match u.getObjVal? "lha_monthly_pence" with
+        | .ok _ => some <$> n "lha_monthly_pence"
+        | .error _ => pure none
+      let ext : Claims := {
+        under25 := b "under_25", firstChildPre2017 := b "first_child_pre_2017",
+        disabledLower := ← n "disabled_children_lower", disabledHigher := ← n "disabled_children_higher",
+        health, carers := ← n "carers",
+        ucChildcareMonthly := ← n "childcare_monthly_pence", ucChildcareChildren := ← n "childcare_children",
+        housing := { rent := ← n "rent_monthly_pence", lha, spareRooms := ← n "spare_rooms",
+                     nonDeps := ← n "non_dependants" },
+        capital := ← n "capital_pence", unearnedMonthly := ← n "unearned_monthly_pence",
+        partnerEarned := ← n "partner_earned_pence", london := b "london", capExempt := b "cap_exempt",
+        cannotCare := b "cannot_provide_childcare", partnerCannotCare := b "partner_cannot_provide_childcare" }
+      pure (some (couple, children, ext))
     | .error _ => pure none
   let costs ← match j.getObjValAs? (Array Nat) "childcare_costs_pence" with
     | .ok xs => pure xs.toList
@@ -156,6 +195,7 @@ def parseCase (j : Json) : Except String Case := do
         throw "childcare_costs_pence must be an array of whole numbers of pence"
       else pure []
   let ucCouple := (uc.map (·.1)).getD false
+  let ext : Claims := (uc.map (·.2.2)).getD {}
   let partner ← match j.getObjVal? "partner" with
     | .ok pj => do
       if ucCouple then
@@ -209,9 +249,12 @@ def parseCase (j : Json) : Except String Case := do
       else pure []
   if (j.getObjVal? "funded_hours_value_pence").toOption.isSome then
     throw "funded_hours_value_pence is replaced by funded_children"
+  let cb ← optField "child_benefit_pence"
   let claims : Claims := {
-    uc := uc.isSome, couple := ucCouple || partner.isSome, ucChildren := (uc.map (·.2)).getD 0,
-    childcareCosts := costs, partner, england, fundedChildren := kids }
+    ext with
+    uc := uc.isSome, couple := ucCouple || partner.isSome, ucChildren := (uc.map (·.2.1)).getD 0,
+    childcareCosts := costs, partner, england, fundedChildren := kids,
+    capOtherBenefits := cb }
   let tr ← optField "trading_receipts_pence"
   let te ← optField "trading_expenses_pence"
   let pr ← optField "property_receipts_pence"

@@ -31,7 +31,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P1 | Scottish income tax, Gift Aid, relief at source | Scottish rates on non-savings income, savings and dividends on UK rates, s25(2) placement for Scottish taxpayers; Gift Aid and relief-at-source pension contributions raising the rate limits and reducing adjusted net income |
 | P2 | Reliefs and allowances | net pay pension contributions, Marriage Allowance, married couple's allowance, Blind Person's Allowance, trading and property allowances, rent-a-room relief, self-employment and property profits (**done**) |
 | P3 | NICs completeness | Class 2, 3 and 4, employer Class 1, Class 1A (**done**) |
-| P4 | Universal Credit in full | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
+| P4 | Universal Credit in full (**done**, except self-employment and the minimum income floor) | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
 | P5 | Other means-tested and disability benefits | Housing Benefit, legacy benefits still in payment, Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant |
 | P6 | Pensions | State Pension (new and basic), Pension Credit |
 | P7 | Council tax | council tax, Council Tax Reduction |
@@ -78,14 +78,14 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
-| Universal Credit: standard allowance (25 or over), child element, higher work allowance, taper | `universal_credit`, `uc_standard_allowance`, `uc_child_element`, `uc_work_allowance` | Welfare Reform Act 2012 Part 1; SI 2013/376 regs 22, 36; Universal Credit (Removal of Two Child Limit) Act 2026 | **done** (minimal: one earner, pay only) |
-| UC: under-25 rates, lower work allowance, first-child rate (before 6 April 2017), disabled child additions | `uc_standard_allowance`, `uc_individual_child_element`, `uc_individual_disabled_child_element`, `uc_individual_severely_disabled_child_element` | SI 2013/376 regs 22, 24, 36 | planned (P4) |
-| UC: LCWRA (health) element, carer element | `uc_LCWRA_element`, `uc_carer_element` | SI 2013/376 regs 27-30, 36; Universal Credit Act 2025 | planned (P4) |
-| UC: housing costs element, non-dependant deductions, LHA cap | `uc_housing_costs_element`, `uc_non_dep_deductions`, `uc_LHA_cap` | SI 2013/376 reg 25, Schs 1-5; Rent Officers (Universal Credit Functions) Order 2013 (SI 2013/382) | planned (P4, LHA rate as an input) |
-| UC: childcare costs element | `uc_childcare_element`, `uc_maximum_childcare_element_amount` | SI 2013/376 regs 31-35 | planned (P4) |
-| UC: capital and unearned income, tariff income | `uc_assessable_capital`, `uc_tariff_income`, `uc_unearned_income` | SI 2013/376 regs 18, 45-50 (capital), 65-74 (unearned income; tariff income reg 72) | planned (P4) |
-| UC: two earners, self-employment, minimum income floor | `uc_earned_income`, `uc_minimum_income_floor` | SI 2013/376 regs 52-64 | planned (P4) |
-| Benefit cap | `benefit_cap_reduction`, `uc_benefit_cap`, `housing_benefit_benefit_cap_reduction` | Welfare Reform Act 2012 s96; SI 2013/376 regs 78-83; SI 2006/213 Part 8A | planned (P4) |
+| Universal Credit: standard allowance (25 or over), child element, higher work allowance, taper | `universal_credit`, `uc_standard_allowance`, `uc_child_element`, `uc_work_allowance` | Welfare Reform Act 2012 Part 1; SI 2013/376 regs 22, 36; Universal Credit (Removal of Two Child Limit) Act 2026 | **done** |
+| UC: under-25 rates, lower work allowance, first-child rate (before 6 April 2017), disabled child additions | `uc_standard_allowance`, `uc_individual_child_element`, `uc_individual_disabled_child_element`, `uc_individual_severely_disabled_child_element` | SI 2013/376 regs 22, 24, 36 | **done** (P4) |
+| UC: LCWRA (health) element, carer element | `uc_LCWRA_element`, `uc_carer_element` | SI 2013/376 regs 27-30, 36; Universal Credit Act 2025 | **done** (P4: new-claim and protected rates as an input; reg 29(4)) |
+| UC: housing costs element, non-dependant deductions, LHA cap | `uc_housing_costs_element`, `uc_non_dep_deductions`, `uc_LHA_cap` | SI 2013/376 reg 25, Schs 1-5; Rent Officers (Universal Credit Functions) Order 2013 (SI 2013/382) | **done** (P4: rent, the LHA rate as an input, social-sector under-occupancy, non-dependant contributions as a count; findings #16) |
+| UC: childcare costs element | `uc_childcare_element`, `uc_maximum_childcare_element_amount` | SI 2013/376 regs 31-35 | **done** (P4, with the reg 32 work condition) |
+| UC: capital and unearned income, tariff income | `uc_assessable_capital`, `uc_tariff_income`, `uc_unearned_income` | SI 2013/376 regs 18, 45-50 (capital), 65-74 (unearned income; tariff income reg 72) | **done** (P4: capital limit and tariff income; unearned income as a monthly input) |
+| UC: two earners, self-employment, minimum income floor | `uc_earned_income`, `uc_minimum_income_floor` | SI 2013/376 regs 52-64 | **done** for two earners (P4: the partner's earned income fixed); self-employment and the minimum income floor planned (P4b) |
+| Benefit cap | `benefit_cap_reduction`, `uc_benefit_cap`, `housing_benefit_benefit_cap_reduction` | Welfare Reform Act 2012 s96; SI 2013/376 regs 78-83; SI 2006/213 Part 8A | **done** for UC (P4: amounts, the earnings exception, LCWRA, carer and other exemptions, the childcare reduction of reg 81; the grace period not modelled); Housing Benefit's cap with P5 |
 | UC deductions (advances, debts) | `uc_deductions`, `uc_deduction_*` | SI 2013/380 Sch 6 | out of scope: driven by imputed debts and random draws, not the entitlement |
 | Child Benefit | `child_benefit`, `child_benefit_respective_amount` | SSCBA 1992 ss 141-147; SI 2006/965 | planned (P5; now an input) |
 | Housing Benefit | `housing_benefit` and 45 components | SSCBA 1992 s130; SI 2006/213; SI 2006/214 | planned (P5) |

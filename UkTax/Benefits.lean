@@ -91,6 +91,30 @@ def FundedChild.universalValue (ch : FundedChild) : Nat :=
 def FundedChild.workingValue (ch : FundedChild) : Nat :=
   ch.hourly * ch.band.workingHours * fundedWeeks
 
+/-- The LCWRA (health) element: none, the rate for a claimant who first has it
+from 6 April 2026, or the protected rate (reg 27A, Sch 5A, reg 40A, terminal
+illness). For joint claimants, the higher of the two (reg 27(4)(b)). -/
+inductive Health where
+  | none
+  | newClaim
+  | protectedRate
+  deriving DecidableEq, Repr
+
+/-- Housing costs for the UC housing costs element (rent only; Sch 4). -/
+structure Housing where
+  /-- Monthly rent (core rent and eligible service charges), pence. -/
+  rent : Nat := 0
+  /-- Private renter: the local housing allowance for the size of home the
+  claimant is allowed (Sch 4 para 25; the rate is an input), monthly pence. -/
+  lha : Option Nat := none
+  /-- Social renter: bedrooms more than the size criteria allow (Sch 4 paras 8-12),
+  for the under-occupancy deduction (para 36). -/
+  spareRooms : Nat := 0
+  /-- Non-dependants for whom a housing cost contribution is deducted (Sch 4
+  paras 13-16; the exemptions are for the caller to apply). -/
+  nonDeps : Nat := 0
+  deriving Repr
+
 /-- A household's benefit claims. -/
 structure Claims where
   /-- Claims Universal Credit. -/
@@ -108,6 +132,48 @@ structure Claims where
   england : Bool := true
   /-- Children of the ages that get funded hours. -/
   fundedChildren : List FundedChild := []
+  /-- UC: the single claimant, or both joint claimants, under 25 (reg 36). -/
+  under25 : Bool := false
+  /-- UC: responsible for a child born before 6 April 2017, so the first child
+  element is at the higher rate. -/
+  firstChildPre2017 : Bool := false
+  /-- UC: children with the lower and the higher disabled child addition. -/
+  disabledLower : Nat := 0
+  disabledHigher : Nat := 0
+  /-- UC: the LCWRA element. -/
+  health : Health := .none
+  /-- UC: claimants with regular and substantial caring responsibilities for a
+  severely disabled person (0 to 2). A single claimant with the LCWRA element
+  gets only the LCWRA element (reg 29(4)); for joint claimants, count only those
+  who do not have it. -/
+  carers : Nat := 0
+  /-- UC childcare work condition (reg 32(1)(b)): the claimant, and the partner,
+  is unable to provide childcare (limited capability for work, caring for a
+  severely disabled person, or temporarily absent), so need not be in paid work. -/
+  cannotCare : Bool := false
+  partnerCannotCare : Bool := false
+  /-- UC: monthly relevant childcare costs, pence, and the number of children they
+  are for (the cap is for one child, or two or more). -/
+  ucChildcareMonthly : Nat := 0
+  ucChildcareChildren : Nat := 0
+  /-- UC: rent and the housing costs element. -/
+  housing : Housing := {}
+  /-- UC: capital, pence (reg 18, reg 72). -/
+  capital : Nat := 0
+  /-- UC: monthly unearned income, pence (reg 66; deducted in full). -/
+  unearnedMonthly : Nat := 0
+  /-- UC: the partner's earned income for the year, pence, net of their income tax
+  and NICs (reg 55(5)); fixed while the claimant's pay varies. -/
+  partnerEarned : Nat := 0
+  /-- UC benefit cap: lives in Greater London. -/
+  london : Bool := false
+  /-- UC benefit cap: exempt by receipt of a benefit in reg 83 other than the
+  LCWRA and carer elements (PIP, DLA, attendance allowance, industrial injuries,
+  war pension, ...). -/
+  capExempt : Bool := false
+  /-- UC benefit cap: other welfare benefits for the year, pence (reg 79; Child
+  Benefit is the main one). -/
+  capOtherBenefits : Nat := 0
 
 /-- 1/1 000 000 of a penny per penny. -/
 def micro : Int := 1_000_000
@@ -117,14 +183,121 @@ and employee NICs. -/
 def earned (p : EarningsPeriod) (rg : Regime) (s d g : Nat) : Int :=
   10_000 * (g : Int) - (finalTaxExact rg ⟨g, s, d⟩ : Int) - (nicExact p (g + rg.netPay) : Int)
 
-/-- Universal Credit for the year, in 1/1 000 000 pence, on earned income `e`
-(in 1/10 000 pence). -/
+/-- Child element, monthly pence (reg 24(1), 36): the first child at the higher
+rate where the claimant is responsible for a child born before 6 April 2017. No
+two-child limit from 6 April 2026. -/
+def Claims.childElements (c : Claims) : Nat :=
+  if c.firstChildPre2017 && c.ucChildren > 0 then
+    ucChildElementFirst + (c.ucChildren - 1) * ucChildElement
+  else c.ucChildren * ucChildElement
+
+/-- Standard allowance, monthly pence (reg 36). -/
+def Claims.standardAllowance (c : Claims) : Nat :=
+  match c.couple, c.under25 with
+  | true, true => ucStandardJointU25
+  | true, false => ucStandardJoint25
+  | false, true => ucStandardSingleU25
+  | false, false => ucStandardSingle25
+
+/-- LCWRA element, monthly pence. -/
+def Claims.healthElement (c : Claims) : Nat :=
+  match c.health with
+  | .none => 0
+  | .newClaim => ucLcwraNew
+  | .protectedRate => ucLcwraProtected
+
+/-- Housing costs element, in 1/1 000 000 pence a month: rent, capped at the local
+housing allowance for a private renter, or less 14 % / 25 % for under-occupation
+in the social sector, less the housing cost contributions, not below nil. -/
+def Claims.housingMicro (c : Claims) : Int :=
+  let h := c.housing
+  let rent : Int := match h.lha with
+    | some l => micro * (min h.rent l : Nat)
+    | none =>
+      micro * h.rent
+        - (if h.spareRooms = 0 then 0
+           else if h.spareRooms = 1 then micro / 100 * ucUnderOccOne * h.rent
+           else micro / 100 * ucUnderOccTwo * h.rent)
+  max 0 (rent - micro * (h.nonDeps * ucNonDepDeduction : Nat))
+
+/-- The award includes a housing costs element (for the lower work allowance). -/
+def Claims.hasHousing (c : Claims) : Bool := c.housing.rent > 0
+
+/-- The childcare work condition (reg 32): a single claimant in paid work (taken as
+having earned income); for a couple, one in paid work and the other in paid work
+or unable to provide childcare. -/
+def Claims.childcareWork (c : Claims) (e : Int) : Bool :=
+  c.ucChildcareChildren > 0 && (decide (0 < e) || decide (0 < c.partnerEarned) && c.couple)
+    && (decide (0 < e) || c.cannotCare && c.couple)
+    && (!c.couple || decide (0 < c.partnerEarned) || c.partnerCannotCare)
+
+/-- 85 % of the monthly childcare costs, up to the cap, in 1/1 000 000 pence. -/
+def Claims.childcareFull (c : Claims) : Nat :=
+  min (10_000 * ucChildcarePercent * c.ucChildcareMonthly)
+    (1_000_000 * (if c.ucChildcareChildren = 1 then ucChildcareMaxOne else ucChildcareMaxTwo))
+
+/-- Childcare costs element, 1/1 000 000 pence a month, if the work condition is
+met. -/
+def Claims.childcareMicro (c : Claims) (e : Int) : Int :=
+  if c.childcareWork e then (c.childcareFull : Int) else 0
+
+/-- Carer elements (reg 29): a single claimant with the LCWRA element has only that
+(reg 29(4)). -/
+def Claims.carerCount (c : Claims) : Nat :=
+  if !c.couple && c.health ≠ .none then 0 else c.carers
+
+/-- Maximum amount except the childcare element, monthly, 1/1 000 000 pence. -/
+def Claims.maxMicro (c : Claims) : Int :=
+  micro * (c.standardAllowance + c.childElements + c.disabledLower * ucDisabledChildLower
+      + c.disabledHigher * ucDisabledChildHigher + c.healthElement + c.carerCount * ucCarerElement : Nat)
+    + c.housingMicro
+
+/-- Work allowance, monthly pence (reg 22): for a claimant responsible for a child
+or with limited capability for work, the lower amount if the award has a housing
+costs element, the higher if not; otherwise none. -/
+def Claims.workAllowance (c : Claims) : Nat :=
+  if c.ucChildren > 0 || c.health ≠ .none then
+    if c.hasHousing then ucWorkAllowanceLower else ucWorkAllowanceHigher
+  else 0
+
+/-- Tariff income from capital, monthly pence (reg 72): £4.35 for each £250 or part
+above £6,000. -/
+def Claims.tariff (c : Claims) : Nat :=
+  ucTariffPerStep * ((c.capital - ucCapitalLower + ucTariffStep - 1) / ucTariffStep)
+
+/-- The benefit cap's relevant amount for the year, pence (reg 80A). -/
+def Claims.capAmount (c : Claims) : Nat :=
+  if c.couple || c.ucChildren > 0 then (if c.london then capLondonFamily else capFamily)
+  else (if c.london then capLondonSingle else capSingle)
+
+/-- Whether the benefit cap can apply, given the household's earned income `e` for
+the year (1/10 000 pence): no LCWRA or carer element, no other reg 83 exemption,
+and earned income below 16 hours at the National Living Wage (reg 82(1)(a); the
+grace period of reg 82(1)(b) is not modelled). -/
+def Claims.capApplies (c : Claims) (e : Int) : Bool :=
+  c.health = .none && c.carers = 0 && !c.capExempt
+    && decide (e < 10_000 * 12 * (capEarningsMonthly : Int))
+
+/-- Universal Credit for the year, in 1/1 000 000 pence, on the claimant's earned
+income `e` (1/10 000 pence a year; the partner's is added):
+
+    award = max(0, 12 × (maximum amount + childcare element − tariff income − unearned income)
+                   − 55 % × max(0, earned income − 12 × work allowance)),
+
+nil with capital over £16,000 (reg 18), then reduced by the benefit cap: by the
+excess of the award and the other welfare benefits over the relevant amount, less
+the childcare element (reg 81), so at most `relevant amount + childcare element −
+other benefits`, not below nil. Months are taken as equal; rounding to the penny
+each assessment period (reg 6) is not modelled. -/
 def ucAward (c : Claims) (e : Int) : Int :=
-  if c.uc then
-    let maxMonthly : Int :=
-      (if c.couple then ucStandardJoint25 else ucStandardSingle25) + c.ucChildren * ucChildElement
-    let wa : Int := if c.ucChildren > 0 then ucWorkAllowanceHigher else 0
-    max 0 (micro * 12 * maxMonthly - (ucTaperPercent : Int) * max 0 (e - 10_000 * 12 * wa))
+  if c.uc && c.capital ≤ ucCapitalUpper then
+    let eh := e + 10_000 * (c.partnerEarned : Int)
+    let cc := 12 * c.childcareMicro e
+    let award := max 0 (12 * (c.maxMicro - micro * (c.tariff + c.unearnedMonthly : Nat)) + cc
+      - (ucTaperPercent : Int) * max 0 (eh - 10_000 * 12 * (c.workAllowance : Int)))
+    if c.capApplies eh then
+      max 0 (min award (micro * (c.capAmount : Int) + cc - micro * (c.capOtherBenefits : Int)))
+    else award
   else 0
 
 /-- One parent's part of the childcare tests: minimum earnings and the £100,000
@@ -173,29 +346,70 @@ def netAll (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (s d g : N
 
 /-! ## Proved properties -/
 
+/-- The childcare element is never negative and never falls as earned income
+rises (the work condition, once met, stays met). -/
+theorem childcareMicro_mono (c : Claims) {e e' : Int} (h : e ≤ e') :
+    0 ≤ c.childcareMicro e ∧ c.childcareMicro e ≤ c.childcareMicro e' := by
+  have hw : c.childcareWork e = true → c.childcareWork e' = true := by
+    unfold Claims.childcareWork
+    simp only [Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq]
+    intro h1
+    refine ⟨⟨⟨h1.1.1.1, ?_⟩, ?_⟩, h1.2⟩
+    · rcases h1.1.1.2 with h2 | h2
+      · exact Or.inl (by omega)
+      · exact Or.inr h2
+    · rcases h1.1.2 with h2 | h2
+      · exact Or.inl (by omega)
+      · exact Or.inr h2
+  unfold Claims.childcareMicro
+  constructor
+  · split <;> omega
+  · by_cases h1 : c.childcareWork e = true
+    · simp only [h1, hw h1, ↓reduceIte]; exact Int.le_refl _
+    · simp only [Bool.not_eq_true] at h1
+      simp only [h1, Bool.false_eq_true, ↓reduceIte]
+      split <;> omega
+
+/-- The benefit cap's earnings exception, once met, stays met. -/
+theorem capApplies_anti (c : Claims) {e e' : Int} (h : e ≤ e') (h' : c.capApplies e' = true) :
+    c.capApplies e = true := by
+  unfold Claims.capApplies at *
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at *
+  exact ⟨h'.1, by omega⟩
+
+/-- With the taper at 55 %, earned income plus UC keeps at least 45 % of any rise in
+earned income: the childcare element and the lifting of the benefit cap only add. -/
+theorem earned_plus_uc_gain (c : Claims) {e e' : Int} (h : e ≤ e') :
+    100 * e + ucAward c e + 45 * (e' - e) ≤ 100 * e' + ucAward c e' := by
+  have hcc := childcareMicro_mono c h
+  have hcap := capApplies_anti c (e := e + 10_000 * (c.partnerEarned : Int))
+    (e' := e' + 10_000 * (c.partnerEarned : Int)) (by omega)
+  unfold ucAward ucTaperPercent
+  split
+  · dsimp only
+    generalize c.childcareMicro e = X at *
+    generalize c.childcareMicro e' = X' at *
+    generalize c.capApplies (e + 10_000 * (c.partnerEarned : Int)) = a at *
+    generalize c.capApplies (e' + 10_000 * (c.partnerEarned : Int)) = a' at *
+    generalize c.maxMicro = M
+    generalize (c.workAllowance : Int) = W
+    generalize micro * (c.capAmount : Int) = K
+    generalize micro * (c.capOtherBenefits : Int) = O
+    generalize micro * ((c.tariff + c.unearnedMonthly : Nat) : Int) = T
+    generalize (c.partnerEarned : Int) = P
+    cases a <;> cases a'
+    · simp only [Bool.false_eq_true, ↓reduceIte]; omega
+    · simp at hcap
+    · simp only [Bool.false_eq_true, ↓reduceIte]; omega
+    · simp only [↓reduceIte]; omega
+  · omega
+
 /-- Earned income and Universal Credit together never fall as earned income rises:
 the taper takes 55 %, not more. -/
 theorem earned_plus_uc_mono (c : Claims) {e e' : Int} (h : e ≤ e') :
     100 * e + ucAward c e ≤ 100 * e' + ucAward c e' := by
-  unfold ucAward ucTaperPercent
-  split
-  · dsimp only
-    generalize (if c.ucChildren > 0 then (ucWorkAllowanceHigher : Int) else 0) = wa
-    generalize micro * 12 * _ = m
-    omega
-  · omega
-
-/-- With the taper at 55 %, earned income plus UC keeps at least 45 % of any rise in
-earned income. -/
-theorem earned_plus_uc_gain (c : Claims) {e e' : Int} (h : e ≤ e') :
-    100 * e + ucAward c e + 45 * (e' - e) ≤ 100 * e' + ucAward c e' := by
-  unfold ucAward ucTaperPercent
-  split
-  · dsimp only
-    generalize (if c.ucChildren > 0 then (ucWorkAllowanceHigher : Int) else 0) = wa
-    generalize micro * 12 * _ = m
-    omega
-  · omega
+  have := earned_plus_uc_gain c h
+  omega
 
 /-- Eligibility is only lost where adjusted net income goes over £100,000. -/
 theorem childcareEligible_succ {c : Claims} {pay ani : Nat}
