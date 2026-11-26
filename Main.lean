@@ -15,7 +15,21 @@ Optional fields:
 * `nic_earnings_period`: `"annual"` (default), `"monthly"` or `"weekly"`;
 * `child_benefit_pence`: Child Benefit paid for the year to the taxpayer or
   their partner, on which the taxpayer pays the High Income Child Benefit
-  Charge (default 0).
+  Charge (default 0);
+* `uc`: `{"couple": false, "children": 2}` to claim Universal Credit (pay only:
+  not allowed with savings or dividends);
+* `childcare_costs_pence`: yearly childcare costs per child, for Tax-Free
+  Childcare (default none);
+* `funded_hours_value_pence`: yearly value of the working-parent funded hours
+  (default 0).
+
+Benefit outputs are in 1/1 000 000 of a penny: `uc_millionths_pence`,
+`tfc_millionths_pence` (Tax-Free Childcare can't be had with Universal Credit;
+`net_income_millionths_pence` counts the larger), `funded_hours_millionths_pence`,
+and `net_income_millionths_pence` (null unless all non-savings income is pay),
+the `netAll` of `UkTax/Benefits.lean`: gross
+income less income tax, NICs and HICBC, plus Child Benefit, the better of UC and
+Tax-Free Childcare, and the funded hours.
 
 Output (an array for an array input). `liability_pence` is the liability rounded
 down to the penny; `tax_exact_ten_thousandths_pence` is the exact, unrounded tax
@@ -41,6 +55,7 @@ structure Case where
   employment : Nat
   period : EarningsPeriod
   childBenefit : Nat
+  claims : Claims
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -62,7 +77,26 @@ def parseCase (j : Json) : Except String Case := do
     | .ok "weekly" => pure .weekly
     | .ok p => throw s!"nic_earnings_period must be annual, monthly or weekly, not {p}"
     | .error _ => pure .annual
-  return ⟨income, employment, period, ← optField "child_benefit_pence"⟩
+  let uc ← match j.getObjVal? "uc" with
+    | .ok u => do
+      let couple := (u.getObjValAs? Bool "couple").toOption.getD false
+      let children ← match u.getObjValAs? Nat "children" with
+        | .ok n => pure n
+        | .error _ => throw "uc.children must be a non-negative whole number"
+      if income.savings + income.dividends > 0 || employment ≠ income.nonSavings then
+        throw "uc: only pay is modelled for Universal Credit (employment_pence must equal non_savings_pence, with no savings or dividends)"
+      pure (some (couple, children))
+    | .error _ => pure none
+  let costs ← match j.getObjValAs? (Array Nat) "childcare_costs_pence" with
+    | .ok xs => pure xs.toList
+    | .error _ =>
+      if (j.getObjVal? "childcare_costs_pence").toOption.isSome then
+        throw "childcare_costs_pence must be an array of whole numbers of pence"
+      else pure []
+  let claims : Claims := {
+    uc := uc.isSome, couple := (uc.map (·.1)).getD false, ucChildren := (uc.map (·.2)).getD 0,
+    childcareCosts := costs, fundedHoursValue := ← optField "funded_hours_value_pence" }
+  return ⟨income, employment, period, ← optField "child_benefit_pence", claims⟩
 
 def result (c : Case) : Json :=
   let i := c.income
@@ -79,7 +113,16 @@ def result (c : Case) : Json :=
     ("nic_exact_ten_thousandths_pence", toJson nic),
     ("nic_pence", toJson (nic / 10_000)),
     -- adjusted net income is total income: no reliefs are modelled
-    ("hicbc_pence", toJson (hicbc i.total c.childBenefit))]
+    ("hicbc_pence", toJson (hicbc i.total c.childBenefit)),
+    ("uc_millionths_pence", toJson (ucAward c.claims (earned c.period i.savings i.dividends c.employment))),
+    ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment i.total)),
+    ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment i.total)),
+    ("childcare_eligible", toJson (childcareEligible c.employment i.total)),
+    -- `netAll` takes all non-savings income as pay
+    ("net_income_millionths_pence",
+      if c.employment = i.nonSavings then
+        toJson (netAll c.period c.childBenefit c.claims i.savings i.dividends c.employment)
+      else Json.null)]
 
 def run (input : String) : Except String Json := do
   let j ← Json.parse input

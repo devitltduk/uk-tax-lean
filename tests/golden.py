@@ -26,7 +26,15 @@ results = json.loads(proc.stdout)
 assert len(results) == len(cases), f"expected {len(cases)} results, got {len(results)}"
 
 # Each case states the outputs it was worked for; every one it states is checked.
-CHECKED = ("liability_pence", "nic_exact_ten_thousandths_pence", "hicbc_pence")
+CHECKED = (
+    "liability_pence",
+    "nic_exact_ten_thousandths_pence",
+    "hicbc_pence",
+    "uc_millionths_pence",
+    "tfc_millionths_pence",
+    "childcare_eligible",
+    "net_income_millionths_pence",
+)
 
 failures = 0
 for case, got in zip(cases, results):

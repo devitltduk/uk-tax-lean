@@ -320,5 +320,155 @@
       "child_benefit_pence": 233740
     },
     "hicbc_pence": 175200
+  },
+  {
+    "name": "UC: lone parent, 1 child, pay 15,000",
+    "source": "SI 2013/376 regs 22, 36, 55; SI 2026/148 art 32, Sch 13; https://www.gov.uk/universal-credit/what-youll-get",
+    "working": "tax (15,000-12,570) x 20% = 486; NICs x 8% = 194.40; earned 14,319.60. Max 12 x (424.90 + 303.94) = 8,746.08; work allowance 12 x 710 = 8,520; taper 55% x 5,799.60 = 3,189.78; UC 5,556.30. Net 15,000 - 680.40 + CB 1,406.60 + 5,556.30 = 21,282.50",
+    "input": {
+      "non_savings_pence": 1500000,
+      "employment_pence": 1500000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "uc": {
+        "children": 1
+      },
+      "child_benefit_pence": 140660
+    },
+    "uc_millionths_pence": 555630000000,
+    "net_income_millionths_pence": 2128250000000
+  },
+  {
+    "name": "UC: single, no children, no work allowance, pay 8,000",
+    "source": "SI 2013/376 regs 22, 36, 55; SI 2026/148 art 32, Sch 13; https://www.gov.uk/universal-credit/what-youll-get",
+    "working": "no tax or NICs; max 12 x 424.90 = 5,098.80; no work allowance without a child; 55% x 8,000 = 4,400; UC 698.80",
+    "input": {
+      "non_savings_pence": 800000,
+      "employment_pence": 800000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "uc": {
+        "children": 0
+      }
+    },
+    "uc_millionths_pence": 69880000000
+  },
+  {
+    "name": "UC: 3 children, no two-child limit, pay 20,000",
+    "source": "SI 2013/376 regs 22, 36, 55; SI 2026/148 art 32, Sch 13; https://www.gov.uk/universal-credit/what-youll-get; Universal Credit (Removal of Two Child Limit) Act 2026 s1",
+    "working": "tax 7,430 x 20% = 1,486; NICs x 8% = 594.40; earned 17,919.60. Max 12 x (424.90 + 3 x 303.94) = 16,040.64; taper 55% x (17,919.60 - 8,520) = 5,169.78; UC 10,870.86",
+    "input": {
+      "non_savings_pence": 2000000,
+      "employment_pence": 2000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "uc": {
+        "children": 3
+      }
+    },
+    "uc_millionths_pence": 1087086000000
+  },
+  {
+    "name": "UC: joint claim, 2 children, pay 30,000",
+    "source": "SI 2013/376 regs 22, 36, 55; SI 2026/148 art 32, Sch 13; https://www.gov.uk/universal-credit/what-youll-get",
+    "working": "tax 17,430 x 20% = 3,486; NICs 1,394.40; earned 25,119.60. Max 12 x (666.97 + 2 x 303.94) = 15,298.20; taper 55% x 16,599.60 = 9,129.78; UC 6,168.42",
+    "input": {
+      "non_savings_pence": 3000000,
+      "employment_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "uc": {
+        "couple": true,
+        "children": 2
+      }
+    },
+    "uc_millionths_pence": 616842000000
+  },
+  {
+    "name": "UC or TFC: TFC is worth more at pay 25,000, so net counts TFC",
+    "source": "SI 2013/376 regs 22, 36, 55; SI 2026/148 art 32, Sch 13; https://www.gov.uk/universal-credit/what-youll-get; SI 2015/448 reg 15; https://www.gov.uk/tax-free-childcare; https://www.gov.uk/tax-free-childcare/universal-credit-childcare-vouchers",
+    "working": "tax 2,486, NICs 994.40, earned 21,519.60; UC 8,746.08 - 55% x 12,999.60 = 1,596.30. TFC 20% x 10,000 = 2,000 > UC. Net 25,000 - 3,480.40 + 1,406.60 + 2,000 = 24,926.20",
+    "input": {
+      "non_savings_pence": 2500000,
+      "employment_pence": 2500000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "uc": {
+        "children": 1
+      },
+      "child_benefit_pence": 140660,
+      "childcare_costs_pence": [
+        1000000
+      ]
+    },
+    "uc_millionths_pence": 159630000000,
+    "tfc_millionths_pence": 200000000000,
+    "net_income_millionths_pence": 2492620000000
+  },
+  {
+    "name": "TFC: adjusted net income exactly 100,000 still eligible; top-up 20% per child, capped",
+    "source": "SI 2015/448 reg 15; https://www.gov.uk/tax-free-childcare",
+    "working": "costs 12,000 -> 20% = 2,400, capped at 2,000; costs 5,000 -> 1,000; total 3,000",
+    "input": {
+      "non_savings_pence": 10000000,
+      "employment_pence": 10000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "childcare_costs_pence": [
+        1200000,
+        500000
+      ]
+    },
+    "tfc_millionths_pence": 300000000000,
+    "childcare_eligible": true
+  },
+  {
+    "name": "TFC: 1p over 100,000 loses it",
+    "source": "SI 2015/448 reg 15; https://www.gov.uk/tax-free-childcare",
+    "working": "expected adjusted net income 100,000.01 exceeds 100,000",
+    "input": {
+      "non_savings_pence": 10000001,
+      "employment_pence": 10000001,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "childcare_costs_pence": [
+        1200000,
+        500000
+      ]
+    },
+    "tfc_millionths_pence": 0,
+    "childcare_eligible": false
+  },
+  {
+    "name": "TFC: 1p under the minimum earnings",
+    "source": "https://www.gov.uk/tax-free-childcare/check-if-youre-eligible; https://www.gov.uk/national-minimum-wage-rates",
+    "working": "minimum 2,643.68 per 3 months (16 h x 12.71 x 13 weeks) = 10,574.72 a year; pay 10,574.71 is below",
+    "input": {
+      "non_savings_pence": 1057471,
+      "employment_pence": 1057471,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "childcare_costs_pence": [
+        1000000
+      ]
+    },
+    "tfc_millionths_pence": 0,
+    "childcare_eligible": false
+  },
+  {
+    "name": "TFC: exactly the minimum earnings",
+    "source": "https://www.gov.uk/tax-free-childcare/check-if-youre-eligible",
+    "working": "pay 10,574.72 meets the minimum; top-up 20% x 10,000 = 2,000",
+    "input": {
+      "non_savings_pence": 1057472,
+      "employment_pence": 1057472,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "childcare_costs_pence": [
+        1000000
+      ]
+    },
+    "tfc_millionths_pence": 200000000000,
+    "childcare_eligible": true
   }
 ]

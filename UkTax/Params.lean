@@ -140,4 +140,55 @@ GOV.UK <https://www.gov.uk/child-benefit-rates> and
 def childBenefitEldestWeekly : Nat := 2_705
 def childBenefitOtherWeekly : Nat := 1_790
 
+/-! ## Universal Credit, 2026-27 (monthly amounts, pence)
+
+Universal Credit Regulations 2013 (SI 2013/376) reg 36 table, amounts for 2026-27
+set by the Social Security Benefits Up-rating Order 2026 (SI 2026/148) art 32 and
+Sch 13, and (standard allowance) SI 2026/113. GOV.UK "Benefit and pension rates
+2026 to 2027"
+<https://www.gov.uk/government/publications/benefit-and-pension-rates-2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027>
+and <https://www.gov.uk/universal-credit/what-youll-get>. -/
+
+/-- Standard allowance, single claimant aged 25 or over: £424.90 a month. -/
+def ucStandardSingle25 : Nat := 42_490
+
+/-- Standard allowance, joint claimants where either is aged 25 or over: £666.97. -/
+def ucStandardJoint25 : Nat := 66_697
+
+/-- Child element for each child born on or after 6 April 2017: £303.94 a month.
+No two-child limit: reg 24A was revoked for assessment periods from 6 April 2026 by
+the Universal Credit (Removal of Two Child Limit) Act 2026 s1
+<https://www.legislation.gov.uk/ukpga/2026/13>. -/
+def ucChildElement : Nat := 30_394
+
+/-- Higher work allowance (no housing costs element), for a claimant responsible
+for a child: £710 a month. Reg 22(2); SI 2026/148 art 32(1)(a)
+<https://www.legislation.gov.uk/uksi/2026/148/article/32/made>. -/
+def ucWorkAllowanceHigher : Nat := 71_000
+
+/-- Taper: the award goes down by 55 % of earned income above the work allowance.
+Reg 22(1)(b) <https://www.legislation.gov.uk/uksi/2013/376/regulation/22>. -/
+def ucTaperPercent : Nat := 55
+
+/-! ## Tax-Free Childcare and the working-parent funded hours (England) -/
+
+/-- The £100,000 limit: a parent who expects adjusted net income to exceed it
+is not eligible. Tax-Free Childcare: Childcare Payments (Eligibility)
+Regulations 2015 (SI 2015/448) reg 15(1)
+<https://www.legislation.gov.uk/uksi/2015/448/regulation/15>. Funded hours for
+working parents: GOV.UK <https://www.gov.uk/free-childcare-if-working/check-youre-eligible>
+("over £100,000"). -/
+def childcareIncomeLimit : Nat := 10_000_000
+
+/-- Minimum expected earnings, as a year: £2,643.68 over three months for a parent
+aged 21 or over (16 hours a week at the National Living Wage, £12.71 from April
+2026), times four. GOV.UK <https://www.gov.uk/tax-free-childcare/check-if-youre-eligible>,
+<https://www.gov.uk/national-minimum-wage-rates>. -/
+def childcareMinimumEarnings : Nat := 4 * 264_368
+
+/-- Tax-Free Childcare top-up cap per child, £500 a quarter, £2,000 a year (child
+not disabled). GOV.UK <https://www.gov.uk/tax-free-childcare>. The top-up is £2 for
+every £8 the parent pays in, i.e. 20 % of the childcare paid for. -/
+def tfcCapPerChild : Nat := 200_000
+
 end UkTax
