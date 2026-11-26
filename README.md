@@ -512,8 +512,8 @@ What it finds, for 2026-27:
   for about 68p of pay after each step net income is below its level before it.
   Over any whole £2 the rate is the familiar 60 % (62 % with NICs).
 - **HICBC**: 100 drops, at each £200 from £60,200 to £80,000, each 1 % of the
-  Child Benefit in whole pounds (£13.99 to £14.99 with one child, £31.99 to £32.99
-  with three), each followed by a £24 to £57 pay range where net income is lower.
+  Child Benefit in whole pounds (£13.99 to £14.99 with one child, £32.99 to £33.99
+  with three), each followed by a £24 to £59 pay range where net income is lower.
 - **Personal savings allowance**: with savings income, crossing the basic rate
   limit costs £100 (£500 of interest moving from 0 % to 20 %) and crossing
   £125,140 costs £200 (£500 at 40 %), with traps of about £140 to £380 of pay.

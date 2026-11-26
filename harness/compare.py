@@ -89,10 +89,11 @@ def pounds(p: float) -> int:
 # grossed-up Gift Aid, gross pension contributions relieved at source), pence.
 Case = tuple[int, int, int, int, int, bool, int, int]
 
-# Child Benefit for 52 weeks (GOV.UK 2026-27 rates £27.05 eldest, £17.90 others).
-CB_ONE = 52 * 2705
-CB_TWO = 52 * (2705 + 1790)
-CB_THREE = 52 * (2705 + 2 * 1790)
+# Child Benefit for a whole 2026-27, 53 weeks (£27.05 eldest, £17.90 others; findings
+# #19). Passed to both sides as an input, so both charge the HICBC on the same amount.
+CB_ONE = 53 * 2705
+CB_TWO = 53 * (2705 + 1790)
+CB_THREE = 53 * (2705 + 2 * 1790)
 
 
 def edge_cases() -> list[Case]:
