@@ -87,4 +87,57 @@ ordinary and upper rates raised from 8.75 % and 33.75 % by Finance Act 2026 s4 f
 <https://www.gov.uk/government/publications/changes-to-tax-rates-for-property-savings-and-dividend-income> -/
 def dividendRates : Rates := ⟨1075, 3575, 3935⟩
 
+/-! ## Employee (primary) Class 1 National Insurance contributions, 2026-27
+
+Amounts in pence per earnings period. The thresholds for 2026-27 are on GOV.UK,
+"Rates and thresholds for employers 2026 to 2027"
+<https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027>
+(also <https://www.gov.uk/government/publications/rates-and-allowances-national-insurance-contributions/rates-and-allowances-national-insurance-contributions>),
+set under the Social Security (Contributions) Regulations 2001 reg 10 as amended
+for 2026-27 by SI 2026/231 <https://www.legislation.gov.uk/uksi/2026/231/regulation/5/made>.
+-/
+
+/-- Primary threshold: £242 a week, £1,048 a month, £12,570 a year. -/
+def primaryThresholdWeekly : Nat := 24_200
+def primaryThresholdMonthly : Nat := 104_800
+def primaryThresholdAnnual : Nat := 1_257_000
+
+/-- Upper earnings limit: £967 a week, £4,189 a month, £50,270 a year. -/
+def upperEarningsLimitWeekly : Nat := 96_700
+def upperEarningsLimitMonthly : Nat := 418_900
+def upperEarningsLimitAnnual : Nat := 5_027_000
+
+/-- Main primary percentage, 8 %, on earnings above the primary threshold up to the
+upper earnings limit. Social Security Contributions and Benefits Act 1992 s8(2)(a)
+<https://www.legislation.gov.uk/ukpga/1992/4/section/8>; GOV.UK category A. -/
+def nicMainRate : Nat := 800
+
+/-- Additional primary percentage, 2 %, on earnings above the upper earnings limit.
+SSCBA 1992 s8(2)(b); GOV.UK category A. -/
+def nicAdditionalRate : Nat := 200
+
+/-! ## High Income Child Benefit Charge (ITEPA 2003 Part 10 Chapter 8)
+
+ITEPA 2003 s681C <https://www.legislation.gov.uk/ukpga/2003/1/section/681C>: the
+charge is the appropriate percentage of the Child Benefit, 1 % for each £200 of
+adjusted net income over £60,000 (capped at 100 %); the Child Benefit total, the
+percentage and the charge are each rounded down to a whole number (s681C(3)).
+Figures as substituted by Finance (No. 2) Act 2024 s5 for 2024-25 onwards. GOV.UK:
+<https://www.gov.uk/child-benefit-tax-charge>. -/
+
+/-- L in s681C(2): £60,000. -/
+def hicbcThreshold : Nat := 6_000_000
+
+/-- X in s681C(2): £200 of income per percentage point. -/
+def hicbcStep : Nat := 20_000
+
+/-! ## Child Benefit weekly rates, 2026-27
+
+Used only to build example households (the model takes the Child Benefit received
+as an input). £27.05 for the eldest or only child, £17.90 for each other child.
+GOV.UK <https://www.gov.uk/child-benefit-rates> and
+<https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance>. -/
+def childBenefitEldestWeekly : Nat := 2_705
+def childBenefitOtherWeekly : Nat := 1_790
+
 end UkTax
