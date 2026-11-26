@@ -6,9 +6,11 @@ children. No housing costs, childcare, disability or capital. Pay only.
 
 By default PolicyEngine treats a couple as married and claiming the Marriage
 Allowance (`would_claim_marriage_allowance`), so the earner gets £1,260 of the
-partner's allowance (£252 less tax, £138.60 more UC). The model has no Marriage
-Allowance (out of scope), so for couples the harness sets PolicyEngine's
-`marriage_allowance` to 0 and compares like with like.
+partner's allowance (£252 less tax, £138.60 more UC). The partner here has no
+income and the model's UC input does not carry a Marriage Allowance election,
+so for couples the harness sets PolicyEngine's `marriage_allowance` to 0 and
+compares like with like. The full set of UC elements is compared in
+compare_uc_full.py.
 
 Check, for every case: UC within --steps float32 steps of the model's exact
 award, at the size of the larger of the household's maximum yearly amount and

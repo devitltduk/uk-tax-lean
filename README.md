@@ -162,15 +162,37 @@ over £60,000, up to 100 %. The Child Benefit, the percentage and the charge are
 each rounded down to a whole number (s681C(3)). Adjusted net income is total
 income, since no reliefs are modelled.
 
-### Universal Credit (minimal)
+### Universal Credit
 
-`UkTax/Benefits.lean`. Standard allowance (single or joint, 25 or over), child
-element for children born on or after 6 April 2017 with no two-child limit (reg
-24A was revoked from April 2026), the higher work allowance for a claimant
-responsible for a child, and the 55 % taper on earned income, which is pay less
-income tax and employee NICs (SI 2013/376 reg 55(5)). Pay is taken as equal each
-month, so the yearly award is twelve times the monthly one. Pay only: no savings,
-dividends or other income for UC households.
+`UkTax/Benefits.lean`, amounts for assessment periods from 6 April 2026 (SI
+2013/376 reg 36 as uprated by SI 2026/113 and SI 2026/148; Universal Credit Act
+2025 s2):
+
+- standard allowance, single or joint, under 25 or 25 and over;
+- child element (£303.94, the first child £351.88 where the claimant is
+  responsible for a child born before 6 April 2017), no two-child limit, and the
+  disabled child additions (£164.79 / £514.71);
+- the LCWRA element at the new-claim rate (£217.26) or the protected rate
+  (£429.80), and the carer element (£209.34; not with the LCWRA element for the
+  same claimant, reg 29(4));
+- the childcare costs element, 85 % of costs up to £1,071.09 / £1,836.16, with
+  the reg 32 work condition;
+- the housing costs element: rent, capped at a given local housing allowance for
+  a private renter, less 14 % / 25 % for under-occupancy in the social sector,
+  less £96.55 for each non-dependant;
+- the higher (£710) or lower (£427) work allowance, the 55 % taper on earned
+  income (pay less income tax and NICs, reg 55(5)) of the claimant and partner;
+- capital over £16,000 (no award) and tariff income (£4.35 for each £250 or part
+  over £6,000); unearned income deducted in full;
+- the benefit cap (£22,020 / £25,323 in London for a couple or a parent, £14,753
+  / £16,967 for a single person), counting Child Benefit, lifted by earnings of
+  £881 a month or by the LCWRA, carer or other reg 83 exemptions, and reduced by
+  the childcare element (reg 81).
+
+Pay is taken as equal each month, so the yearly award is twelve times the monthly
+one; rounding each month (reg 6), the grace period of the cap, self-employment
+and the minimum income floor are not modelled. Pay only: no savings, dividends or
+other income of the claimant beyond the unearned income given.
 
 ### Tax-Free Childcare and the funded hours (England)
 
@@ -324,8 +346,12 @@ relief-at-source contributions.
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
   universal 15.
-  `earned_plus_uc_mono`: earned income plus UC never falls as earned income
-  rises (the taper is 55 %). `netAll_succ_ge`: between steps, a penny more pay
+  `earned_plus_uc_mono`, `earned_plus_uc_gain`: earned income plus UC never
+  falls as earned income rises, and keeps at least 45 % of any rise, with every
+  element, the childcare work condition (`childcareMicro_mono`) and the benefit
+  cap (`capApplies_anti`: its earnings exception, once met, stays met). So the full
+  UC adds no step to `netAll_drop_only_at_steps`: meeting the childcare work
+  condition or the cap's earnings exception only raises net income. `netAll_succ_ge`: between steps, a penny more pay
   raises net income with benefits by at least 0.1053p (0.0963p in Scotland), so
   the marginal rate there is at most 1 − 0.45 × 0.234 = 89.47 % (90.37 %).
 
@@ -365,7 +391,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 103 cases with the expected figures worked out by hand
+`tests/golden.json` holds 117 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -512,6 +538,17 @@ HICBC agrees. On NixOS, numpy needs
 `libstdc++`: run with `LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH` (nix-ld) or from a
 shell that provides it.
 
+### Universal Credit in full against PolicyEngine
+
+`uv run python compare_uc_full.py` builds households with every modelled element
+(under-25 rates, the pre-2017 first child, LCWRA at either rate, carer, childcare,
+private and social rent, capital, two earners, the benefit cap in and outside
+London with PolicyEngine's own Child Benefit), plus edge cases at the capital
+limits and the cap's earnings exception. Latest local run: 1,029 of 1,029 agree
+within 2 float32 steps plus 0.95p (the partner's earned income passed in whole
+pence, and the NIC gap). Social renters have no spare bedroom: PolicyEngine has no
+under-occupancy deduction (findings #16).
+
 ### National Insurance against PolicyEngine
 
 `uv run python compare_nics.py` compares employer Class 1 (annual basis, aged 40
@@ -580,5 +617,5 @@ under 2 in the April term, gets £11,339.20 there, not £10,146).
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
-comparisons (income tax, NICs and HICBC; Universal Credit; funded hours and NICs, with
+comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full and NICs, with
 1,000 random cases each; reliefs and allowances).

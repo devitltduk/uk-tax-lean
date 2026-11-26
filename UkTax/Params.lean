@@ -356,4 +356,83 @@ def eyRate2 : Nat := 890
 £6.61 an hour (Table 6). -/
 def eyRate34 : Nat := 661
 
+/-! ## Universal Credit in full, 2026-27 (monthly amounts, pence)
+
+For assessment periods beginning on or after 6 April 2026 (SI 2026/148 art 1(3),
+SI 2026/113 reg 1(4)). Amounts from the reg 36 table as amended by SI 2026/113
+reg 3(3) (standard allowance, LCWRA protected rate) and the Social Security
+Benefits Up-rating Order 2026 (SI 2026/148) art 32 and Sch 13
+<https://www.legislation.gov.uk/uksi/2026/148/article/32/made>; the LCWRA element
+for new claimants by the Universal Credit Act 2025 s2(1)(a)
+<https://www.legislation.gov.uk/ukpga/2025/22/section/2>. Checked 2026-11-26. -/
+
+/-- Standard allowance, single claimant under 25: £338.58. -/
+def ucStandardSingleU25 : Nat := 33_858
+
+/-- Standard allowance, joint claimants both under 25: £528.34. -/
+def ucStandardJointU25 : Nat := 52_834
+
+/-- Child element for the first child, where the claimant is responsible for a
+child born before 6 April 2017 (Welfare Reform and Work Act 2016 s14(5)(b); SI
+2014/1230 reg 43): £351.88. -/
+def ucChildElementFirst : Nat := 35_188
+
+/-- Disabled child addition (reg 24(2)), lower rate £164.79, higher rate (a child
+getting the DLA care component at the highest rate, the enhanced PIP daily living
+component, or blind) £514.71. -/
+def ucDisabledChildLower : Nat := 16_479
+def ucDisabledChildHigher : Nat := 51_471
+
+/-- LCWRA (health) element (regs 27-28): £217.26 for a claimant who first has it
+from 6 April 2026 (Universal Credit Act 2025 s2(1)(a), frozen to 2029-30 by s3);
+£429.80 for the protected groups (claimants who had it before 6 April 2026,
+reg 27A and Sch 5A; the severe conditions criteria, reg 40A; the terminally ill). -/
+def ucLcwraNew : Nat := 21_726
+def ucLcwraProtected : Nat := 42_980
+
+/-- Carer element (regs 29-30): £209.34 for each claimant with regular and
+substantial caring responsibilities for a severely disabled person. -/
+def ucCarerElement : Nat := 20_934
+
+/-- Childcare costs element (regs 31-35): 85 % of the relevant childcare costs
+(reg 34(1)), up to £1,071.09 for one child or £1,836.16 for two or more (reg 36,
+Sch 13). -/
+def ucChildcarePercent : Nat := 85
+def ucChildcareMaxOne : Nat := 107_109
+def ucChildcareMaxTwo : Nat := 183_616
+
+/-- Lower work allowance, for a claimant whose award includes the housing costs
+element: £427 a month (reg 22(2); SI 2026/148 art 32(1)(b)). -/
+def ucWorkAllowanceLower : Nat := 42_700
+
+/-- Housing cost contribution for each non-dependant, £96.55 a month (Sch 4 para
+14(1); SI 2026/148 art 32(3)). -/
+def ucNonDepDeduction : Nat := 9_655
+
+/-- Social-sector under-occupancy (Sch 4 para 36): 14 % of the rent for one
+bedroom more than allowed, 25 % for two or more. -/
+def ucUnderOccOne : Nat := 14
+def ucUnderOccTwo : Nat := 25
+
+/-- Capital (reg 18(1)): no award above £16,000. Tariff income (reg 72(1)): £4.35 a
+month for each £250, or part of £250, above £6,000. Unchanged since 2013. -/
+def ucCapitalUpper : Nat := 1_600_000
+def ucCapitalLower : Nat := 600_000
+def ucTariffStep : Nat := 25_000
+def ucTariffPerStep : Nat := 435
+
+/-- Benefit cap, annual relevant amounts (reg 80A; WRA 2012 s96): £25,323 in
+Greater London and £22,020 elsewhere for a couple or a claimant responsible for a
+child, £16,967 and £14,753 for a single claimant without one (as set by SI
+2023/335, unchanged for 2026-27). -/
+def capLondonFamily : Nat := 2_532_300
+def capLondonSingle : Nat := 1_696_700
+def capFamily : Nat := 2_202_000
+def capSingle : Nat := 1_475_300
+
+/-- Benefit cap earnings exception (reg 82(1)(a)): earned income of at least 16
+hours a week at the National Living Wage (£12.71, SI 2026/357), × 52 / 12:
+£881.21, which reg 6(1A)(za) rounds down to £881 a month. -/
+def capEarningsMonthly : Nat := 88_100
+
 end UkTax
