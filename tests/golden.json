@@ -185,5 +185,140 @@
       "dividends_pence": 0
     },
     "liability_pence": 4251600
+  },
+  {
+    "name": "NICs: 1p over the annual primary threshold",
+    "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027; SSCBA 1992 s8",
+    "working": "annual basis, PT 12,570: 0.01 x 8% = 0.0008 pounds = 0.08p = 800 ten-thousandths of a penny",
+    "input": {
+      "non_savings_pence": 1257001,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1257001
+    },
+    "nic_exact_ten_thousandths_pence": 800
+  },
+  {
+    "name": "NICs: monthly basis, 30,000",
+    "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027; SSCBA 1992 s8",
+    "working": "PT 12 x 1,048 = 12,576; (30,000 - 12,576) x 8% = 1,393.92",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "nic_earnings_period": "monthly"
+    },
+    "nic_exact_ten_thousandths_pence": 1393920000
+  },
+  {
+    "name": "NICs: annual basis, 60,000, above the upper earnings limit",
+    "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027; SSCBA 1992 s8",
+    "working": "(50,270 - 12,570) x 8% = 3,016; (60,000 - 50,270) x 2% = 194.60; total 3,210.60",
+    "input": {
+      "non_savings_pence": 6000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 6000000
+    },
+    "nic_exact_ten_thousandths_pence": 3210600000
+  },
+  {
+    "name": "NICs: weekly basis, 60,000",
+    "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027; SSCBA 1992 s8",
+    "working": "PT 52 x 242 = 12,584, UEL 52 x 967 = 50,284; 37,700 x 8% = 3,016; 9,716 x 2% = 194.32; total 3,210.32",
+    "input": {
+      "non_savings_pence": 6000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 6000000,
+      "nic_earnings_period": "weekly"
+    },
+    "nic_exact_ten_thousandths_pence": 3210320000
+  },
+  {
+    "name": "NICs on the employment part only (25,000 pay + 15,000 pension)",
+    "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027; SSCBA 1992 s8; ITA 2007 s10",
+    "working": "NICs (25,000 - 12,570) x 8% = 994.40; income tax (40,000 - 12,570) x 20% = 5,486",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 2500000
+    },
+    "liability_pence": 548600,
+    "nic_exact_ten_thousandths_pence": 994400000
+  },
+  {
+    "name": "HICBC: 1p below the first 1% step (60,199.99)",
+    "source": "ITEPA 2003 s681C; https://www.gov.uk/child-benefit-tax-charge",
+    "working": "(60,199.99 - 60,000) / 200 = 0.99..., rounded down to 0%",
+    "input": {
+      "non_savings_pence": 6019999,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_pence": 140660
+    },
+    "hicbc_pence": 0
+  },
+  {
+    "name": "HICBC: first 1% step (60,200), one child for 52 weeks",
+    "source": "ITEPA 2003 s681C; https://www.gov.uk/child-benefit-tax-charge",
+    "working": "CB 27.05 x 52 = 1,406.60, rounded down to 1,406; 1% = 14.06, rounded down to 14",
+    "input": {
+      "non_savings_pence": 6020000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_pence": 140660
+    },
+    "hicbc_pence": 1400
+  },
+  {
+    "name": "HICBC: 79,999.99 is 99%",
+    "source": "ITEPA 2003 s681C; https://www.gov.uk/child-benefit-tax-charge",
+    "working": "19,999.99 / 200 = 99.99..., rounded down to 99%; 99% of 1,406 = 1,391.94, rounded down to 1,391",
+    "input": {
+      "non_savings_pence": 7999999,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_pence": 140660
+    },
+    "hicbc_pence": 139100
+  },
+  {
+    "name": "HICBC: 80,000 is the full charge",
+    "source": "ITEPA 2003 s681C; https://www.gov.uk/child-benefit-tax-charge",
+    "working": "20,000 / 200 = 100%; 1,406",
+    "input": {
+      "non_savings_pence": 8000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_pence": 140660
+    },
+    "hicbc_pence": 140600
+  },
+  {
+    "name": "HICBC: adjusted net income includes dividends (50,000 pay + 20,000 dividends)",
+    "source": "ITEPA 2003 s681C; https://www.gov.uk/child-benefit-tax-charge; ITA 2007 s58",
+    "working": "ANI 70,000; 10,000 / 200 = 50%; 50% of 1,406 = 703",
+    "input": {
+      "non_savings_pence": 5000000,
+      "savings_pence": 0,
+      "dividends_pence": 2000000,
+      "child_benefit_pence": 140660
+    },
+    "hicbc_pence": 70300
+  },
+  {
+    "name": "HICBC: two children, partial percentage of a non-whole-pound benefit",
+    "source": "ITEPA 2003 s681C; https://www.gov.uk/child-benefit-tax-charge; https://www.gov.uk/child-benefit-rates",
+    "working": "CB (27.05 + 17.90) x 52 = 2,337.40, rounded down to 2,337; ANI 75,100: 15,100 / 200 = 75.5, rounded down to 75%; 75% of 2,337 = 1,752.75, rounded down to 1,752",
+    "input": {
+      "non_savings_pence": 7510000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "child_benefit_pence": 233740
+    },
+    "hicbc_pence": 175200
   }
 ]
