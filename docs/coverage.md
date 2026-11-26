@@ -33,7 +33,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P3 | NICs completeness | Class 2, 3 and 4, employer Class 1, Class 1A (**done**) |
 | P4 | Universal Credit in full (**done**, except self-employment and the minimum income floor) | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
 | P5 | Other means-tested and disability benefits | Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant (P5a, **done**); Housing Benefit and legacy benefits still in payment (P5b) |
-| P6 | Pensions | State Pension (new and basic), Pension Credit |
+| P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
 | P7 | Council tax | council tax, Council Tax Reduction |
 | P8 | CGT, property taxes and the remaining income tax reliefs | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
 | P9 | The rest | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
@@ -100,8 +100,8 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Sure Start Maternity Grant | `ssmg` | SI 2005/3061 regs 5, 5A | **done** (P5a, without the multiple-birth and refugee exceptions; PolicyEngine pays it on reported receipt, findings #20) |
 | Statutory Sick, Maternity and Paternity Pay | budget terms only (inputs) | SSCBA 1992 Parts XI, XII, XIIZA | out of scope: PolicyEngine takes them as inputs |
 | Bereavement, industrial injuries, war pensions, Armed Forces Compensation | budget terms only (inputs) | various | out of scope: PolicyEngine takes them as inputs |
-| State Pension (new and basic, additional, age addition) | `state_pension`, `new_state_pension`, `basic_state_pension`, `additional_state_pension` | Pensions Act 2014 Part 1; SSCBA 1992 ss 44-45, 78-79 | planned (P6) |
-| Pension Credit (guarantee and savings credit) | `pension_credit`, `guarantee_credit`, `savings_credit`, `minimum_guarantee` | State Pension Credit Act 2002; SI 2002/1792 | planned (P6) |
+| State Pension (new and basic, additional, age addition) | `state_pension`, `new_state_pension`, `basic_state_pension`, `additional_state_pension` | Pensions Act 2014 ss 2-5; SI 2015/173 regs 1A, 13; SSCBA 1992 ss 44, 79 | **done** as far as the statute fixes it (P6): an input, as in PolicyEngine, since the transitional rate comes from each person's record; the reduced rate for someone with no pre-2016 year and the full rates are modelled (findings #25) |
+| Pension Credit (guarantee and savings credit) | `pension_credit`, `guarantee_credit`, `savings_credit`, `minimum_guarantee` | State Pension Credit Act 2002 ss 2, 3, 15; SI 2002/1792 regs 6, 7, 9, 15, 17, Schs IIA, VI | **done** (P6: the additional amounts as inputs, income net of tax, the earnings disregards, deemed income from capital, savings credit with the reg 7(4) rounding; findings #22-#24) |
 | Winter Fuel Payment | `winter_fuel_payment` | Social Fund Winter Fuel Payment Regulations 2025 (SI 2025/969) | planned (P9) |
 
 ## Childcare

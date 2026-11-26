@@ -105,6 +105,21 @@ Optional fields:
   `esa_contrib_weekly_tenths_pence`); `ssmg`: `{"qualifying_benefit": true,
   "existing_children_under_16": 0, "babies": 1}` (output `ssmg_pence`).
 
+* `pension_credit`: `{"couple": false, "savings_credit": false, "severe_disability": 0,
+  "carers": 0, "children": 0, "first_child_pre_2017": false, "disabled_children_lower": 0,
+  "disabled_children_higher": 0, "higher_earnings_disregard": false,
+  "state_pension_pence": n, "other_pension_pence": n, "other_income_pence": n,
+  "excluded_income_pence": n, "net_earnings_pence": n, "capital_pence": n,
+  "income_tax_pence": n}`, yearly amounts (earnings after NICs; the income tax on
+  all the income counted is deducted, reg 17(10)(a): for a single claimant the
+  model's liability on it as non-savings income unless given, for a couple
+  required) (`UkTax/Pension.lean`); outputs `pension_credit_tenths_pence` and
+  `guarantee_credit_tenths_pence` for the year (52 weeks), the income
+  (`pension_credit_income_tenths_pence`, also units of 1/520 penny a week) and the
+  appropriate minimum guarantee (`minimum_guarantee_weekly_pence`);
+* `new_state_pension`: `{"qualifying_years": n}` for someone with no qualifying
+  year before 6 April 2016 (output `new_state_pension_weekly_35ths_pence`).
+
 Benefit outputs are in 1/1 000 000 of a penny: `uc_millionths_pence`,
 `tfc_millionths_pence` (Tax-Free Childcare can't be had with Universal Credit;
 `net_income_millionths_pence` counts the larger), `funded_hours_millionths_pence`,
@@ -156,6 +171,8 @@ structure Case where
   jsa : Option (Bool × Nat × Nat) := none
   esa : Option (Bool × Bool × Nat) := none
   ssmgIn : Option (Bool × Nat × Nat) := none
+  pc : Option PcClaim := none
+  nspYears : Option Nat := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -353,6 +370,36 @@ def parseCase (j : Json) : Except String Case := do
         throw "ssmg: a multiple birth with existing children under 16 (reg 5A(5)-(7)) is not modelled"
       pure (some (subB o "qualifying_benefit", existing, babies))
     | none => pure none
+  let pc ← match obj "pension_credit" with
+    | some o => do
+      let pcl : PcClaim := {
+        couple := subB o "couple", savingsCredit := subB o "savings_credit",
+        severeDisability := ← sub o "severe_disability", carers := ← sub o "carers",
+        children := ← sub o "children", firstChildPre2017 := subB o "first_child_pre_2017",
+        disabledChildrenLower := ← sub o "disabled_children_lower",
+        disabledChildrenHigher := ← sub o "disabled_children_higher",
+        higherDisregard := subB o "higher_earnings_disregard",
+        statePension := ← sub o "state_pension_pence", otherPension := ← sub o "other_pension_pence",
+        otherIncome := ← sub o "other_income_pence", excludedIncome := ← sub o "excluded_income_pence",
+        earnings := ← sub o "net_earnings_pence", capital := ← sub o "capital_pence" }
+      -- reg 17(10)(a): the income tax on the income counted. For a single claimant
+      -- the model's own liability on it, all non-savings income, unless given; a
+      -- couple's is per person, so it must be given.
+      let given := (o.getObjVal? "income_tax_pence").toOption.isSome
+      if pcl.couple && !given && pcl.statePension + pcl.otherPension + pcl.otherIncome
+          + pcl.excludedIncome + pcl.earnings > 0 then
+        throw "pension_credit: a couple's income_tax_pence must be given (each partner's tax on their income)"
+      let tax ← if given then sub o "income_tax_pence" else
+        pure (finalLiability ({ scottish } : Regime)
+          ⟨pcl.statePension + pcl.otherPension + pcl.otherIncome + pcl.excludedIncome + pcl.earnings, 0, 0⟩)
+      let pcl := { pcl with incomeTax := tax }
+      if pcl.severeDisability > 2 || pcl.carers > 2 then
+        throw "pension_credit: severe_disability and carers must be 0, 1 or 2"
+      pure (some pcl)
+    | none => pure none
+  let nspYears ← match obj "new_state_pension" with
+    | some o => pure (some (← sub o "qualifying_years"))
+    | none => pure none
   let c1 ← optField "class_1a_benefits_pence"
   let c2 ← optField "class_2_voluntary_weeks"
   let c3 ← optField "class_3_weeks"
@@ -363,7 +410,7 @@ def parseCase (j : Json) : Except String Case := do
     zeroRated := (j.getObjValAs? Bool "employer_zero_rated").toOption.getD false,
     class1A := c1, class2Weeks := c2,
     class3Weeks := c3, disability := disability, carer := carer,
-    maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn }
+    maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears }
   return res
 
 def result (c : Case) : Json :=
@@ -430,6 +477,16 @@ def result (c : Case) : Json :=
       | none => [])
     ++ (match c.ssmgIn with
       | some (q, ex, b) => [("ssmg_pence", toJson (ssmg q ex b))]
+      | none => [])
+    ++ (match c.pc with
+      | some pc => [
+        ("pension_credit_tenths_pence", toJson (pensionCredit pc)),
+        ("guarantee_credit_tenths_pence", toJson (guaranteeCredit pc.mg pc.income)),
+        ("pension_credit_income_tenths_pence", toJson pc.income),
+        ("minimum_guarantee_weekly_pence", toJson pc.mg)]
+      | none => [])
+    ++ (match c.nspYears with
+      | some y => [("new_state_pension_weekly_35ths_pence", toJson (nspReduced35 y))]
       | none => [])
     |> Json.mkObj
 

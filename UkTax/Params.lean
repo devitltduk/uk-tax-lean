@@ -515,4 +515,62 @@ def esaPensionThreshold : Nat := 8_500
 /-- Sure Start Maternity Grant: £500 (SI 2005/3061 reg 5(1)). -/
 def ssmgAmount : Nat := 50_000
 
+/-! ## State Pension and Pension Credit, 2026-27 (weekly amounts, pence)
+
+SI 2026/148 arts 4, 6, 29, Sch 1; GOV.UK "Benefit and pension rates 2026 to
+2027". Checked 2026-11-26 against legislation.gov.uk. -/
+
+/-- New State Pension full rate, £241.30 (SI 2015/173 reg 1A; Pensions Act 2014
+s3(1)); 35 qualifying years for it (s2(1)(b)), at least 10 for the reduced rate of
+1/35 a year (s3(2); SI 2015/173 reg 13(1)). -/
+def nspFull : Nat := 24_130
+def nspFullYears : Nat := 35
+def nspMinYears : Nat := 10
+
+/-- Basic State Pension, Category A £184.90 (SSCBA 1992 s44(4)); Category B
+(lower rate, on a spouse's or civil partner's contributions) and Category D
+£110.75 (Sch 4 Part I para 5, Part III para 7); the age addition at 80, 25p
+(s79; Sch 4 Part III para 8, not uprated). -/
+def bspCategoryA : Nat := 18_490
+def bspCategoryB : Nat := 11_075
+def spAgeAddition : Nat := 25
+
+/-- Pension Credit standard minimum guarantee, £363.25 for a claimant with a
+partner, £238.00 without (SI 2002/1792 reg 6(1)). -/
+def pcSmgCouple : Nat := 36_325
+def pcSmgSingle : Nat := 23_800
+
+/-- Additional amounts (reg 6(5), (8); Sch IIA): severe disability £86.05 (£172.10
+where both members of a couple qualify and no one gets a carer benefit for
+either); carer £48.15 each; each child £69.98, the first child born before
+6 April 2017 £81.07; disabled child £37.93, or £118.46 at the higher rate. -/
+def pcSevereDisability : Nat := 8_605
+def pcCarer : Nat := 4_815
+def pcChild : Nat := 6_998
+def pcChildFirstPre2017 : Nat := 8_107
+def pcDisabledChildLower : Nat := 3_793
+def pcDisabledChildHigher : Nat := 11_846
+
+/-- Savings credit (SPCA 2002 s3; reg 7): threshold £208.07 single, £329.75 a
+couple (reg 7(2)); amount A 60 % of qualifying income above the threshold, up to
+the maximum, 60 % of the standard minimum guarantee less the threshold (reg
+7(1)(a), (b); s3(7)); amount B 40 % of income above the appropriate minimum
+guarantee (reg 7(1)(c)); a fraction of a penny in A or B goes to the claimant's
+advantage (reg 7(4)). Only where the claimant or partner reached pensionable age
+before 6 April 2016 (s3(1)). -/
+def pcScThresholdSingle : Nat := 20_807
+def pcScThresholdCouple : Nat := 32_975
+
+/-- Deemed income from capital (reg 15(6)): £1 a week for each £500, or part of
+£500, above £10,000. No capital limit. -/
+def pcCapitalLower : Nat := 1_000_000
+def pcCapitalStep : Nat := 50_000
+
+/-- Earnings disregards (Sch VI): £20 for a lone parent, listed employments, a
+carer or a disabled claimant or partner (paras 1-4); otherwise £5 for a claimant
+without a partner and £10 with one (para 5). -/
+def pcDisregardHigher : Nat := 2_000
+def pcDisregardSingle : Nat := 500
+def pcDisregardCouple : Nat := 1_000
+
 end UkTax

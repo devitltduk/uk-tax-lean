@@ -5,6 +5,7 @@ import UkTax.Benefits
 import UkTax.Profits
 import UkTax.Nics
 import UkTax.Disability
+import UkTax.Pension
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -159,3 +160,27 @@ today, so any change to it is seen.
 /-- info: 'UkTax.esa_total_gain' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.esa_total_gain
+
+/-- info: 'UkTax.nsp_full' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.nsp_full
+
+/-- info: 'UkTax.sc_core' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.sc_core
+
+/-- info: 'UkTax.sc_step' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.sc_step
+
+/-- info: 'UkTax.pc_total_succ' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.pc_total_succ
+
+/-- info: 'UkTax.pc_total_gain' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.pc_total_gain
+
+/-- info: 'UkTax.deemed_step' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.deemed_step

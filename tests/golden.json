@@ -1874,5 +1874,142 @@
     "source": "SSCBA 1992 s35A(1)(b); SI 1986/1960 reg 6",
     "working": "90 % x £500 = £450, more than £194.32",
     "maternity_allowance_weekly_tenths_pence": 194320
+  },
+  {
+    "name": "Pension Credit guarantee credit, single, State Pension £11,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 1100000
+      }
+    },
+    "source": "SPCA 2002 s2; SI 2002/1792 regs 6(1), 17(1)(b)(iii)",
+    "working": "52 x £238.00 = £12,376; less £11,000 = £1,376",
+    "pension_credit_tenths_pence": 1376000
+  },
+  {
+    "name": "Savings credit at its maximum (rounded up to £17.96), income net of tax",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "savings_credit": true,
+        "state_pension_pence": 1150000,
+        "other_pension_pence": 150000
+      }
+    },
+    "source": "SPCA 2002 s3; SI 2002/1792 regs 7(1), (2), (4), 17(10)(a)",
+    "working": "income £13,000 less tax 20% x (13,000 - 12,570) = £86: £12,914 / 52 = £248.346 a week, over £238: no guarantee credit; A = min(60% x (238 - 208.07) = 17.958, 60% x (248.346 - 208.07)) = 17.958, rounded up 17.96; B = 40% x (248.346 - 238) = 4.138, rounded down 4.13; 13.83 a week, 52 x 13.83 = £719.16",
+    "pension_credit_tenths_pence": 719160,
+    "guarantee_credit_tenths_pence": 0
+  },
+  {
+    "name": "Savings credit and guarantee credit together, amount A rounded up",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "savings_credit": true,
+        "state_pension_pence": 1092000
+      }
+    },
+    "source": "SI 2002/1792 reg 7(4)",
+    "working": "£10,920 / 52 = £210 a week: guarantee credit 238 - 210 = 28.00; A = 60% x (210 - 208.07) = 1.158, rounded up 1.16; B nil; 29.16 x 52 = £1,516.32",
+    "pension_credit_tenths_pence": 1516320
+  },
+  {
+    "name": "Couple, savings credit income below the threshold",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "couple": true,
+        "savings_credit": true,
+        "state_pension_pence": 1560000,
+        "income_tax_pence": 0
+      }
+    },
+    "source": "SI 2002/1792 regs 6(1)(a), 7(2)",
+    "working": "£15,600 / 52 = £300 a week (£7,800 each, under the personal allowance, no tax); guarantee credit 363.25 - 300 = 63.25; qualifying income under £329.75: no savings credit; 52 x 63.25 = £3,289",
+    "pension_credit_tenths_pence": 3289000
+  },
+  {
+    "name": "Deemed income: capital 1p over £12,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "capital_pence": 1200001
+      }
+    },
+    "source": "SI 2002/1792 reg 15(6)",
+    "working": "£2,000.01 over £10,000: 4 whole £500s and a part, £5 a week; guarantee credit 238 - 5 = 233 a week, £12,116 a year",
+    "pension_credit_tenths_pence": 12116000
+  },
+  {
+    "name": "Couple with earnings: the £10 disregard",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "couple": true,
+        "state_pension_pence": 1560000,
+        "net_earnings_pence": 260000,
+        "income_tax_pence": 0
+      }
+    },
+    "source": "SI 2002/1792 Sch VI para 5(b)",
+    "working": "no tax (each partner under the personal allowance); earnings £2,600 / 52 = £50 a week, less £10 = £40; State Pension £300 a week; income £340; 363.25 - 340 = 23.25; x 52 = £1,209",
+    "pension_credit_tenths_pence": 1209000
+  },
+  {
+    "name": "Severe disability additional amount",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "severe_disability": 1,
+        "state_pension_pence": 1040000
+      }
+    },
+    "source": "SI 2002/1792 reg 6(4), (5)(a)",
+    "working": "minimum guarantee 238.00 + 86.05 = 324.05; State Pension £200 a week; 124.05 x 52 = £6,450.60",
+    "pension_credit_tenths_pence": 6450600
+  },
+  {
+    "name": "New State Pension, 20 qualifying years from 2016",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "new_state_pension": {
+        "qualifying_years": 20
+      }
+    },
+    "source": "Pensions Act 2014 s3(2); SI 2015/173 regs 1A, 13",
+    "working": "20/35 x £241.30 = 482,600/35 pence a week (£137.886)",
+    "new_state_pension_weekly_35ths_pence": 482600
+  },
+  {
+    "name": "New State Pension, 9 qualifying years: under the minimum",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "new_state_pension": {
+        "qualifying_years": 9
+      }
+    },
+    "source": "SI 2015/173 reg 13(1)",
+    "working": "fewer than 10: nil",
+    "new_state_pension_weekly_35ths_pence": 0
   }
 ]
