@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lean:
+    name: Build, proofs and golden cases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      # Builds the model, checks every proof (a `sorry` is a warning, so --wfail
+      # fails on it) and the axiom guard in UkTax/Axioms.lean, and builds uktax.
+      - name: Build and check proofs
+        run: lake build --wfail
+      - name: Golden cases
+        run: python3 tests/golden.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uktax
+          path: .lake/build/bin/uktax
+
+  policyengine:
+    name: Compare with PolicyEngine UK
+    needs: lean
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: uktax
+          path: bin
+      - run: chmod +x bin/uktax
+      - uses: astral-sh/setup-uv@v6
+      - name: Compare
+        working-directory: harness
+        run: uv run --frozen python compare.py --binary ../bin/uktax --random 1000
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: comparison
+          path: harness/out/comparison.csv
