@@ -59,6 +59,14 @@ Optional fields:
   (`UkTax/Profits.lean`), are added to `non_savings_pence` (which is then the
   other non-savings income, such as pay). No losses: a loss counts as nil. Not
   with `uc` or the childcare tests;
+* National Insurance beyond employee Class 1 (`UkTax/Nics.lean`):
+  `employer_zero_rated` (an employee under 21 or a relevant apprentice under 25:
+  employer Class 1 at 0 % up to the upper secondary threshold; default false),
+  `class_1a_benefits_pence` (cash equivalent of benefits in kind, for Class 1A),
+  `class_2_voluntary_weeks` (weeks of voluntary Class 2, paid only with profits
+  below the small profits threshold) and `class_3_weeks` (weeks of Class 3).
+  Class 4 is on the trading profit, limited by the reg 100 annual maximum where
+  employee Class 1 is also payable;
 * `funded_children`: children for the funded hours, e.g.
   `[{"age": "under_2"}, {"age": "3_4", "price_pence_per_hour": 750}]`, ages
   `"under_2"` (9 months to 2), `"2"` and `"3_4"` (until school); the hours are
@@ -106,6 +114,10 @@ structure Case where
   claims : Claims
   tradeProfit : Nat := 0
   propertyProfit : Nat := 0
+  zeroRated : Bool := false
+  class1A : Nat := 0
+  class2Weeks : Nat := 0
+  class3Weeks : Nat := 0
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -215,7 +227,10 @@ def parseCase (j : Json) : Except String Case := do
     { income with nonSavings := income.nonSavings - netPay + profits }
   let rg : Regime := { scottish, relief, netPay, blind, maTransfer, maReceive, mca }
   return ⟨income, income.settle rg, employment - netPay, period, ← optField "child_benefit_pence", claims,
-    tradeProfit tr te, propertyProfit shared pr pe rr re⟩
+    tradeProfit tr te, propertyProfit shared pr pe rr re,
+    (j.getObjValAs? Bool "employer_zero_rated").toOption.getD false,
+    ← optField "class_1a_benefits_pence", ← optField "class_2_voluntary_weeks",
+    ← optField "class_3_weeks"⟩
 
 def result (c : Case) : Json :=
   let i := c.income
@@ -240,6 +255,14 @@ def result (c : Case) : Json :=
     ("allowance_against_dividends_pence", toJson a.toDividends),
     ("nic_exact_ten_thousandths_pence", toJson nic),
     ("nic_pence", toJson (nic / 10_000)),
+    ("employer_nic_exact_ten_thousandths_pence",
+      toJson (employerNicExact c.period c.zeroRated (c.employment + rg.netPay))),
+    ("class_1a_exact_ten_thousandths_pence", toJson (class1AExact c.class1A)),
+    ("class_4_exact_ten_thousandths_pence",
+      toJson (class4Exact c.period (c.employment + rg.netPay) c.tradeProfit)),
+    ("class_2_treated_paid", toJson (class2TreatedPaid c.tradeProfit)),
+    ("class_2_voluntary_pence", toJson (class2Voluntary c.tradeProfit c.class2Weeks)),
+    ("class_3_pence", toJson (class3 c.class3Weeks)),
     ("hicbc_pence", toJson (hicbc ani c.childBenefit)),
     ("uc_millionths_pence",
       toJson (ucAward c.claims (earned c.period rg i.savings i.dividends c.employment))),

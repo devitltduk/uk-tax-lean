@@ -4,7 +4,7 @@ UK income tax (including Scottish rates, Gift Aid, pension contributions
 relieved at source and under net pay, the Marriage Allowance, the married
 couple's allowance, the blind person's allowance, and trading and property
 income with the trading and property allowances and rent-a-room relief),
-employee National Insurance, the High Income Child Benefit
+National Insurance (employee and employer Class 1, Class 1A, 2, 3 and 4), the High Income Child Benefit
 Charge, a minimal Universal Credit and the £100,000 childcare cliff for 2026-27,
 for taxpayers anywhere in the UK (childcare rules are England's), formalised in
 Lean 4, with proofs about it and a harness that checks it against
@@ -136,6 +136,22 @@ the annual formula with annual-equivalent thresholds (`nic_earnings_period`):
 | `monthly` (12 × £1,048, 12 × £4,189) | £12,576 | £50,268 |
 | `weekly` (52 × £242, 52 × £967) | £12,584 | £50,284 |
 
+### Other National Insurance (`UkTax/Nics.lean`)
+
+- **Employer (secondary) Class 1**: 15 % above the secondary threshold (£96 a
+  week, £417 a month, £5,000 a year; SSCBA 1992 s9, SI 2001/1004 regs 10-11), or
+  for an employee under 21 or a relevant apprentice under 25
+  (`employer_zero_rated`) above the upper secondary threshold (£967, £4,189,
+  £50,270; ss 9A, 9B), on the same earnings-period bases as employee
+  contributions. The Employment Allowance is the employer's and is left out.
+- **Class 1A**: 15 % of a given cash equivalent of benefits in kind (s10).
+- **Class 4**: 6 % of trading profits between £12,570 and £50,270, 2 % above
+  (s15), on the profits after the trading allowance; where employee Class 1 is
+  also payable, limited by the annual maximum of SI 2001/1004 reg 100.
+- **Class 2**: treated as paid with profits of at least the £7,105 small profits
+  threshold (s11(5A)-(5B)); voluntary £3.65 a week below it
+  (`class_2_voluntary_weeks`). **Class 3**: £18.40 a week (`class_3_weeks`).
+
 ### High Income Child Benefit Charge
 
 ITEPA 2003 s681B-s681H. The input is the Child Benefit paid for the year to the
@@ -222,8 +238,8 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26; each is in
 ## Out of scope
 
 Welsh rates other than 2026-27's (in scope only because they equal the rUK
-rates), National Insurance other than employee Class 1 primary contributions
-(employer, self-employed, voluntary, other category letters), Universal Credit
+rates), National Insurance category letters other than A, Class 4 loss relief, the
+Employment Allowance, freeport and veterans' employer reliefs, Universal Credit
 beyond the minimal model (housing, childcare, disability and carer elements,
 capital, unearned income, the benefit cap, the minimum income floor, under-25
 rates, the first-child rate for children born before 6 April 2017, monthly
@@ -294,6 +310,11 @@ relief-at-source contributions.
   (`UkTax/Profits.lean`): with the elections made, a penny more receipts adds at
   most a penny to the trading or property profits charged and never lowers them,
   so the £1,000 allowances and the rent-a-room limit are not cliffs.
+- `employerNicExact_succ`, `class4Exact_succ`, `class4Exact_le_pre`
+  (`UkTax/Nics.lean`): employer contributions and Class 4 never fall as pay or
+  profits rise, and rise by at most 15 % and 6 % of a penny per penny; the reg 100
+  maximum never raises Class 4. `class4Exact_full_class1`: with employee Class 1
+  on the whole band, Class 4 is exactly 2 % of profits above £12,570.
 - `netAll_drop_only_at_steps` (`UkTax/Benefits.lean`): the same with Universal
   Credit, Tax-Free Childcare (whichever is larger) and the funded hours added,
   with one more kind of step: adjusted net income going over £100,000. The
@@ -344,7 +365,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 90 cases with the expected figures worked out by hand
+`tests/golden.json` holds 103 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -491,6 +512,13 @@ HICBC agrees. On NixOS, numpy needs
 `libstdc++`: run with `LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH` (nix-ld) or from a
 shell that provides it.
 
+### National Insurance against PolicyEngine
+
+`uv run python compare_nics.py` compares employer Class 1 (annual basis, aged 40
+or 20), Class 1A, Class 4 (with the reg 100 maximum where there is also pay) and
+Class 2 (nothing payable as of course). Latest local run: 580 of 580 agree within
+2 float32 steps (worst 1.57), 117 of them with both employee Class 1 and Class 4.
+
 ### Universal Credit against PolicyEngine
 
 `uv run python compare_uc.py` compares the award for a single claimant with 0 to
@@ -552,5 +580,5 @@ under 2 in the April term, gets £11,339.20 there, not £10,146).
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
-comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, with
+comparisons (income tax, NICs and HICBC; Universal Credit; funded hours and NICs, with
 1,000 random cases each; reliefs and allowances).

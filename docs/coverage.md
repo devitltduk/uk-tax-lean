@@ -30,7 +30,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 |---|---|---|
 | P1 | Scottish income tax, Gift Aid, relief at source | Scottish rates on non-savings income, savings and dividends on UK rates, s25(2) placement for Scottish taxpayers; Gift Aid and relief-at-source pension contributions raising the rate limits and reducing adjusted net income |
 | P2 | Reliefs and allowances | net pay pension contributions, Marriage Allowance, married couple's allowance, Blind Person's Allowance, trading and property allowances, rent-a-room relief, self-employment and property profits (**done**) |
-| P3 | NICs completeness | Class 2, 3 and 4, employer Class 1, Class 1A |
+| P3 | NICs completeness | Class 2, 3 and 4, employer Class 1, Class 1A (**done**) |
 | P4 | Universal Credit in full | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
 | P5 | Other means-tested and disability benefits | Housing Benefit, legacy benefits still in payment, Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant |
 | P6 | Pensions | State Pension (new and basic), Pension Credit |
@@ -58,7 +58,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Self-employment and property income as non-savings income | `taxable_self_employment_income`, `taxable_property_income`, `property_finance_cost_relief` | ITTOIA 2005 Parts 2-3, s272A (finance costs restriction), ss 274A-274C (the tax reduction) | **done** for income tax (P2, profits from receipts and expenses); finance costs restriction and the s274A reduction planned (P8) |
 | Trade loss relief, capital allowances, relief cap | `loss_relief`, `trade_loss_relief_against_general_income`, `capital_allowances`, `income_tax_relief_cap` | ITA 2007 ss 64, 24A; CAA 2001 | planned (P8: losses as an input) |
 | Rent-a-room relief | `rent_a_room_relief`, `rent_a_room_income_tax` | ITTOIA 2005 ss 784-802 | **done** (P2, Part 3 receipts; findings #13) |
-| Company car and car fuel benefits | `company_car_benefit`, `car_fuel_benefit`, `ni_class_1a` | ITEPA 2003 ss 114-153 | planned (P3) |
+| Company car and car fuel benefits | `company_car_benefit`, `car_fuel_benefit`, `ni_class_1a` | ITEPA 2003 ss 114-153 | planned (P9: the cash equivalent; Class 1A on it is done in P3) |
 | Employment expenses and deductions | `employment_deductions`, `employment_expenses` | ITEPA 2003 Part 5 | planned (P8, as an input) |
 | Winter fuel payment charge | `winter_fuel_payment_charge` | Finance Act 2026 s57 and Sch 10 (inserting ITEPA 2003 Part 10 Ch 9) | planned (P9) |
 | ISA cash-interest charge (from 2027-28) | `isa_cash_interest_flat_rate_charge` | Budget 2026; from 6 April 2027 | out of scope: starts after 2026-27 |
@@ -68,11 +68,11 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
 | Class 1 primary (employee), category A | `ni_class_1_employee`, `ni_class_1_employee_primary`, `ni_class_1_employee_additional` | SSCBA 1992 s8; SI 2001/1004 regs 10-11 | **done** |
-| Class 1 secondary (employer), employment allowance | `ni_class_1_employer`, `ni_employer` | SSCBA 1992 s9; SI 2001/1004 reg 10; NICA 2014 s1 | planned (P3) |
-| Class 1A on car benefits | `ni_class_1a` | SSCBA 1992 s10 | planned (P3) |
-| Class 2 | `ni_class_2` | SSCBA 1992 s11 (as amended from 2024-25) | planned (P3) |
-| Class 3 | `ni_class_3` | SSCBA 1992 s13 | planned (P3) |
-| Class 4, including losses | `ni_class_4`, `ni_class_4_main`, `ni_class_4_maximum`, `ni_class_4_loss_relief` | SSCBA 1992 ss 15-18; SI 2001/1004 reg 100 | planned (P3) |
+| Class 1 secondary (employer), employment allowance | `ni_class_1_employer`, `ni_employer` | SSCBA 1992 s9; SI 2001/1004 reg 10; NICA 2014 s1 | **done** (P3: 15 %, the secondary and under-21 / apprentice thresholds on each earnings-period basis); the Employment Allowance is the employer's, not modelled per employee (PolicyEngine has none either) |
+| Class 1A on car benefits | `ni_class_1a` | SSCBA 1992 s10 | **done** (P3: 15 % of a given cash equivalent; the car benefit itself planned in P9) |
+| Class 2 | `ni_class_2` | SSCBA 1992 s11 (as amended from 2024-25) | **done** (P3: treated as paid at or above the £7,105 small profits threshold; voluntary £3.65 a week below it) |
+| Class 3 | `ni_class_3` | SSCBA 1992 s13 | **done** (P3: £18.40 a week, for weeks given) |
+| Class 4, including losses | `ni_class_4`, `ni_class_4_main`, `ni_class_4_maximum`, `ni_class_4_loss_relief` | SSCBA 1992 ss 15-18; SI 2001/1004 reg 100 | **done** (P3: 6 % / 2 %, the reg 100 annual maximum with employee Class 1); loss relief (Sch 2 para 3) planned with losses (P8) |
 
 ## Benefits
 

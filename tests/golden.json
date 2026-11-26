@@ -1266,5 +1266,179 @@
     "working": "other letting 6,000 - 1,000 = 5,000 (the property allowance gives the same); rooms 2,000 - 3,000 = -1,000 in the same property business once full relief is disapplied; profits 4,000; tax (34,000 - 12,570) x 20% = 4,286",
     "property_profit_pence": 400000,
     "liability_pence": 428600
+  },
+  {
+    "name": "Employer NICs, annual earnings period",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000
+    },
+    "source": "SSCBA 1992 s9(2); SI 2001/1004 reg 11(3A)(b)",
+    "working": "15% x (30,000 - 5,000) = 3,750",
+    "employer_nic_exact_ten_thousandths_pence": 3750000000
+  },
+  {
+    "name": "Employer NICs, monthly earnings period",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "nic_earnings_period": "monthly"
+    },
+    "source": "SI 2001/1004 reg 11(3A)(a)",
+    "working": "12 x 15% x (2,500 - 417) = 3,749.40",
+    "employer_nic_exact_ten_thousandths_pence": 3749400000
+  },
+  {
+    "name": "Employer NICs, weekly earnings period (52 weeks at the reg 10 £96)",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "nic_earnings_period": "weekly"
+    },
+    "source": "SI 2001/1004 reg 10(d)",
+    "working": "15% x (30,000 - 52 x 96) = 15% x 25,008 = 3,751.20",
+    "employer_nic_exact_ten_thousandths_pence": 3751200000
+  },
+  {
+    "name": "Employer NICs for an employee under 21: nil up to the upper secondary threshold",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 4000000,
+      "employer_zero_rated": true
+    },
+    "source": "SSCBA 1992 s9A; SI 2001/1004 reg 11(3B)(b)",
+    "working": "40,000 <= 50,270: 0%",
+    "employer_nic_exact_ten_thousandths_pence": 0
+  },
+  {
+    "name": "Employer NICs for an employee under 21 above the upper secondary threshold",
+    "input": {
+      "non_savings_pence": 6000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 6000000,
+      "employer_zero_rated": true
+    },
+    "source": "SSCBA 1992 s9A",
+    "working": "15% x (60,000 - 50,270) = 1,459.50",
+    "employer_nic_exact_ten_thousandths_pence": 1459500000
+  },
+  {
+    "name": "Class 1A on a benefit in kind",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "class_1a_benefits_pence": 800000
+    },
+    "source": "SSCBA 1992 s10(1), (5)",
+    "working": "15% x 8,000 = 1,200",
+    "class_1a_exact_ten_thousandths_pence": 1200000000
+  },
+  {
+    "name": "Class 4 at the main rate",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 4000000,
+      "trading_expenses_pence": 500000
+    },
+    "source": "SSCBA 1992 s15(3), (3ZA)",
+    "working": "profits 40,000 - 5,000 = 35,000; 6% x (35,000 - 12,570) = 1,345.80",
+    "class_4_exact_ten_thousandths_pence": 1345800000
+  },
+  {
+    "name": "Class 4 above the upper profits limit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 6100000,
+      "trading_expenses_pence": 100000
+    },
+    "source": "SSCBA 1992 s15(3)",
+    "working": "profits 60,000; 6% x 37,700 + 2% x 9,730 = 2,262 + 194.60 = 2,456.60",
+    "class_4_exact_ten_thousandths_pence": 2456600000
+  },
+  {
+    "name": "Class 4 annual maximum with employee Class 1 on the full band (reg 100, Case 3)",
+    "input": {
+      "non_savings_pence": 5027000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 5027000,
+      "trading_receipts_pence": 3000000
+    },
+    "source": "SI 2001/1004 reg 100(3)",
+    "working": "profits 30,000 - 1,000 allowance = 29,000; Class 1 at 8% on 12,570-50,270 = 3,016 exceeds Step Two 6% x 37,700 = 2,262, so Step Four is nil (Case 3); Step Six 29,000 - 12,570 = 16,430; Step Seven 16,430; Step Eight 2% = 328.60; Step Nine 0; maximum 328.60, against 6% x 16,430 = 985.80 before it",
+    "class_4_exact_ten_thousandths_pence": 328600000
+  },
+  {
+    "name": "Class 4 annual maximum, Case 2",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 4000000,
+      "trading_receipts_pence": 4100000
+    },
+    "source": "SI 2001/1004 reg 100(3)",
+    "working": "Class 1 main 8% x 27,430 = 2,194.40; Step Four 2,262 - 2,194.40 = 67.60; profits 41,000 - 1,000 = 40,000, main-rate Class 4 6% x 27,430 = 1,645.80, so 67.60 < 2,194.40 + 1,645.80: Case 2; Step Five 67.60 x 100/6 = 1,126.667; Step Six 27,430; Step Seven 26,303.333; Step Eight 2% = 526.0667; maximum 593.6667 (rounded down to 1/10,000p)",
+    "class_4_exact_ten_thousandths_pence": 593666666
+  },
+  {
+    "name": "Voluntary Class 2 below the small profits threshold",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 600000,
+      "class_2_voluntary_weeks": 52
+    },
+    "source": "SSCBA 1992 s11(4)(b), (6)",
+    "working": "profits 6,000 - 1,000 = 5,000 < 7,105: 52 x 3.65 = 189.80",
+    "class_2_voluntary_pence": 18980,
+    "class_2_treated_paid": false
+  },
+  {
+    "name": "Class 2 treated as paid at the small profits threshold",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 810500,
+      "class_2_voluntary_weeks": 52
+    },
+    "source": "SSCBA 1992 s11(5A), (5B)",
+    "working": "profits 8,105 - 1,000 = 7,105 >= 7,105: treated as paid, nothing to pay",
+    "class_2_voluntary_pence": 0,
+    "class_2_treated_paid": true
+  },
+  {
+    "name": "Class 3 for a full year",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "class_3_weeks": 52
+    },
+    "source": "SSCBA 1992 s13(1)",
+    "working": "52 x 18.40 = 956.80",
+    "class_3_pence": 95680
   }
 ]
