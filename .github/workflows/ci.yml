@@ -70,6 +70,9 @@ jobs:
       - name: Compare non-means-tested benefits
         working-directory: harness
         run: uv run --frozen python compare_disability.py --binary ../bin/uktax --random 1000
+      - name: Compare Pension Credit
+        working-directory: harness
+        run: uv run --frozen python compare_pension.py --binary ../bin/uktax --random 1000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -82,3 +85,4 @@ jobs:
             harness/out/compare_reliefs.csv
             harness/out/compare_nics.csv
             harness/out/compare_disability.csv
+            harness/out/compare_pension.csv

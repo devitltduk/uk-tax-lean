@@ -236,6 +236,29 @@ The Carer's Allowance limit is a cliff: with pay only, £10,608.51 a year keeps
 the whole £4,495.40; £10,608.52 (£204.01 a week) loses it, and net income falls by
 £3,988.61 (the allowance less the income tax on it).
 
+### State Pension and Pension Credit (`UkTax/Pension.lean`)
+
+| Figure | 2026-27 a week | Source |
+|---|---|---|
+| New State Pension | £241.30 with 35 qualifying years; 1/35 a year from 10 | [Pensions Act 2014 ss 2-3](https://www.legislation.gov.uk/ukpga/2014/19/section/3); [SI 2015/173 regs 1A, 13](https://www.legislation.gov.uk/uksi/2015/173/regulation/1A) |
+| Basic State Pension | Category A £184.90; Category B (lower) and D £110.75; 25p at 80 | [SSCBA 1992 s44(4)](https://www.legislation.gov.uk/ukpga/1992/4/section/44), s79, Sch 4 |
+| Standard minimum guarantee | £238.00 single, £363.25 couple | [SI 2002/1792 reg 6(1)](https://www.legislation.gov.uk/uksi/2002/1792/regulation/6) |
+| Additional amounts | severe disability £86.05 (£172.10 double), carer £48.15, child £69.98 (first born before 6 April 2017 £81.07), disabled child £37.93 / £118.46 | reg 6(5), (8); Sch IIA |
+| Savings credit | threshold £208.07 / £329.75; 60 % / 40 %; maximum £17.96 / £20.10; fractions of a penny to the claimant | [reg 7](https://www.legislation.gov.uk/uksi/2002/1792/regulation/7); [SPCA 2002 s3](https://www.legislation.gov.uk/ukpga/2002/16/section/3) |
+| Deemed income from capital | £1 for each £500 or part above £10,000; no capital limit | [reg 15(6)](https://www.legislation.gov.uk/uksi/2002/1792/regulation/15) |
+| Earnings disregard | £20 (lone parent, carer, disabled, listed jobs), else £10 couple, £5 single | [Sch VI](https://www.legislation.gov.uk/uksi/2002/1792/schedule/VI) |
+
+- **State Pension**: an input. Anyone with a qualifying year before 6 April 2016
+  gets the transitional rate, worked out from their own record (Pensions Act 2014
+  s4), so no count of years gives it. `new_state_pension` gives the reduced rate
+  for someone with no such year.
+- **Pension Credit** (`pension_credit`): income is the State Pension, other
+  pensions and income, earnings after NICs less the disregard, less the income tax
+  on them (reg 17(10)(a)), plus deemed income from capital; guarantee credit is the
+  appropriate minimum guarantee less income; savings credit (claimant or partner
+  reached pensionable age before 6 April 2016) is amount A, rounded up, less amount
+  B, rounded down. Yearly figures are 52 weeks.
+
 ### Tax-Free Childcare and the funded hours (England)
 
 A parent is eligible when they, and their partner if they have one, each expect
@@ -397,6 +420,11 @@ relief-at-source contributions.
   earnings rise (the 10p minimum of reg 52; otherwise the deduction is pound for
   pound). `esa_total_gain`: pension plus new style ESA keeps at least half of
   any rise in pension.
+- `pc_total_succ`, `pc_total_gain`, `sc_step`, `deemed_step` (`UkTax/Pension.lean`):
+  income plus Pension Credit never falls as income rises, except by at most a
+  penny a week where amount B's rounding steps; above the minimum guarantee it
+  keeps at least 60 % of a rise; and each £500 of capital above £10,000 is exactly
+  £1 a week of deemed income.
 - `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
@@ -446,7 +474,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 128 cases with the expected figures worked out by hand
+`tests/golden.json` holds 137 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -469,7 +497,10 @@ each limit, the halved limit, and a rent-a-room loss set against other letting).
 benefits: 53 weeks of Child Benefit with the HICBC on it, each disability benefit,
 Carer's Allowance 1p either side of the earnings limit (and net income across it),
 with pension contributions and an overlapping benefit, Maternity Allowance at the
-threshold and the cap, JSA's 10p minimum, ESA's pension deduction and the grant.
+threshold and the cap, JSA's 10p minimum, ESA's pension deduction and the grant. For pensions: the guarantee credit,
+savings credit at its rounded maximum and with amount A rounded up, income net of
+tax, a couple's £10 earnings disregard, the capital step 1p over £12,000, the
+severe disability amount, and the new State Pension's reduced rate and minimum.
 
 ### Where earning more lowers net income
 
@@ -663,6 +694,16 @@ PolicyEngine pays 52 weeks, the law 53 in 2026-27 (findings #19, a draft issue).
 Maternity Allowance, new style JSA and ESA and the Sure Start Maternity Grant are
 reported amounts in PolicyEngine, so there is nothing to compare (findings #20).
 
+### Pension Credit against PolicyEngine
+
+`uv run python compare_pension.py` compares single pensioners and couples aged 70
+or 80 (savings credit), with State Pension, private pensions and capital, edge
+cases at the savings credit threshold and the capital steps. Latest local run:
+1,010 of 1,010 agree (827 paid, 92 with savings credit) within 2 float32 steps,
+the reg 7(4) rounding PolicyEngine leaves out (up to 2p a week; at most 61p a year
+seen; findings #22) and a penny a partner for the income tax, which PolicyEngine
+deducts unrounded.
+
 ### Funded hours against PolicyEngine
 
 `uv run python compare_childcare.py` compares the funded hours' yearly value for a
@@ -688,5 +729,5 @@ under 2 in the April term, gets £11,339.20 there, not £10,146).
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
-comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs and
-non-means-tested benefits, with 1,000 random cases each; reliefs and allowances).
+comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs,
+non-means-tested benefits and Pension Credit, with 1,000 random cases each; reliefs and allowances).

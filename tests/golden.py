@@ -54,6 +54,9 @@ CHECKED = (
     "jsa_contrib_weekly_pence",
     "esa_contrib_weekly_tenths_pence",
     "ssmg_pence",
+    "pension_credit_tenths_pence",
+    "guarantee_credit_tenths_pence",
+    "new_state_pension_weekly_35ths_pence",
 )
 
 failures = 0
