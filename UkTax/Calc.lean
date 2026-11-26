@@ -30,7 +30,9 @@ ITA 2007 s23 steps as modelled here:
   - dividends: the first £500 at the 0 % dividend nil rate (s13A), then
     10.75 / 35.75 / 39.35 % (s8, s13).
   Income charged at a nil rate still uses up the band it falls in.
-* Steps 5-7: nothing to do (no reductions); the liability is the Step 4 total.
+* Step 6: the Marriage Allowance and married couple's allowance reductions, each
+  only so far as there is tax (s29).
+* Steps 5 and 7: nothing to do here (the HICBC is computed separately).
 
 Tax is computed exactly in units of 1/10 000 of a penny and rounded down to the
 penny once, at the end.
@@ -54,6 +56,23 @@ structure Regime where
   rate, which would leave the limits alone where only savings or dividends are
   above them (docs/findings.md #11). -/
   relief : Nat := 0
+  /-- Pension contributions under a net pay arrangement, deducted from pay for
+  income tax (FA 2004 s193(2)) but not for NICs ("There is no equivalent NICs
+  relief", HMRC NIM02365). Pay in the model is pay after them; NICs are charged
+  on pay plus them. -/
+  netPay : Nat := 0
+  /-- Gets the blind person's allowance (ITA 2007 s38). -/
+  blind : Bool := false
+  /-- Has given up the Marriage Allowance to a spouse or civil partner: their own
+  personal allowance is reduced by the transferable amount (s55B(6)). -/
+  maTransfer : Bool := false
+  /-- Has received the Marriage Allowance from a spouse or civil partner who is
+  eligible to give it (s55B(2)(a), s55C): a tax reduction if this taxpayer passes
+  the rate test of s55B(2)(b), (ba). -/
+  maReceive : Bool := false
+  /-- Is the spouse entitled to the married couple's allowance (a party born
+  before 6 April 1935; s45, s46). -/
+  mca : Bool := false
   deriving Repr, DecidableEq
 
 /-- The basic rate limit, raised by the relief. -/
@@ -150,9 +169,12 @@ def Income.total (i : Income) : Nat := i.nonSavings + i.savings + i.dividends
 and the gross pension contributions relieved at source. -/
 def Income.ani (rg : Regime) (i : Income) : Nat := i.total - rg.relief
 
-/-- The personal allowance this taxpayer gets (ITA 2007 s35). -/
+/-- The allowances this taxpayer deducts at Step 3: the personal allowance (ITA
+2007 s35, tapered), less the Marriage Allowance given up (s55B(6)), plus the blind
+person's allowance (s38, not tapered). -/
 def Income.personalAllowance (rg : Regime) (i : Income) : Nat :=
-  personalAllowanceFor (i.ani rg)
+  (personalAllowanceFor (i.ani rg) - (if rg.maTransfer then maTransferable else 0))
+    + (if rg.blind then blindPersonsAllowance else 0)
 
 /-- How much of the personal allowance is set against each kind of income. -/
 structure Alloc where
@@ -264,7 +286,55 @@ def Income.bestAlloc (rg : Regime) (i : Income) : Alloc :=
 /-- Exact liability in 1/10 000 pence. -/
 def taxExact (rg : Regime) (i : Income) : Nat := taxWith rg i (i.bestAlloc rg)
 
-/-- Income tax liability for 2026-27, in pence, rounded down to the penny. -/
+/-- The Step 5 tax (no Step 5 amounts are modelled), in pence, rounded down to
+the penny: the liability before the Step 6 tax reductions. -/
 def liability (rg : Regime) (i : Income) : Nat := taxExact rg i / 10_000
+
+/-! ## Step 6: tax reductions -/
+
+/-- The highest non-savings income, as a position in Step 3 income, at which a
+Marriage Allowance recipient is still liable only at the rates s55B(2)(b) allows:
+the basic rate limit, or for a Scottish taxpayer the top of the intermediate rate. -/
+def Regime.maLimit (rg : Regime) : Nat :=
+  if rg.scottish then scotIntermediateLimit + rg.relief else rg.brl
+
+/-- s55B(2)(b), (ba) for Step 3 income of `n` non-savings, `s` savings and `d`
+dividends: no non-savings income above `maLimit`; no savings charged at a rate
+above the savings basic rate (savings at the starting rate or the savings nil rate
+are allowed wherever they sit); and, if there are dividends, none would be above
+the basic rate limit with the dividend nil rate omitted. -/
+def maRateTest (rg : Regime) (n s d : Nat) : Bool :=
+  n ≤ rg.maLimit
+    && (n + s ≤ rg.brl || n + s ≤ n + startingRateSavings n s + savingsNilRate rg n s d)
+    && (d == 0 || n + s + d ≤ rg.brl)
+
+/-- Whether a Marriage Allowance recipient passes the rate test, with the
+allowance deducted as s25(2) asks. -/
+def Income.maOk (rg : Regime) (i : Income) : Bool :=
+  let a := i.bestAlloc rg
+  maRateTest rg (i.nonSavings - a.toNonSavings) (i.savings - a.toSavings)
+    (i.dividends - a.toDividends)
+
+/-- The Marriage Allowance reduction, in 1/10 000 pence: 20 % of £1,260, £252
+(s55B(1)), if received and the rate test is passed. -/
+def Income.maReduction (rg : Regime) (i : Income) : Nat :=
+  if rg.maReceive && i.maOk rg then maRate * maTransferable else 0
+
+/-- The married couple's allowance reduction, in 1/10 000 pence: 10 % of the
+maximum less half the excess of adjusted net income over £39,200, not below 10 %
+of the minimum (s45, s46). -/
+def Income.mcaReduction (rg : Regime) (i : Income) : Nat :=
+  if rg.mca then
+    max (mcaRate * mcaMin) (mcaRate * mcaMax - (mcaRate / 2) * (i.ani rg - mcaIncomeLimit))
+  else 0
+
+/-- The liability after the Step 6 reductions, in 1/10 000 pence: each only so far
+as there is tax (s29(2)); with both deducted from one total, their order does not
+change it. -/
+def finalTaxExact (rg : Regime) (i : Income) : Nat :=
+  taxExact rg i - (i.maReduction rg + i.mcaReduction rg)
+
+/-- Income tax liability for 2026-27, in pence, rounded down to the penny. -/
+def finalLiability (rg : Regime) (i : Income) : Nat := finalTaxExact rg i / 10_000
 
 end UkTax
