@@ -152,6 +152,40 @@ and 3 <https://www.legislation.gov.uk/ukpga/2007/3/section/58>). The model takes
 the gross amounts as inputs. For 2026-27 the Scottish basic rate equals the basic
 rate (20 %), so the s414A and FA 2004 ss192A-192B adjustments are nil. -/
 
+/-! ## Blind person's allowance, Marriage Allowance and married couple's allowance -/
+
+/-- Blind person's allowance, £3,250 for 2026-27: ITA 2007 s38(1)
+<https://www.legislation.gov.uk/ukpga/2007/3/section/38> ("a blind person's allowance
+of £3,250"), substituted for £3,130 by The Income Tax (Indexation) Order 2026
+(SI 2026/38) <https://www.legislation.gov.uk/uksi/2026/38/made>. GOV.UK
+<https://www.gov.uk/blind-persons-allowance/what-youll-get>. It is not tapered:
+s35(2) reduces only the personal allowance. -/
+def blindPersonsAllowance : Nat := 325_000
+
+/-- Marriage Allowance transferable amount, £1,260: 10 % of the s35(1) personal
+allowance (£1,257), rounded up to a multiple of £10. ITA 2007 s55B(4)(b), (5)
+<https://www.legislation.gov.uk/ukpga/2007/3/section/55B>. The recipient gets a tax
+reduction of the basic rate (or Scottish basic rate), 20 %, of it at Step 6
+(s55B(1), (3), s55A(2)), so up to £252; the transferor's own personal allowance
+is reduced by it (s55B(6)). GOV.UK <https://www.gov.uk/marriage-allowance>. -/
+def maTransferable : Nat := 126_000
+
+/-- The Marriage Allowance reduction rate, the basic rate (and Scottish basic rate),
+20 %, in basis points (s55B(3)). -/
+def maRate : Nat := 2000
+
+/-- Married couple's allowance, for a marriage where either party was born before
+6 April 1935 (ITA 2007 s42(1), s45, s46): the maximum amount £11,700 (s45(3)(a),
+s46(3)(a)), reduced by half the excess of adjusted net income over £39,200
+(s45(4), s46(4)) but not below the minimum amount £4,530 (s43, s46(5)), all as
+substituted for 2026-27 by SI 2026/38 art 2. The tax reduction is 10 % of it
+(s45(1), s46(1)), at Step 6 (s42(4)), only so far as there is tax (s29(2)).
+<https://www.legislation.gov.uk/ukpga/2007/3/section/46> -/
+def mcaMax : Nat := 1_170_000
+def mcaMin : Nat := 453_000
+def mcaIncomeLimit : Nat := 3_920_000
+def mcaRate : Nat := 1000
+
 /-! ## Employee (primary) Class 1 National Insurance contributions, 2026-27
 
 Amounts in pence per earnings period. The thresholds for 2026-27 are on GOV.UK,

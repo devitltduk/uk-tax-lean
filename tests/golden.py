@@ -31,6 +31,8 @@ CHECKED = (
     "tax_exact_ten_thousandths_pence",
     "adjusted_net_income_pence",
     "personal_allowance_pence",
+    "trading_profit_pence",
+    "property_profit_pence",
     "nic_exact_ten_thousandths_pence",
     "hicbc_pence",
     "uc_millionths_pence",

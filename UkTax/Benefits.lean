@@ -115,7 +115,7 @@ def micro : Int := 1_000_000
 /-- Earned income for Universal Credit, in 1/10 000 pence: pay less income tax
 and employee NICs. -/
 def earned (p : EarningsPeriod) (rg : Regime) (s d g : Nat) : Int :=
-  10_000 * (g : Int) - (taxExact rg ⟨g, s, d⟩ : Int) - (nicExact p g : Int)
+  10_000 * (g : Int) - (finalTaxExact rg ⟨g, s, d⟩ : Int) - (nicExact p (g + rg.netPay) : Int)
 
 /-- Universal Credit for the year, in 1/1 000 000 pence, on earned income `e`
 (in 1/10 000 pence). -/
@@ -239,20 +239,22 @@ theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims
     (hPA : personalAllowanceFor (g + 1 + s + d - rg.relief)
       = personalAllowanceFor (g + s + d - rg.relief))
     (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
+    (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
     (hC : hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb)
     (hLim : g + s + d - rg.relief ≠ childcareIncomeLimit) :
     netAll p cb rg c s d g + 45 * (rg.minGain : Int) ≤ netAll p cb rg c s d (g + 1) := by
   have hani : g + 1 + s + d - rg.relief = (g + s + d - rg.relief) + 1 ∨
       (g + 1 + s + d - rg.relief = 0 ∧ g + s + d - rg.relief = 0) := by omega
-  have htax := taxExact_succ_le hPA hPSA
-  have hnic := nicExact_succ_le p g
+  have htax := finalTaxExact_succ_le hPA hPSA hMA
+  have hnic := nicExact_succ_le p (g + rg.netPay)
+  rw [show g + rg.netPay + 1 = g + 1 + rg.netPay by omega] at hnic
   have hmg := rg.minGain_eq
   have hearn : earned p rg s d g + rg.minGain ≤ earned p rg s d (g + 1) := by
     unfold earned
-    generalize taxExact rg ⟨g, s, d⟩ = A at *
-    generalize taxExact rg ⟨g + 1, s, d⟩ = A' at *
-    generalize nicExact p g = B at *
-    generalize nicExact p (g + 1) = B' at *
+    generalize finalTaxExact rg ⟨g, s, d⟩ = A at *
+    generalize finalTaxExact rg ⟨g + 1, s, d⟩ = A' at *
+    generalize nicExact p (g + rg.netPay) = B at *
+    generalize nicExact p (g + 1 + rg.netPay) = B' at *
     omega
   have hle : earned p rg s d g ≤ earned p rg s d (g + 1) := by
     generalize earned p rg s d g = E at *
@@ -291,7 +293,7 @@ theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims
       = 100 * earned p rg s d g' + 1_000_000 * ((s + d + cb : Nat) : Int)
         - 1_000_000 * (hicbc (g' + s + d - rg.relief) cb : Int) := by
     intro g'; unfold net earned
-    generalize taxExact _ _ = A; generalize nicExact p g' = B; generalize hicbc _ cb = C
+    generalize finalTaxExact _ _ = A; generalize nicExact p _ = B; generalize hicbc _ cb = C
     omega
   clear hPA hPSA hEl htax hnic
   unfold netAll
@@ -311,10 +313,11 @@ theorem netAll_between_steps {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : 
     (hPA : personalAllowanceFor (g + 1 + s + d - rg.relief)
       = personalAllowanceFor (g + s + d - rg.relief))
     (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
+    (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
     (hC : hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb)
     (hLim : g + s + d - rg.relief ≠ childcareIncomeLimit)
     (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) : False := by
-  have := netAll_succ_ge (p := p) (c := c) hPA hPSA hC hLim
+  have := netAll_succ_ge (p := p) (c := c) hPA hPSA hMA hC hLim
   omega
 
 /-- **Where net income with benefits can fall.** For every pay, savings,
@@ -327,9 +330,13 @@ theorem netAll_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) 
     (s d g : Nat) (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) :
     PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) ∨
       Income.step3 rg ⟨g, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g, s, d⟩ = rg.hrl ∨
-      g + s + d - rg.relief = childcareIncomeLimit := by
+      MaStep rg s d g ∨ g + s + d - rg.relief = childcareIncomeLimit := by
   by_cases hLim : g + s + d - rg.relief = childcareIncomeLimit
-  · exact Or.inr (Or.inr (Or.inr (Or.inr hLim)))
+  · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr hLim))))
+  by_cases hM : MaStep rg s d g
+  · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hM))))
+  have hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩ :=
+    Classical.not_not.mp hM
   have ht : g + 1 + s + d = (g + s + d) + 1 := by omega
   have hA : (personalAllowanceFor (g + 1 + s + d - rg.relief)
         = personalAllowanceFor (g + s + d - rg.relief) ∧
@@ -348,7 +355,7 @@ theorem netAll_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) 
     · left; rw [ha, hb]; exact ⟨rfl, rfl⟩
   rcases hA with ⟨hPA, hC⟩ | hA
   · rcases psa_succ hPA with hPSA | hT | hT
-    · exact (netAll_between_steps hPA hPSA hC hLim h).elim
+    · exact (netAll_between_steps hPA hPSA hMA hC hLim h).elim
     · exact Or.inr (Or.inr (Or.inl hT))
     · exact Or.inr (Or.inr (Or.inr (Or.inl hT)))
   · rcases hA with hA | hA

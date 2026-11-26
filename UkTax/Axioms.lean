@@ -2,6 +2,7 @@ import UkTax.Optimal
 import UkTax.Charges
 import UkTax.Cliffs
 import UkTax.Benefits
+import UkTax.Profits
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -68,3 +69,27 @@ today, so any change to it is seen.
 /-- info: 'UkTax.fundedHours_drop_at_limit' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.fundedHours_drop_at_limit
+
+/-- info: 'UkTax.maOk_payOnly' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.maOk_payOnly
+
+/-- info: 'UkTax.maStep_above_limit' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.maStep_above_limit
+
+/-- info: 'UkTax.finalTaxExact_succ_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.finalTaxExact_succ_le
+
+/-- info: 'UkTax.reliefProfit_succ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.reliefProfit_succ
+
+/-- info: 'UkTax.propertyProfit_succ_other' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.propertyProfit_succ_other
+
+/-- info: 'UkTax.propertyProfit_succ_room' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.propertyProfit_succ_room

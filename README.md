@@ -1,7 +1,10 @@
 # uk-tax-lean
 
-UK income tax (including Scottish rates, Gift Aid and pension contributions
-relieved at source), employee National Insurance, the High Income Child Benefit
+UK income tax (including Scottish rates, Gift Aid, pension contributions
+relieved at source and under net pay, the Marriage Allowance, the married
+couple's allowance, the blind person's allowance, and trading and property
+income with the trading and property allowances and rent-a-room relief),
+employee National Insurance, the High Income Child Benefit
 Charge, a minimal Universal Credit and the £100,000 childcare cliff for 2026-27,
 for taxpayers anywhere in the UK (childcare rules are England's), formalised in
 Lean 4, with proofs about it and a harness that checks it against
@@ -58,6 +61,27 @@ interest and dividends, following the steps of ITA 2007 s23:
   contribution, as HMRC's PTM056120 describes. Read literally, "the higher rate" is
   the non-savings rate, so savings or dividends alone above the limit would not
   raise it (findings #11).
+- **Net pay pension contributions** come off pay for income tax (FA 2004
+  s193(2)) but not for NICs ("There is no equivalent NICs relief", HMRC
+  NIM02365).
+- **Blind person's allowance** £3,250 (ITA 2007 s38), added to the tapered
+  personal allowance, itself untapered.
+- **Marriage Allowance** (ss 55A-55E): the transferor's personal allowance falls
+  by £1,260 (s55B(6)) if, with it reduced, they pass the rate test (s55C(1)(c),
+  (ca)); the recipient gets 20 % of £1,260, £252, off at Step 6 if they pass the
+  same test (s55B(2)(b), (ba)): no income charged above the basic rate (for a
+  Scottish taxpayer, above the intermediate rate), dividends tested as if the
+  dividend nil rate were omitted. Not with the married couple's allowance
+  (s55B(2)(d)).
+- **Married couple's allowance** (ss 45-46): 10 % of £11,700, less half the excess
+  of adjusted net income over £39,200, not below 10 % of £4,530, at Step 6.
+- **Trading and property income** (`UkTax/Profits.lean`): one trade's receipts and
+  expenses, with the £1,000 trading allowance (ITTOIA 2005 ss 783AD-783AM: full
+  relief within it, or receipts less £1,000 instead of expenses above it); one
+  property business with the £1,000 property allowance (ss 783BD-783BH); and
+  rent-a-room receipts with the £7,500 limit, halved if shared (ss 784-800: full
+  relief within it, or receipts less the limit above it). The model makes the
+  elections that give the least profit; losses count as nil and are not relieved.
 
 All amounts are whole pence (`Nat`), and rates are basis points. Tax is computed
 exactly, in 1/10,000 of a penny, and rounded down to the penny once at the end.
@@ -84,6 +108,11 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26. Each one is in
 | Gift Aid | grossed up at 20 %; raises the basic and higher rate limits and the Scottish limits from the basic rate up | [ITA 2007 s414(2)](https://www.legislation.gov.uk/ukpga/2007/3/section/414), s415 |
 | Pension contributions relieved at source | 20 % at source; raise the same limits | [FA 2004 s192(1), (4), (4A)](https://www.legislation.gov.uk/ukpga/2004/12/section/192); [GOV.UK](https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief) |
 | Adjusted net income | net income less grossed-up Gift Aid and gross relief-at-source contributions | [ITA 2007 s58](https://www.legislation.gov.uk/ukpga/2007/3/section/58) |
+| Blind person's allowance | £3,250 | [ITA 2007 s38(1)](https://www.legislation.gov.uk/ukpga/2007/3/section/38) as amended by [SI 2026/38](https://www.legislation.gov.uk/uksi/2026/38/made) |
+| Marriage Allowance | £1,260 transferred (10 % of £12,570 rounded up to £10); £252 reduction | [ITA 2007 s55B(4)(b), (5), (6)](https://www.legislation.gov.uk/ukpga/2007/3/section/55B) |
+| Married couple's allowance | £11,700 maximum, £4,530 minimum, income limit £39,200, 10 % | ITA 2007 ss 43, 45, 46 as amended by SI 2026/38 art 2 |
+| Trading allowance / property allowance | £1,000 each | [ITTOIA 2005 s783AD](https://www.legislation.gov.uk/ukpga/2005/5/section/783AD), [s783BD](https://www.legislation.gov.uk/ukpga/2005/5/section/783BD) |
+| Rent-a-room limit | £7,500, or £3,750 if shared | [ITTOIA 2005 s789](https://www.legislation.gov.uk/ukpga/2005/5/section/789); SI 2015/1539 |
 
 GOV.UK summary pages: [Income Tax rates](https://www.gov.uk/income-tax-rates),
 [tax on savings interest](https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free),
@@ -203,12 +232,10 @@ disabled children, the childcare tests' routes for a partner who is disabled or 
 carer, the lower minimum earnings for parents under 21 or apprentices, the 15
 hours for disadvantaged 2-year-olds (which depend on benefits), a child changing
 age band during the year (the model takes one band for the year), Wales's,
-Scotland's and Northern Ireland's own childcare schemes, legacy benefits, reliefs and deductions other than Gift Aid and pension
-contributions relieved at source (net pay pension contributions, losses, the
-trading and property allowances; Gift Aid and pension contributions with
-Universal Credit), Marriage
-Allowance and Blind Person's Allowance, other tax reductions, property income's
-own rates (from 2027-28), the default rates for non-residents, top-slicing relief,
+Scotland's and Northern Ireland's own childcare schemes, legacy benefits, reliefs and deductions not listed above (losses and loss
+relief, capital allowances, property finance costs, employment expenses; Gift
+Aid, pension contributions and trading or property income with Universal Credit
+or the childcare tests), other tax reductions, property income's own rates (from 2027-28), the default rates for non-residents, top-slicing relief,
 foreign income, capital gains, and every tax year other than 2026-27.
 
 That includes 2027-28 savings rates, where the sources currently differ. As
@@ -257,6 +284,16 @@ relief-at-source contributions.
   42 + 25 + 3.6 %) and `net_succ_ge`
   (between steps net income rises at least 0.234p per penny, 0.214p in Scotland,
   so the marginal rate there is at most 76.6 %, or 78.6 %).
+  With the Marriage Allowance there is one more step: a recipient whose Step 3
+  income passes the basic rate limit (for a Scottish taxpayer, the top of the
+  intermediate rate) fails the rate test and loses the £252 at once
+  (`maStep_above_limit`; `maOk_payOnly` shows that with pay only the test is
+  exactly that), and the married couple's allowance taper costs at most 0.05p
+  more per penny.
+- `reliefProfit_succ`, `propertyProfit_succ_other`, `propertyProfit_succ_room`
+  (`UkTax/Profits.lean`): with the elections made, a penny more receipts adds at
+  most a penny to the trading or property profits charged and never lowers them,
+  so the £1,000 allowances and the rent-a-room limit are not cliffs.
 - `netAll_drop_only_at_steps` (`UkTax/Benefits.lean`): the same with Universal
   Credit, Tax-Free Childcare (whichever is larger) and the funded hours added,
   with one more kind of step: adjusted net income going over £100,000. The
@@ -307,7 +344,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 63 cases with the expected figures worked out by hand
+`tests/golden.json` holds 90 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -322,6 +359,11 @@ adjusted net income. For the funded hours: each age band at £100,000 and 1p ove
 (a 3-year-old keeping the universal hours), 1p under the minimum earnings, a local
 price, a couple where the partner is 1p over £100,000 or 1p under the minimum
 earnings, a UC couple, Wales, and net income either side of the £100,000 cliff.
+For the reliefs: net pay contributions, the blind person's allowance through the
+taper, the Marriage Allowance for each spouse (each rate test, 1p over the
+limit, savings and dividends, Scotland), the married couple's allowance taper
+and floor, and the trading, property and rent-a-room reliefs (within and above
+each limit, the halved limit, and a rent-a-room loss set against other letting).
 
 ### Where earning more lowers net income
 
@@ -460,8 +502,30 @@ steps plus 0.176p (55 % of the NIC threshold gap above); largest difference 0.43
 By default PolicyEngine treats the couple as married and claiming the Marriage
 Allowance (its `would_claim_marriage_allowance` take-up flag), which gives the
 earner £1,260 of the partner's allowance: £252 less tax and £138.60 more UC a
-year. That's a default, not an error. The model has no Marriage Allowance, so the
-harness sets it to 0 for couples.
+year. That's a default, not an error. The UC harness sets it to 0 for couples, since
+its couples have one earner and a partner with no income; the Marriage Allowance
+itself is compared in `compare_reliefs.py` below.
+
+### Reliefs and allowances against PolicyEngine
+
+`uv run python compare_reliefs.py` (about 30 s) compares, for one taxpayer, net
+pay pension contributions (income tax, NICs on the whole pay, adjusted net
+income), the blind person's allowance, the married couple's allowance (given to
+PolicyEngine as the model's tapered amount, which it takes as an input), the
+trading allowance (receipts and expenses) and the property allowance with
+rent-a-room relief (no rent-a-room expenses, which PolicyEngine does not take).
+Latest local run: 384, 224, 224, 264 and 291 cases, all within 2 float32 steps
+(worst 0.72 steps).
+
+For the Marriage Allowance it compares the couple's total tax, since the law and
+PolicyEngine put it on different spouses. PolicyEngine gives the recipient 20 %
+of the transferor's *unused* allowance (rounded up to £10) and never reduces the
+transferor's allowance; the law moves a fixed £1,260. The harness checks
+PolicyEngine against that stated basis (666 of 666 couples match) and reports
+where it departs from the law: 554 agree; 17 differ by under £2 (the £10
+round-up); 95 pay £6.90 to £252 more in PolicyEngine, where the transferor's
+income above the reduced allowance is taxed below 20 % (findings #12, a known
+PolicyEngine issue).
 
 ### Funded hours against PolicyEngine
 
@@ -488,5 +552,5 @@ under 2 in the April term, gets £11,339.20 there, not £10,146).
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
-comparisons (income tax, NICs and HICBC; Universal Credit; funded hours) with
-1,000 random cases each.
+comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, with
+1,000 random cases each; reliefs and allowances).
