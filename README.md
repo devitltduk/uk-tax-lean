@@ -73,41 +73,39 @@ enacted, Finance Act 2026 s5 sets 22 / 42 / 47 % from 6 April 2027. Budget 2026
 
 ## What is proved
 
-In `UkTax/Proofs.lean`, with no `sorry`. `UkTax/Axioms.lean` fails the build if any
-of these theorems ever depends on more than Lean's standard axioms
-(`propext`, `Classical.choice`, `Quot.sound`).
+In `UkTax/Proofs.lean` and `UkTax/Optimal.lean`, with no `sorry`.
+`UkTax/Axioms.lean` fails the build if any of these theorems ever depends on more
+than Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`). Nothing
+is assumed: every result below holds for every income.
 
-Unconditional:
+- `isLeastTax_taxExact`: the search finds the least tax. For every income, the
+  allowance share the model picks gives the least Step 4 tax over every legal
+  way of deducting the allowance, which is what s25(2) asks for. So the computed
+  liability *is* the s25(2) liability, not an upper bound on it.
+- `liability_mono`: the computed `liability` never goes down when any kind of
+  income (non-savings, savings or dividends) goes up. This has to hold through
+  the taper, savings and dividends moving into higher bands, and the savings
+  allowance dropping from £1,000 to £500 to £0 at a cliff edge.
+- `leastTax_mono`: the same for the least tax itself, which is how
+  `liability_mono` is proved.
+- `exists_isLeastTax`: the least tax exists for every income.
+- `bestAlloc_feasible`: the search only picks legal allowance placements.
 
-- `leastTax_mono`: the least tax over all legal ways of deducting the allowance
-  (the s25(2) liability) never goes down when any kind of income goes up. This
-  has to hold through the taper, savings and dividends moving into higher
-  bands, and the savings allowance dropping from £1,000 to £500 to £0 at a
-  cliff edge.
-- `exists_isLeastTax`: that least tax exists for every income, so
-  `leastTax_mono` is not vacuous.
-- `bestAlloc_feasible`: the search only picks legal allowance placements, so the
-  computed liability is never below the least tax.
-- `liability_mono_nonSavings_only`: the computed `liability` is monotone in
-  non-savings income for someone with no savings or dividends (there is only
-  one legal placement, so the search is trivially optimal).
-
-Conditional:
-
-- `liability_mono_of_optimal`: **if** the corner search finds the least tax, the
-  computed `liability` is monotone in every kind of income. That hypothesis is
-  **not proved**. The argument for it is in `UkTax/Calc.lean`, and the golden
-  cases and PolicyEngine comparison check it in practice.
-
-**So for mixed income, the only proved fact about the computed `liability` is
-`bestAlloc_feasible`: it is never below the least tax.** Proving that the search
-is optimal (`∀ i, IsLeastTax i (taxExact i)`) would make the conditional result
-unconditional. It means formalising "a piecewise-linear function on a polygon
-is least at a corner" for this tax, which is left for later.
+How the optimality proof works (details at the top of `UkTax/Optimal.lean`): with
+the income fixed, a way of sharing the allowance is a point `(x, w)` (non-savings
+income left, and that plus savings left), and Step 4 tax is a sum of band-tax
+terms that are linear between a short list of lines. Away from those lines the
+tax has a zero second difference, so along any line segment it is least at an
+end or on another line. Moving first along `x` and then along `w` takes any legal
+share to a crossing of two lines with no more tax, and the search tries every
+such crossing. The proof uses only Lean's core `omega` tactic; Mathlib is not
+needed.
 
 ## Running it
 
 Lean is pinned in `lean-toolchain`, and there are no dependencies (no Mathlib).
+If elan is not installed, install it into the checkout with
+`ELAN_HOME=$PWD/.elan` (ignored by git) so toolchains stay inside it.
 
 ```sh
 lake build --wfail            # model, proofs, axiom guard and the uktax binary
