@@ -73,6 +73,7 @@ def result (c : Case) : Json :=
     ("tax_exact_ten_thousandths_pence", toJson (taxExact i)),
     ("personal_allowance_pence", toJson i.personalAllowance),
     ("savings_allowance_pence", toJson (savingsAllowanceFor (i.total - i.allowanceUsed))),
+    ("step3_income_pence", toJson (i.total - i.allowanceUsed)),
     ("allowance_against_savings_pence", toJson a.toSavings),
     ("allowance_against_dividends_pence", toJson a.toDividends),
     ("nic_exact_ten_thousandths_pence", toJson nic),
