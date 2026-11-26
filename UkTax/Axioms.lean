@@ -4,6 +4,7 @@ import UkTax.Cliffs
 import UkTax.Benefits
 import UkTax.Profits
 import UkTax.Nics
+import UkTax.Disability
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -122,3 +123,39 @@ today, so any change to it is seen.
 /-- info: 'UkTax.capApplies_anti' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.capApplies_anti
+
+/-- info: 'UkTax.caYear_anti' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.caYear_anti
+
+/-- info: 'UkTax.caYear_change' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.caYear_change
+
+/-- info: 'UkTax.caYear_cliff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.caYear_cliff
+
+/-- info: 'UkTax.netCa_drop_only_at_steps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.netCa_drop_only_at_steps
+
+/-- info: 'UkTax.netCarer_drop_only_at_steps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.netCarer_drop_only_at_steps
+
+/-- info: 'UkTax.ma_threshold_cliff' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.ma_threshold_cliff
+
+/-- info: 'UkTax.ma_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ma_mono
+
+/-- info: 'UkTax.jsa_total_succ' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.jsa_total_succ
+
+/-- info: 'UkTax.esa_total_gain' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.esa_total_gain

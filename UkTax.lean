@@ -7,4 +7,5 @@ import UkTax.Optimal
 import UkTax.Charges
 import UkTax.Cliffs
 import UkTax.Benefits
+import UkTax.Disability
 import UkTax.Axioms

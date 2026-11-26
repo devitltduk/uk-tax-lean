@@ -46,6 +46,14 @@ CHECKED = (
     "funded_hours_millionths_pence",
     "childcare_eligible",
     "net_income_millionths_pence",
+    "child_benefit_pence",
+    "disability_benefits_pence",
+    "carers_allowance_pence",
+    "net_income_carer_ten_thousandths_pence",
+    "maternity_allowance_weekly_tenths_pence",
+    "jsa_contrib_weekly_pence",
+    "esa_contrib_weekly_tenths_pence",
+    "ssmg_pence",
 )
 
 failures = 0

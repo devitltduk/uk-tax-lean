@@ -32,7 +32,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P2 | Reliefs and allowances | net pay pension contributions, Marriage Allowance, married couple's allowance, Blind Person's Allowance, trading and property allowances, rent-a-room relief, self-employment and property profits (**done**) |
 | P3 | NICs completeness | Class 2, 3 and 4, employer Class 1, Class 1A (**done**) |
 | P4 | Universal Credit in full (**done**, except self-employment and the minimum income floor) | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
-| P5 | Other means-tested and disability benefits | Housing Benefit, legacy benefits still in payment, Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant |
+| P5 | Other means-tested and disability benefits | Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant (P5a, **done**); Housing Benefit and legacy benefits still in payment (P5b) |
 | P6 | Pensions | State Pension (new and basic), Pension Credit |
 | P7 | Council tax | council tax, Council Tax Reduction |
 | P8 | CGT, property taxes and the remaining income tax reliefs | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
@@ -87,17 +87,17 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | UC: two earners, self-employment, minimum income floor | `uc_earned_income`, `uc_minimum_income_floor` | SI 2013/376 regs 52-64 | **done** for two earners (P4: the partner's earned income fixed); self-employment and the minimum income floor planned (P4b) |
 | Benefit cap | `benefit_cap_reduction`, `uc_benefit_cap`, `housing_benefit_benefit_cap_reduction` | Welfare Reform Act 2012 s96; SI 2013/376 regs 78-83; SI 2006/213 Part 8A | **done** for UC (P4: amounts, the earnings exception, LCWRA, carer and other exemptions, the childcare reduction of reg 81; the grace period not modelled); Housing Benefit's cap with P5 |
 | UC deductions (advances, debts) | `uc_deductions`, `uc_deduction_*` | SI 2013/380 Sch 6 | out of scope: driven by imputed debts and random draws, not the entitlement |
-| Child Benefit | `child_benefit`, `child_benefit_respective_amount` | SSCBA 1992 ss 141-147; SI 2006/965 | planned (P5; now an input) |
-| Housing Benefit | `housing_benefit` and 45 components | SSCBA 1992 s130; SI 2006/213; SI 2006/214 | planned (P5) |
-| Income Support, income-based JSA, income-related ESA, tax credits | `income_support`, `jsa_income`, `esa_income`, `tax_credits` | SSCBA 1992 s124; Jobseekers Act 1995; Welfare Reform Act 2007; Tax Credits Act 2002 | planned (P5: those PolicyEngine still pays in 2026-27); tax credits out of scope: ended 5 April 2025 |
-| Contribution-based JSA and ESA | `jsa_contrib`, `esa_contrib` | Jobseekers Act 1995; Welfare Reform Act 2007; SI 2013/378, SI 2013/379 | planned (P5) |
-| Personal Independence Payment | `pip`, `pip_dl`, `pip_m` | Welfare Reform Act 2012 Part 4; SI 2013/377 | planned (P5) |
-| Disability Living Allowance | `dla`, `dla_sc`, `dla_m` | SSCBA 1992 ss 71-76 | planned (P5) |
-| Attendance Allowance | `attendance_allowance` | SSCBA 1992 ss 64-67 | planned (P5) |
-| Severe Disablement Allowance | `sda` | SSCBA 1992 s68 (closed to new claims) | planned (P5) |
-| Carer's Allowance | `carers_allowance` | SSCBA 1992 s70; SI 1976/409; SI 1979/597 | planned (P5) |
-| Maternity Allowance | `maternity_allowance` | SSCBA 1992 ss 35, 35A | planned (P5) |
-| Sure Start Maternity Grant | `ssmg` | SI 2005/3061 | planned (P5) |
+| Child Benefit | `child_benefit`, `child_benefit_respective_amount` | SSCBA 1992 ss 141-147; SI 2006/965 reg 2 (SI 2026/232) | **done** (P5a: 53 weeks in 2026-27, findings #19; the eligibility of each child is the caller's) |
+| Housing Benefit | `housing_benefit` and 45 components | SSCBA 1992 s130; SI 2006/213; SI 2006/214 | planned (P5b) |
+| Income Support, income-based JSA, income-related ESA, tax credits | `income_support`, `jsa_income`, `esa_income`, `tax_credits` | SSCBA 1992 s124; Jobseekers Act 1995; Welfare Reform Act 2007; Tax Credits Act 2002 | planned (P5b: those PolicyEngine still pays in 2026-27); tax credits out of scope: ended 5 April 2025 |
+| Contribution-based JSA and ESA | `jsa_contrib`, `esa_contrib` | Jobseekers Act 1995; Welfare Reform Act 2007; SI 2013/378 regs 49-52, SI 2013/379 regs 62, 67 | **done** (P5a, new style: weekly award from earnings and pensions; PolicyEngine takes reported amounts, findings #20) |
+| Personal Independence Payment | `pip`, `pip_dl`, `pip_m` | Welfare Reform Act 2012 Part 4; SI 2013/377 reg 24 | **done** (P5a: the rate of each component is an input, the assessment being outside the calculation) |
+| Disability Living Allowance | `dla`, `dla_sc`, `dla_m` | SSCBA 1992 ss 71-76; SI 1991/2890 reg 4 | **done** (P5a, rates as inputs; the s73(1A) mobility ages are the caller's) |
+| Attendance Allowance | `attendance_allowance` | SSCBA 1992 ss 64-67 | **done** (P5a, rate as an input) |
+| Severe Disablement Allowance | `sda` | SSCBA 1992 s68 (closed to new claims) | out of scope: closed to new claims since 2001; PolicyEngine pays its maximum (the basic rate with the highest age addition, `gov.dwp.sda.maximum`) to anyone reporting it |
+| Carer's Allowance | `carers_allowance` | SSCBA 1992 s70; SI 1976/409 reg 8 (SI 2026/218); SI 1979/597 reg 12; SI 1996/2745 regs 5, 10 | **done** (P5a: the earnings limit on net earnings from pay, overlapping benefits as an input, the cliff in net income proved; not with UC yet) |
+| Maternity Allowance | `maternity_allowance` | SSCBA 1992 ss 35, 35A | **done** (P5a, weekly rate from average weekly earnings; PolicyEngine takes it as reported, findings #20) |
+| Sure Start Maternity Grant | `ssmg` | SI 2005/3061 regs 5, 5A | **done** (P5a, without the multiple-birth and refugee exceptions; PolicyEngine pays it on reported receipt, findings #20) |
 | Statutory Sick, Maternity and Paternity Pay | budget terms only (inputs) | SSCBA 1992 Parts XI, XII, XIIZA | out of scope: PolicyEngine takes them as inputs |
 | Bereavement, industrial injuries, war pensions, Armed Forces Compensation | budget terms only (inputs) | various | out of scope: PolicyEngine takes them as inputs |
 | State Pension (new and basic, additional, age addition) | `state_pension`, `new_state_pension`, `basic_state_pension`, `additional_state_pension` | Pensions Act 2014 Part 1; SSCBA 1992 ss 44-45, 78-79 | planned (P6) |
@@ -123,7 +123,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Carer Support Payment, Scottish Carer's Allowance Supplement | `carer_support_payment`, `scottish_carer_supplement` | Social Security (Scotland) Act 2018 s81 (supplement); SSI 2023/302 | planned (P9) |
 | Pension Age Winter Heating Payment | `pension_age_winter_heating_payment` | Social Security (Scotland) Act 2018 s30; SSI 2024/351 | planned (P9) |
 | Scottish two-child limit payment | `two_child_limit_payment` | Scottish Government scheme | planned (P9): check whether anything is payable in 2026-27, since the UC two-child limit it makes up for was removed from 6 April 2026 (Universal Credit (Removal of Two Child Limit) Act 2026) |
-| Adult and Child Disability Payment (Scotland) | modelled through `pip`, `dla` | SSI 2022/54; SSI 2021/174 | planned (P5, as PIP and DLA) |
+| Adult and Child Disability Payment (Scotland) | modelled through `pip`, `dla` | SSI 2022/54; SSI 2021/174 | **done** as PIP and DLA (P5a; the same weekly rates) |
 
 ## Local taxes and support
 
