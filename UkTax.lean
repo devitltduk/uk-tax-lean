@@ -4,4 +4,5 @@ import UkTax.Proofs
 import UkTax.Optimal
 import UkTax.Charges
 import UkTax.Cliffs
+import UkTax.Benefits
 import UkTax.Axioms

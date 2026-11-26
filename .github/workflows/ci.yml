@@ -48,8 +48,13 @@ jobs:
       - name: Compare
         working-directory: harness
         run: uv run --frozen python compare.py --binary ../bin/uktax --random 1000
+      - name: Compare Universal Credit
+        working-directory: harness
+        run: uv run --frozen python compare_uc.py --binary ../bin/uktax --random 1000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: comparison
-          path: harness/out/comparison.csv
+          path: |
+            harness/out/comparison.csv
+            harness/out/compare_uc.csv

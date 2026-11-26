@@ -1,19 +1,21 @@
 """Map where earning more lowers net income, for a few household types (2026-27).
 
 Net income = gross income - income tax - employee NICs - High Income Child
-Benefit Charge + Child Benefit, exact, in 1/10 000 of a penny, from the `uktax`
-binary. Pay varies; each household's savings, dividends and Child Benefit are
-fixed; NICs on the annual basis.
+Benefit Charge + Child Benefit + the better of Universal Credit and Tax-Free
+Childcare + funded hours: the `netAll` of UkTax/Benefits.lean, exact, in
+1/1 000 000 of a penny, read from the `uktax` binary. Pay varies; each
+household's savings, dividends, Child Benefit and claims are fixed; NICs on the
+annual basis.
 
-Completeness comes from the Lean theorem `net_drop_only_at_steps`
-(UkTax/Cliffs.lean): one more penny of pay can lower net income only at a step
-of the personal allowance (total income reaching a multiple of £2 in
-(£100,000, £125,140]), of the HICBC (a multiple of £200 in [£60,200, £80,000],
-with Child Benefit) or of the personal savings allowance (Step 3 income at
-£37,700 or £125,140). This script lists every such penny, so it checks every
-place a drop can happen and finds the drops exactly; it samples nothing. Between
-steps the theorem also gives net income rising by at least 0.234p per penny
-(`net_succ_ge`), which is what makes the recovery search below exact.
+Completeness comes from the Lean theorem `netAll_drop_only_at_steps`: one more
+penny of pay can lower net income only at a step of the personal allowance
+(total income reaching a multiple of £2 in (£100,000, £125,140]), of the HICBC
+(a multiple of £200 in [£60,200, £80,000], with Child Benefit), of the personal
+savings allowance (Step 3 income at £37,700 or £125,140), or where adjusted net
+income goes over £100,000 (Tax-Free Childcare and funded hours). This script
+lists every such penny, so it checks every place a drop can happen and finds
+the drops exactly; it samples nothing. Between steps net income never falls
+(`netAll_between_steps`), which is what makes the recovery search below exact.
 
 For each drop it reports the size, and the "trap": the pay range above the step
 where net income is below what it was just before the step, i.e. where earning
@@ -38,7 +40,7 @@ from dataclasses import dataclass
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 DEFAULT_BINARY = ROOT / ".lake/build/bin/uktax"
-UNIT = 10_000  # net income is in 1/10 000 of a penny
+UNIT = 1_000_000  # net income is in 1/1 000 000 of a penny
 MAX_PAY = 20_000_000  # £200,000: above £125,140 + savings + dividends there are no steps
 
 BRL = 3_770_000
@@ -55,11 +57,17 @@ class Household:
     savings: int = 0
     dividends: int = 0
     children: int = 0
+    uc: bool = False
+    childcare_costs: tuple[int, ...] = ()
 
     @property
     def cb(self) -> int:
         return CB[self.children]
 
+
+# Childcare costs for Tax-Free Childcare are an illustrative assumption: £10,000 a
+# year per child, enough to reach the £2,000 top-up cap (20 % of £10,000).
+CHILDCARE = 1_000_000
 
 HOUSEHOLDS = [
     Household("single", "Single, pay only"),
@@ -72,6 +80,21 @@ HOUSEHOLDS = [
         savings=200_000,
         dividends=1_000_000,
         children=2,
+    ),
+    Household("uc_single", "Single, Universal Credit", uc=True),
+    Household(
+        "uc_one_child",
+        "Lone parent, 1 child, UC or Tax-Free Childcare",
+        children=1,
+        uc=True,
+        childcare_costs=(CHILDCARE,),
+    ),
+    Household(
+        "uc_three_children",
+        "Lone parent, 3 children (2 in childcare), UC or Tax-Free Childcare",
+        children=3,
+        uc=True,
+        childcare_costs=(CHILDCARE, CHILDCARE),
     ),
 ]
 
@@ -88,16 +111,15 @@ class Model:
         todo = sorted({g for g in pays if g not in self.cache})
         if not todo:
             return
-        payload = [
-            {
-                "non_savings_pence": g,
-                "employment_pence": g,
-                "savings_pence": self.h.savings,
-                "dividends_pence": self.h.dividends,
-                "child_benefit_pence": self.h.cb,
-            }
-            for g in todo
-        ]
+        base = {
+            "savings_pence": self.h.savings,
+            "dividends_pence": self.h.dividends,
+            "child_benefit_pence": self.h.cb,
+            "childcare_costs_pence": list(self.h.childcare_costs),
+        }
+        if self.h.uc:
+            base["uc"] = {"couple": False, "children": self.h.children}
+        payload = [{"non_savings_pence": g, "employment_pence": g, **base} for g in todo]
         out = subprocess.run(
             [str(self.binary)], input=json.dumps(payload), capture_output=True, text=True, check=True
         ).stdout
@@ -106,15 +128,7 @@ class Model:
 
     def net(self, g: int) -> int:
         self.fetch([g])
-        r = self.cache[g]
-        gross = g + self.h.savings + self.h.dividends
-        return (
-            UNIT * gross
-            + UNIT * self.h.cb
-            - r["tax_exact_ten_thousandths_pence"]
-            - r["nic_exact_ten_thousandths_pence"]
-            - UNIT * r["hicbc_pence"]
-        )
+        return self.cache[g]["net_income_millionths_pence"]
 
     def step3(self, g: int) -> int:
         self.fetch([g])
@@ -151,6 +165,8 @@ def step_pennies(m: Model) -> dict[int, str]:
     if h.cb:
         for k in range(100):
             add(6_020_000 + 20_000 * k, "HICBC")
+    if h.childcare_costs:
+        add(10_000_001, "childcare (£100,000)")
     for limit in (BRL, HRL):
         g = first_at_least(m, limit, 0, MAX_PAY)
         if g is not None and m.step3(g) == limit:
@@ -226,21 +242,21 @@ def seed_checks(binary: pathlib.Path) -> list[str]:
     # plus 0.4p tax and 0.02p NICs on the penny itself, less the penny: 39.42p.
     if len(drops) != 12_570:
         fails.append(f"single: expected 12,570 drops (one per £1 of allowance), got {len(drops)}")
-    if {d.drop for d in drops} != {394_200}:
+    if {d.drop for d in drops} != {39_420_000}:
         fails.append(f"single: expected every drop to be 39.42p, got {sorted({d.drop for d in drops})[:5]}")
     if {d.kind for d in drops} != {"personal allowance"}:
         fails.append(f"single: unexpected kinds {sorted({d.kind for d in drops})}")
     # £100,000 -> £125,140: 60% income tax (40% + half the allowance at 40%) and 2%
     # NICs, so net income rises by 38% of £25,140 = £9,553.20.
     rise = single.net(12_514_000) - single.net(10_000_000)
-    if rise != 955_320 * UNIT:
+    if rise != 955_320 * UNIT:  # pence
         fails.append(f"single: £100,000 to £125,140 net rise {rise / UNIT}p, expected 955,320p")
     one = Model(binary, HOUSEHOLDS[1])
     d1 = {d.pay: d for d in find_drops(one)}
     # £60,199.99 -> £60,200: HICBC 1% of £1,406 = £14 (whole pounds), less the
     # penny after 40% tax and 2% NICs: 1 - 0.4 - 0.02 - 1,400 = -1,399.42p.
     first = d1.get(6_019_999)
-    if first is None or first.kind != "HICBC" or first.drop != 13_994_200:
+    if first is None or first.kind != "HICBC" or first.drop != 1_399_420_000:
         fails.append(f"one child: drop at £60,200 should be £13.9942, got {first}")
     if sum(1 for d in d1.values() if d.kind == "HICBC") != 100:
         fails.append("one child: expected 100 HICBC drops")
@@ -253,9 +269,8 @@ def write_svg(series: dict[str, list[tuple[int, float]]], labels: dict[str, str]
     W, PH, GAP, L, R, T = 760, 140, 58, 56, 16, 48
     n = len(series)
     H = T + n * (PH + GAP)
-    xmax, ymin = 15_000_000, 0.0
-    peak = max(y for pts in series.values() for _, y in pts)
-    ymax = max(1.2, (int(peak * 5) + 1) / 5)  # never clip: round the top up to 20 %
+    # Fixed 0-120 % scale; any window above it is marked with an arrow and its value.
+    xmax, ymin, ymax = 15_000_000, 0.0, 1.2
     ink, sub, grid, base, blue = "#1f1f1f", "#666666", "#e7e7e7", "#c2c2c2", "#257de0"
     out = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
@@ -263,7 +278,7 @@ def write_svg(series: dict[str, list[tuple[int, float]]], labels: dict[str, str]
         f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
         f'<text x="{L}" y="18" font-size="14" fill="{ink}" font-weight="600">Effective marginal rate on '
         "£200 more pay, 2026-27</text>",
-        f'<text x="{L}" y="34" fill="{sub}">Income tax + employee NICs + HICBC, net of Child Benefit; '
+        f'<text x="{L}" y="34" fill="{sub}">Income tax + NICs + HICBC, less Child Benefit, UC and Tax-Free Childcare; '
         "above 100% the extra £200 leaves the household worse off</text>",
     ]
     for k, (key, pts) in enumerate(series.items()):
@@ -281,6 +296,15 @@ def write_svg(series: dict[str, list[tuple[int, float]]], labels: dict[str, str]
                        f"£{x // 100_000}k</text>")
         d = " ".join(f"{'M' if i == 0 else 'L'}{sx(x):.1f},{sy(y):.1f}" for i, (x, y) in enumerate(pts))
         out.append(f'<path d="{d}" fill="none" stroke="{blue}" stroke-width="1.5" stroke-linejoin="round"/>')
+        for x, y in pts:
+            if y > ymax:
+                cx, cy = sx(x), sy(ymax)
+                out.append(f'<path d="M{cx - 4:.1f},{cy + 2:.1f} L{cx:.1f},{cy - 5:.1f} L{cx + 4:.1f},{cy + 2:.1f} Z" '
+                           f'fill="{blue}"/>')
+                left = cx > 0.7 * W  # keep the label inside the chart
+                tx, anchor = (cx - 7, "end") if left else (cx + 7, "start")
+                out.append(f'<text x="{tx:.1f}" y="{cy + 3:.1f}" text-anchor="{anchor}" fill="{ink}">'
+                           f"{y * 100:,.0f}% (£{x / 100:,.0f} to £{(x + WINDOW) / 100:,.0f})</text>")
     out.append("</svg>")
     path.write_text("\n".join(out) + "\n")
 
@@ -305,10 +329,15 @@ def main() -> int:
         "",
         "Generated by `harness/cliffs.py`; do not edit by hand. Net income is gross income less",
         "income tax, employee NICs (annual basis) and the High Income Child Benefit Charge, plus",
-        "Child Benefit (52 weeks at £27.05 / £17.90). Pay varies; everything else is fixed.",
+        "Child Benefit (52 weeks at £27.05 / £17.90), plus, where claimed, the better of Universal",
+        "Credit and Tax-Free Childcare (childcare costs £10,000 a year per child, an illustrative",
+        "assumption). Pay varies; everything else is fixed. The funded hours for working parents",
+        "are lost at the same £100,000 as Tax-Free Childcare, but they are in kind and no value is",
+        "assumed here, so their cliff is not in these tables: it adds their value to the",
+        "£100,000 drop, and lengthens the trap by about that value divided by 0.38.",
         "",
         "Every penny where net income can fall is listed by the Lean theorem",
-        "`net_drop_only_at_steps`, so these tables are complete within the model for each",
+        "`netAll_drop_only_at_steps`, so these tables are complete within the model for each",
         "household, at every pay. A *drop* is the fall in net income from one more penny of pay. The",
         "*trap* is the pay range above the step where net income stays below its level just before",
         "the step.",
@@ -327,7 +356,7 @@ def main() -> int:
                     "kind": d.kind,
                     "pay_pence": d.pay + 1,
                     "total_income_pence": d.pay + 1 + h.savings + h.dividends,
-                    "drop_ten_thousandths_pence": d.drop,
+                    "drop_millionths_pence": d.drop,
                     "trap_end_pay_pence": d.trap_end,
                     "trap_width_pence": d.trap_end - (d.pay + 1),
                 }
@@ -337,7 +366,7 @@ def main() -> int:
             md += ["No drops.", ""]
             continue
         md += ["| kind | where (pay reaching) | drops | each drop | trap after each step |", "|---|---|---|---|---|"]
-        for kind in ("savings allowance", "HICBC", "personal allowance"):
+        for kind in ("savings allowance", "HICBC", "childcare (£100,000)", "personal allowance"):
             ds = [d for d in drops if d.kind == kind]
             if not ds:
                 continue
@@ -360,8 +389,9 @@ def main() -> int:
         "",
         "The rate on each £200 of pay from £0 to £150,000 is in `emr.csv` (the chart's table view);",
         "£200 windows hold one HICBC step each, so the HICBC band shows as a level rate.",
-        "Between steps the rate on a penny is at most 76.6 % (`net_succ_ge`); a rate above 100 %",
-        "occurs only on the step pennies above.",
+        "Without benefits the rate on a penny between steps is at most 76.6 % (`net_succ_ge`);",
+        "with UC tapering, 55 % of what is left on top makes at most 89.5 %. A rate above 100 % occurs only",
+        "on the step pennies above.",
         "",
     ]
     (args.docs / "cliffs.md").write_text("\n".join(md))

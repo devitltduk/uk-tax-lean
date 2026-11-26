@@ -1,8 +1,9 @@
 # uk-tax-lean
 
-UK income tax, employee National Insurance and the High Income Child Benefit
-Charge for 2026-27, for taxpayers in England, Wales and Northern Ireland (not
-Scottish taxpayers), formalised in Lean 4, with proofs about it and a harness that checks it against
+UK income tax, employee National Insurance, the High Income Child Benefit
+Charge, a minimal Universal Credit and the £100,000 childcare cliff for 2026-27,
+for taxpayers in England, Wales and Northern Ireland (not Scottish taxpayers;
+childcare rules are England's), formalised in Lean 4, with proofs about it and a harness that checks it against
 [PolicyEngine UK](https://github.com/PolicyEngine/policyengine-uk).
 
 ## What is modelled
@@ -85,6 +86,27 @@ over £60,000, up to 100 %. The Child Benefit, the percentage and the charge are
 each rounded down to a whole number (s681C(3)). Adjusted net income is total
 income, since no reliefs are modelled.
 
+### Universal Credit (minimal)
+
+`UkTax/Benefits.lean`. Standard allowance (single or joint, 25 or over), child
+element for children born on or after 6 April 2017 with no two-child limit (reg
+24A was revoked from April 2026), the higher work allowance for a claimant
+responsible for a child, and the 55 % taper on earned income, which is pay less
+income tax and employee NICs (SI 2013/376 reg 55(5)). Pay is taken as equal each
+month, so the yearly award is twelve times the monthly one. Pay only: no savings,
+dividends or other income for UC households.
+
+### Tax-Free Childcare and the funded hours (England)
+
+A lone parent is eligible when they expect to earn at least £10,574.72 a year
+(16 hours a week at the £12.71 National Living Wage, as £2,643.68 a quarter) and
+their adjusted net income is not over £100,000. Tax-Free Childcare adds 20 % of
+each child's childcare costs (£2 for every £8 paid in), up to £2,000 a child a
+year. It can't be had with Universal Credit, so net income counts whichever is
+larger. The working-parent funded hours are lost at the same £100,000; they are
+in kind, so their yearly value is an input (`funded_hours_value_pence`) with no
+default figure.
+
 ### 2026-27 figures for NICs and HICBC
 
 Checked against legislation.gov.uk and GOV.UK on 2026-11-26; each is in
@@ -97,12 +119,23 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26; each is in
 | Main / additional primary rate | 8 % / 2 % | [SSCBA 1992 s8](https://www.legislation.gov.uk/ukpga/1992/4/section/8) |
 | HICBC threshold, step | £60,000, 1 % per £200 | [ITEPA 2003 s681C](https://www.legislation.gov.uk/ukpga/2003/1/section/681C) (F(No. 2)A 2024 s5); [GOV.UK](https://www.gov.uk/child-benefit-tax-charge) |
 | Child Benefit (examples only) | £27.05 eldest, £17.90 others, per week | [GOV.UK rates by tax year](https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance) |
+| UC standard allowance, 25 or over | £424.90 single, £666.97 joint, per month | [SI 2013/376 reg 36](https://www.legislation.gov.uk/uksi/2013/376/regulation/36) (SI 2026/113); [GOV.UK benefit rates 2026 to 2027](https://www.gov.uk/government/publications/benefit-and-pension-rates-2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027) |
+| UC child element | £303.94 per child per month, no two-child limit | reg 36 (SI 2026/148 Sch 13); [Universal Credit (Removal of Two Child Limit) Act 2026 s1](https://www.legislation.gov.uk/ukpga/2026/13) |
+| UC higher work allowance, taper | £710 a month, 55 % | [reg 22](https://www.legislation.gov.uk/uksi/2013/376/regulation/22) ([SI 2026/148 art 32](https://www.legislation.gov.uk/uksi/2026/148/article/32/made)) |
+| Childcare income limit | adjusted net income over £100,000 | [SI 2015/448 reg 15](https://www.legislation.gov.uk/uksi/2015/448/regulation/15); [GOV.UK funded hours](https://www.gov.uk/free-childcare-if-working/check-youre-eligible) |
+| Childcare minimum earnings | £2,643.68 a quarter (21 or over) | [GOV.UK](https://www.gov.uk/tax-free-childcare/check-if-youre-eligible); NLW £12.71 [GOV.UK](https://www.gov.uk/national-minimum-wage-rates) |
+| Tax-Free Childcare top-up | £2 per £8 paid in, up to £2,000 a child a year | [GOV.UK](https://www.gov.uk/tax-free-childcare) |
 
 ## Out of scope
 
 Scottish rates (Welsh rates are in scope only because they equal the rUK rates
 in 2026-27), National Insurance other than employee Class 1 primary contributions
-(employer, self-employed, voluntary, other category letters), reliefs and deductions (pension
+(employer, self-employed, voluntary, other category letters), Universal Credit
+beyond the minimal model (housing, childcare, disability and carer elements,
+capital, unearned income, the benefit cap, the minimum income floor, under-25
+rates, the first-child rate for children born before 6 April 2017, monthly
+rounding, couples where both work), Tax-Free Childcare for couples and for
+disabled children, legacy benefits, reliefs and deductions (pension
 contributions, Gift Aid, losses, the trading and property allowances), Marriage
 Allowance and Blind Person's Allowance, other tax reductions, property income's
 own rates (from 2027-28), the default rates for non-residents, top-slicing relief,
@@ -145,6 +178,11 @@ is assumed: every result below holds for every income.
   It rests on `taxExact_succ_le` (with both allowances fixed, a penny more pay
   adds at most 0.686p of income tax) and `net_succ_ge` (between steps net income
   rises at least 0.234p per penny, so the marginal rate there is at most 76.6 %).
+- `netAll_drop_only_at_steps` (`UkTax/Benefits.lean`): the same with Universal
+  Credit, Tax-Free Childcare (whichever is larger) and the funded hours added,
+  with one more kind of step: adjusted net income going over £100,000.
+  `earned_plus_uc_mono`: earned income plus UC never falls as earned income
+  rises (the taper is 55 %).
 
 How the optimality proof works (details at the top of `UkTax/Optimal.lean`): with
 the income fixed, a way of sharing the allowance is a point `(x, w)` (non-savings
@@ -197,11 +235,12 @@ adjusted net income.
 
 ### Where earning more lowers net income
 
-`python3 harness/cliffs.py` writes [`docs/cliffs.md`](docs/cliffs.md) (every drop,
+`python3 harness/cliffs.py` (about 2 minutes) writes [`docs/cliffs.md`](docs/cliffs.md) (every drop,
 by household type, with its size and the pay range after it where net income stays
 lower) and [`docs/emr.svg`](docs/emr.svg) with its table `docs/emr.csv` (effective
-marginal rates on each £200 of pay). It evaluates net income exactly at every
-step penny that `net_drop_only_at_steps` allows, so the list is complete within
+marginal rates on each £200 of pay). Net income there is the proved `netAll`, read from
+`uktax` (`net_income_millionths_pence`), and the script evaluates it exactly at every
+step penny that `netAll_drop_only_at_steps` allows, so the list is complete within
 the model; nothing is sampled. CI checks that the docs match the model, and the
 script's seed checks hold figures worked out by hand: every personal allowance
 step costs 39.42p, £100,000 to £125,140 keeps exactly 38 % (the 60 % band plus
@@ -220,6 +259,14 @@ What it finds, for 2026-27:
 - **Personal savings allowance**: with savings income, crossing the basic rate
   limit costs £100 (£500 of interest moving from 0 % to 20 %) and crossing
   £125,140 costs £200 (£500 at 40 %), with traps of about £140 to £380 of pay.
+- **The £100,000 childcare cliff**: going 1p over £100,000 of adjusted net income
+  loses Tax-Free Childcare, £1,999.99 with one child in £10,000 of childcare and
+  £3,999.99 with two, and net income stays below its level at £100,000 for the
+  next £5,263 / £10,526 of pay (the loss divided by the 38 % kept in the 60 % band).
+  The funded hours go at the same penny and add their value to the drop.
+- **Universal Credit** adds no drops: the 55 % taper on top of tax and NICs takes
+  at most 89.5 % of a penny between steps, and moving between UC and Tax-Free
+  Childcare is smooth because the household takes the larger.
 - No other drops, for any household of this form.
 
 ## Comparing with PolicyEngine UK
@@ -262,8 +309,23 @@ It runs in CI as well (about 30 s for 3,000 cases). Latest local run:
 `libstdc++`: run with `LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH` (nix-ld) or from a
 shell that provides it.
 
+### Universal Credit against PolicyEngine
+
+`uv run python compare_uc.py` compares the award for a single claimant with 0 to
+4 children and a one-earner couple with 0 to 3 children, from £0 to £80,000 of
+pay. Latest local run: 5,603 cases (2,729 with UC paid), all within 2 float32
+steps plus 0.176p (55 % of the NIC threshold gap above); largest difference 0.43p.
+
+By default PolicyEngine treats the couple as married and claiming the Marriage
+Allowance (its `would_claim_marriage_allowance` take-up flag), which gives the
+earner £1,260 of the partner's allowance: £252 less tax and £138.60 more UC a
+year. That's a default, not an error. The model has no Marriage Allowance, so the
+harness sets it to 0 for couples.
+
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
-proofs and the axiom guard, runs the golden cases, then runs the PolicyEngine
-comparison with 1,000 random cases.
+proofs and the axiom guard, runs the golden cases, regenerates the cliff map
+(failing if `docs/` no longer matches the model), then runs the PolicyEngine
+comparisons (income tax, NICs and HICBC; Universal Credit) with 1,000 random cases
+each.
