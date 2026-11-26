@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Compare the Lean model of 2026-27 UK income tax with PolicyEngine UK"
 requires-python = ">=3.12,<3.14"
 dependencies = [
+    "numpy",
     "policyengine-uk==2.180.2",
 ]
 

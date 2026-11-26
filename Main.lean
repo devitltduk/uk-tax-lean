@@ -8,9 +8,12 @@ Input: one object, or an array of objects, with whole-pence amounts:
 
     {"non_savings_pence": 5000000, "savings_pence": 0, "dividends_pence": 0}
 
-Output (an array for an array input):
+Output (an array for an array input). `liability_pence` is the liability rounded
+down to the penny; `tax_exact_ten_thousandths_pence` is the exact, unrounded tax
+in units of 1/10 000 of a penny.
 
-    {"liability_pence": 748600, "personal_allowance_pence": 1257000,
+    {"liability_pence": 748600, "tax_exact_ten_thousandths_pence": 7486000000,
+     "personal_allowance_pence": 1257000,
      "savings_allowance_pence": 100000, "allowance_against_savings_pence": 0,
      "allowance_against_dividends_pence": 0}
 -/
@@ -28,6 +31,7 @@ def result (i : Income) : Json :=
   let a := i.bestAlloc
   Json.mkObj [
     ("liability_pence", toJson (liability i)),
+    ("tax_exact_ten_thousandths_pence", toJson (taxExact i)),
     ("personal_allowance_pence", toJson i.personalAllowance),
     ("savings_allowance_pence", toJson (savingsAllowanceFor (i.total - i.allowanceUsed))),
     ("allowance_against_savings_pence", toJson a.toSavings),
