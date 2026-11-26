@@ -152,5 +152,38 @@
       "dividends_pence": 4000000
     },
     "liability_pence": 289497
+  },
+  {
+    "name": "Only dividends cross the basic rate limit, cutting the savings allowance to 500",
+    "source": "ITA 2007 s12B(3), s12B(8)(b)(i) (dividend upper rate income is higher-rate income)",
+    "working": "Step 3 income 38,430 (> 37,700 only because of dividends), so PSA 500. Wages 17,430 x 20% = 3,486; savings from 17,430: 500 at 0%, 500 x 20% = 100; dividends from 18,430: 500 at 0%, 18,770 x 10.75% = 2,017.775, 730 x 35.75% = 260.975; total 5,864.75 (a 1,000 PSA would give 5,764.75)",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 100000,
+      "dividends_pence": 2000000
+    },
+    "liability_pence": 586475
+  },
+  {
+    "name": "Step 3 income exactly 125,140: no additional-rate income, savings allowance 500",
+    "source": "ITA 2007 s35, s12B(3)",
+    "working": "allowance tapered to nil; wages 124,140: 7,540 + 86,440 x 40% = 42,116; savings from 124,140: 500 at 0%, 500 x 40% = 200; total 42,316",
+    "input": {
+      "non_savings_pence": 12414000,
+      "savings_pence": 100000,
+      "dividends_pence": 0
+    },
+    "liability_pence": 4231600
+  },
+  {
+    "name": "One penny over 125,140: additional-rate income, savings allowance nil",
+    "source": "ITA 2007 s12B(2)",
+    "working": "wages 42,116; savings 1,000 x 40% = 400, 0.01 x 45% = 0.0045p; total 42,516.0045 rounded down",
+    "input": {
+      "non_savings_pence": 12414000,
+      "savings_pence": 100001,
+      "dividends_pence": 0
+    },
+    "liability_pence": 4251600
   }
 ]

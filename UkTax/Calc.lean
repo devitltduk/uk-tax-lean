@@ -3,9 +3,14 @@ import UkTax.Params
 /-!
 # The income tax calculation (ITA 2007 s23), 2026-27, rUK rates
 
-Scope: an individual who is not a Scottish or Welsh taxpayer, whose net income is
+Scope: an individual in England, Wales or Northern Ireland (not a Scottish
+taxpayer), whose net income is
 made up of non-savings, savings and dividend income, with no reliefs (so total
-income = net income = adjusted net income) and no tax reductions.
+income = net income = adjusted net income) and no tax reductions. Welsh
+taxpayers are covered because for 2026-27 every Welsh rate is 10p in the pound
+(Welsh rate resolution NDM9117, agreed by the Senedd on 27 January 2026,
+<https://record.senedd.wales/Motion/9117>), which leaves them on the same
+20 / 40 / 45 % as England and Northern Ireland.
 
 ITA 2007 s23 steps as modelled here:
 
@@ -142,7 +147,7 @@ A linear function is least at a corner, so the least tax is at a point where two
 of these lines cross, all of which are integers. `candidates` lists every such
 crossing; the search keeps the feasible ones and takes the least tax. (That this
 finds the least tax is argued here and checked against PolicyEngine UK, which
-does the same search; it is not yet proved in Lean. See `Proofs.lean`.)
+does the same search; it is **not proved in Lean**. See `Proofs.lean`.)
 -/
 
 /-- The constant-`x` lines. -/

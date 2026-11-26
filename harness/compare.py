@@ -1,19 +1,22 @@
 """Compare the Lean model (the `uktax` binary) with PolicyEngine UK for 2026-27.
 
 Generates test cases (edge cases around every threshold, plus random incomes),
-runs both, and reports the difference in pence for each case.
+runs both, and reports for each case how far PolicyEngine's tax is from the
+model's exact (unrounded) tax, and whether the personal allowance and personal
+savings allowance agree.
 
     uv run python compare.py                  # edge cases + 500 random cases
     uv run python compare.py --random 5000 --seed 7
-    uv run python compare.py --tolerance 0    # demand exact agreement
+    uv run python compare.py --steps 1        # tighter tax tolerance
 
-Exits non-zero if any case differs by more than --tolerance pence. Writes every
-case to out/comparison.csv.
+Exits non-zero if any allowance differs, or if any tax differs by more than
+--steps float32 steps. Writes every case to out/comparison.csv.
 
-PolicyEngine computes in float32, so liabilities in the tens of thousands of
-pounds can be off by a fraction of a penny; it is rounded to the nearest penny
-here. Amounts over £131,072 are held to 1.56p in float32, so the default
-tolerance is 2p.
+Tolerance: PolicyEngine holds amounts in float32, so its tax is only as precise as
+float32 at the size of the incomes it adds up. One float32 step at £20,000 is
+0.2p, at £100,000 0.8p, from £131,072 1.6p. The tolerance is a number of steps at
+the taxpayer's total income (default 2). Over 7,046 cases the largest difference
+seen was 1.02 steps (1.59p).
 """
 
 from __future__ import annotations
@@ -28,9 +31,12 @@ import subprocess
 import sys
 import time
 
+import numpy as np
+
 HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_BINARY = HERE.parent / ".lake/build/bin/uktax"
 YEAR = 2026  # PolicyEngine labels the 2026-27 tax year as 2026
+DEFAULT_STEPS = 2.0
 
 
 def pounds(p: float) -> int:
@@ -123,7 +129,9 @@ def run_policyengine(cases: list[tuple[int, int, int]], chunk: int = 1_000) -> l
         for t, a, b in zip(tax, pa, psa):
             out.append(
                 {
-                    "liability_pence": pounds(float(t)),
+                    # float32 value as computed, in pence, not rounded
+                    "tax_pence": float(t) * 100,
+                    # allowances are whole pounds in both models
                     "personal_allowance_pence": pounds(float(a)),
                     "savings_allowance_pence": pounds(float(b)),
                 }
@@ -131,12 +139,22 @@ def run_policyengine(cases: list[tuple[int, int, int]], chunk: int = 1_000) -> l
     return out
 
 
+def float32_step_pence(pounds_: float) -> float:
+    """Gap between adjacent float32 values near `pounds_`, in pence."""
+    return float(np.spacing(np.float32(max(pounds_, 1.0)))) * 100
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--binary", type=pathlib.Path, default=DEFAULT_BINARY)
     ap.add_argument("--random", type=int, default=500, help="number of random cases")
     ap.add_argument("--seed", type=int, default=2026)
-    ap.add_argument("--tolerance", type=int, default=2, help="allowed difference in pence")
+    ap.add_argument(
+        "--steps",
+        type=float,
+        default=DEFAULT_STEPS,
+        help="allowed difference, in float32 steps at the taxpayer's total income",
+    )
     ap.add_argument("--out", type=pathlib.Path, default=HERE / "out/comparison.csv")
     args = ap.parse_args()
 
@@ -158,19 +176,27 @@ def main() -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     rows = []
     for kind, (n, s, d), l, p in zip(kinds, cases, lean, pe):
+        exact = l["tax_exact_ten_thousandths_pence"] / 10_000
+        diff = p["tax_pence"] - exact
+        step = float32_step_pence((n + s + d) / 100)
         rows.append(
             {
                 "kind": kind,
                 "non_savings_pence": n,
                 "savings_pence": s,
                 "dividends_pence": d,
-                "lean_pence": l["liability_pence"],
-                "policyengine_pence": p["liability_pence"],
-                "diff_pence": p["liability_pence"] - l["liability_pence"],
+                "lean_exact_pence": exact,
+                "policyengine_pence": p["tax_pence"],
+                "diff_pence": round(diff, 4),
+                "float32_step_pence": step,
+                "diff_in_steps": round(abs(diff) / step, 3),
+                "tax_ok": abs(diff) <= args.steps * step,
                 "lean_pa_pence": l["personal_allowance_pence"],
                 "policyengine_pa_pence": p["personal_allowance_pence"],
+                "pa_ok": l["personal_allowance_pence"] == p["personal_allowance_pence"],
                 "lean_psa_pence": l["savings_allowance_pence"],
                 "policyengine_psa_pence": p["savings_allowance_pence"],
+                "psa_ok": l["savings_allowance_pence"] == p["savings_allowance_pence"],
             }
         )
     with args.out.open("w", newline="") as f:
@@ -178,17 +204,27 @@ def main() -> int:
         w.writeheader()
         w.writerows(rows)
 
-    diffs = [abs(r["diff_pence"]) for r in rows]
-    bad = [r for r in rows if abs(r["diff_pence"]) > args.tolerance]
-    exact = sum(1 for x in diffs if x == 0)
-    print(f"exact: {exact}, within {args.tolerance}p: {len(rows) - len(bad)}, beyond: {len(bad)}")
-    print(f"max |diff|: {max(diffs)}p; all cases in {args.out}")
+    tax_bad = [r for r in rows if not r["tax_ok"]]
+    pa_bad = [r for r in rows if not r["pa_ok"]]
+    psa_bad = [r for r in rows if not r["psa_ok"]]
+    worst = max(rows, key=lambda r: r["diff_in_steps"])
+    print(
+        f"tax: {len(rows) - len(tax_bad)} within {args.steps:g} float32 steps, "
+        f"{len(tax_bad)} beyond; max |diff| {max(abs(r['diff_pence']) for r in rows):.4f}p, "
+        f"worst {worst['diff_in_steps']} steps"
+    )
+    print(f"personal allowance: {len(rows) - len(pa_bad)} equal, {len(pa_bad)} differ")
+    print(f"savings allowance: {len(rows) - len(psa_bad)} equal, {len(psa_bad)} differ")
+    print(f"all cases in {args.out}")
+    bad = [r for r in rows if not (r["tax_ok"] and r["pa_ok"] and r["psa_ok"])]
     for r in sorted(bad, key=lambda r: -abs(r["diff_pence"]))[:30]:
         print(
             f"  {r['kind']:6} ns={r['non_savings_pence']} sav={r['savings_pence']} "
-            f"div={r['dividends_pence']}: lean={r['lean_pence']} pe={r['policyengine_pence']} "
-            f"diff={r['diff_pence']}p (PA {r['lean_pa_pence']} vs {r['policyengine_pa_pence']}, "
-            f"PSA {r['lean_psa_pence']} vs {r['policyengine_psa_pence']})"
+            f"div={r['dividends_pence']}: lean={r['lean_exact_pence']} "
+            f"pe={r['policyengine_pence']:.4f} diff={r['diff_pence']}p "
+            f"({r['diff_in_steps']} steps), PA {r['lean_pa_pence']} vs "
+            f"{r['policyengine_pa_pence']}, PSA {r['lean_psa_pence']} vs "
+            f"{r['policyengine_psa_pence']}"
         )
     return 1 if bad else 0
 

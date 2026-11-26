@@ -1146,11 +1146,15 @@ name = "uk-tax-lean-harness"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "numpy" },
     { name = "policyengine-uk" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "policyengine-uk", specifier = "==2.180.2" }]
+requires-dist = [
+    { name = "numpy" },
+    { name = "policyengine-uk", specifier = "==2.180.2" },
+]
 
 [[package]]
 name = "urllib3"
