@@ -11,7 +11,8 @@ Input: one object, or an array of objects, with whole-pence amounts:
 Output (an array for an array input):
 
     {"liability_pence": 748600, "personal_allowance_pence": 1257000,
-     "savings_allowance_pence": 100000}
+     "savings_allowance_pence": 100000, "allowance_against_savings_pence": 0,
+     "allowance_against_dividends_pence": 0}
 -/
 
 open Lean UkTax
@@ -24,12 +25,13 @@ def parseIncome (j : Json) : Except String Income := do
   return ⟨← field "non_savings_pence", ← field "savings_pence", ← field "dividends_pence"⟩
 
 def result (i : Income) : Json :=
-  let pa := i.personalAllowance
-  let (n, s, d) := step3 pa i
+  let a := i.bestAlloc
   Json.mkObj [
     ("liability_pence", toJson (liability i)),
-    ("personal_allowance_pence", toJson pa),
-    ("savings_allowance_pence", toJson (savingsAllowanceFor (n + s + d)))]
+    ("personal_allowance_pence", toJson i.personalAllowance),
+    ("savings_allowance_pence", toJson (savingsAllowanceFor (i.total - i.allowanceUsed))),
+    ("allowance_against_savings_pence", toJson a.toSavings),
+    ("allowance_against_dividends_pence", toJson a.toDividends)]
 
 def run (input : String) : Except String Json := do
   let j ← Json.parse input

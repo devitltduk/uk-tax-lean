@@ -3,84 +3,154 @@
     "name": "GOV.UK dividends example (2026-27)",
     "source": "https://www.gov.uk/tax-on-dividends/how-dividends-are-taxed",
     "working": "taxable 20,000: 17,000 wages x 20% = 3,400; 500 dividends at 0%; 2,500 x 10.75% = 268.75",
-    "input": {"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 300000},
+    "input": {
+      "non_savings_pence": 2957000,
+      "savings_pence": 0,
+      "dividends_pence": 300000
+    },
     "liability_pence": 366875
   },
   {
     "name": "GOV.UK starting rate for savings example, interest raised to 3,000",
     "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
     "working": "wages 3,430 x 20% = 686; starting rate left 5,000 - 3,430 = 1,570 at 0%; PSA 1,000 at 0%; 430 x 20% = 86",
-    "input": {"non_savings_pence": 1600000, "savings_pence": 300000, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 1600000,
+      "savings_pence": 300000,
+      "dividends_pence": 0
+    },
     "liability_pence": 77200
   },
   {
     "name": "GOV.UK personal savings allowance example (1,300 interest, basic rate)",
     "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
     "working": "wages 17,430 x 20% = 3,486; interest: 1,000 at 0%, 300 x 20% = 60",
-    "input": {"non_savings_pence": 3000000, "savings_pence": 130000, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 130000,
+      "dividends_pence": 0
+    },
     "liability_pence": 354600
   },
   {
     "name": "Personal allowance taper at 110,000",
     "source": "ITA 2007 s35(2); https://www.gov.uk/income-tax-rates",
     "working": "PA 12,570 - 5,000 = 7,570; taxable 102,430: 37,700 x 20% = 7,540; 64,730 x 40% = 25,892",
-    "input": {"non_savings_pence": 11000000, "savings_pence": 0, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 11000000,
+      "savings_pence": 0,
+      "dividends_pence": 0
+    },
     "liability_pence": 3343200
   },
   {
     "name": "Tapered allowance rounded up to a whole pound",
     "source": "ITA 2007 s35(3)",
     "working": "excess 3, half 1.50, PA 12,568.50 rounded up to 12,569; taxable 87,434: 7,540 + 49,734 x 40% = 19,893.60",
-    "input": {"non_savings_pence": 10000300, "savings_pence": 0, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 10000300,
+      "savings_pence": 0,
+      "dividends_pence": 0
+    },
     "liability_pence": 2743360
   },
   {
     "name": "Additional rate, no personal allowance",
     "source": "https://www.gov.uk/income-tax-rates",
     "working": "37,700 x 20% = 7,540; 87,440 x 40% = 34,976; 4,860 x 45% = 2,187",
-    "input": {"non_savings_pence": 13000000, "savings_pence": 0, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 13000000,
+      "savings_pence": 0,
+      "dividends_pence": 0
+    },
     "liability_pence": 4470300
   },
   {
     "name": "Higher rate taxpayer gets a 500 savings allowance",
     "source": "ITA 2007 s12B(3)",
     "working": "taxable 48,430; wages 47,430: 7,540 + 9,730 x 40% = 3,892; interest: 500 at 0%, 500 x 40% = 200",
-    "input": {"non_savings_pence": 6000000, "savings_pence": 100000, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 6000000,
+      "savings_pence": 100000,
+      "dividends_pence": 0
+    },
     "liability_pence": 1163200
   },
   {
     "name": "Taxable income exactly at the basic rate limit keeps the 1,000 savings allowance",
     "source": "ITA 2007 s12B(4)",
     "working": "taxable 37,700, none above the limit; wages 36,700 x 20% = 7,340; interest 1,000 at 0%",
-    "input": {"non_savings_pence": 4927000, "savings_pence": 100000, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 4927000,
+      "savings_pence": 100000,
+      "dividends_pence": 0
+    },
     "liability_pence": 734000
   },
   {
     "name": "One penny over the basic rate limit drops the savings allowance to 500",
     "source": "ITA 2007 s12B(3)",
     "working": "taxable 37,700.01; wages 7,340; interest: 500 at 0%, 500 x 20% = 100, 0.01 x 40% = 0.004p; total 7,440.004 rounded down",
-    "input": {"non_savings_pence": 4927000, "savings_pence": 100001, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 4927000,
+      "savings_pence": 100001,
+      "dividends_pence": 0
+    },
     "liability_pence": 744000
   },
   {
     "name": "Dividends across the basic and higher bands",
     "source": "ITA 2007 s8, s13A, s16",
     "working": "wages 32,430 x 20% = 6,486; dividends from 32,430: 500 at 0%; 4,770 x 10.75% = 512.775; 4,730 x 35.75% = 1,690.975; total 8,689.75",
-    "input": {"non_savings_pence": 4500000, "savings_pence": 0, "dividends_pence": 1000000},
+    "input": {
+      "non_savings_pence": 4500000,
+      "savings_pence": 0,
+      "dividends_pence": 1000000
+    },
     "liability_pence": 868975
   },
   {
     "name": "Dividends only: personal allowance set against dividends",
     "source": "ITA 2007 s25(2), s8, s13A",
     "working": "taxable 87,430: 500 at 0%; 37,200 x 10.75% = 3,999; 49,730 x 35.75% = 17,778.475; total 21,777.475 rounded down",
-    "input": {"non_savings_pence": 0, "savings_pence": 0, "dividends_pence": 10000000},
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 10000000
+    },
     "liability_pence": 2177747
   },
   {
     "name": "Savings only: full starting rate and savings allowance",
     "source": "ITA 2007 s12, s12A, s12B",
     "working": "taxable savings 7,430: 5,000 starting rate at 0%; 1,000 PSA at 0%; 1,430 x 20% = 286",
-    "input": {"non_savings_pence": 0, "savings_pence": 2000000, "dividends_pence": 0},
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 2000000,
+      "dividends_pence": 0
+    },
     "liability_pence": 28600
+  },
+  {
+    "name": "s25(2): allowance set against savings to lift the savings allowance into the higher band",
+    "source": "ITA 2007 s25(2), s12A, s12B(3)",
+    "working": "Step 3 income 39,430 (savings allowance 500). Leave 1,730 savings above 37,700 of wages: wages 7,540; savings 500 at 0%, 1,230 x 40% = 492; total 8,032 (non-savings first would give 8,086)",
+    "input": {
+      "non_savings_pence": 5000000,
+      "savings_pence": 200000,
+      "dividends_pence": 0
+    },
+    "liability_pence": 803200
+  },
+  {
+    "name": "s25(2): allowance set against dividends to keep the starting rate for savings",
+    "source": "ITA 2007 s25(2), s12, s12A, s13A",
+    "working": "Step 3 income 33,430. Savings 6,000 at the bottom: 5,000 starting rate + 1,000 PSA, all 0%; dividends left 27,430: 500 at 0%, 26,930 x 10.75% = 2,894.975 rounded down (savings first would give 3,539.97)",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 600000,
+      "dividends_pence": 4000000
+    },
+    "liability_pence": 289497
   }
 ]
