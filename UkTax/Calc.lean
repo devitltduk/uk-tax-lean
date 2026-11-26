@@ -46,9 +46,13 @@ structure Regime where
   /-- Grossed-up Gift Aid donations plus gross pension contributions relieved at
   source, in pence. They raise the basic and higher rate limits (and the Scottish
   limits from the basic rate's up; ITA 2007 s414(2), FA 2004 s192(4), (4A)) and
-  are deducted from net income to give adjusted net income (ITA 2007 s58). The
-  relief-at-source extension needs a claim; the model assumes it is made, and it
-  changes nothing unless some income is above the basic rate limit. -/
+  are deducted from net income to give adjusted net income (ITA 2007 s58). For
+  relief at source, s192(4) raises the limits "if ... income tax at the higher rate
+  or the additional rate is chargeable" and "on the making of a claim"; the model
+  raises them for every such contribution, as HMRC's PTM056120 describes, and
+  assumes the claim is made. Read literally, "the higher rate" is the non-savings
+  rate, which would leave the limits alone where only savings or dividends are
+  above them (docs/findings.md #11). -/
   relief : Nat := 0
   deriving Repr, DecidableEq
 

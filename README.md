@@ -52,7 +52,12 @@ interest and dividends, following the steps of ITA 2007 s23:
   s414(2); FA 2004 s192(4), (4A)), and both come off adjusted net income (ITA 2007
   s58), which sets the personal allowance taper, the HICBC and the childcare
   income limit. The relief at source itself (20 % of the gross, kept by the member
-  whatever their liability) is not part of the liability.
+  whatever their liability) is not part of the liability. s192(4) raises the
+  limits "if ... income tax at the higher rate or the additional rate is
+  chargeable", on a claim; the model raises them for every relief-at-source
+  contribution, as HMRC's PTM056120 describes. Read literally, "the higher rate" is
+  the non-savings rate, so savings or dividends alone above the limit would not
+  raise it (findings #11).
 
 All amounts are whole pence (`Nat`), and rates are basis points. Tax is computed
 exactly, in 1/10,000 of a penny, and rounded down to the penny once at the end.
@@ -247,8 +252,9 @@ relief-at-source contributions.
   raised by Gift Aid and relief-at-source contributions. Scottish rates add no
   step: they are rates, not cliffs. It rests on `taxExact_succ_le` (with both
   allowances fixed, a penny more pay adds at most 0.686p of income tax, 0.706p
-  for a Scottish taxpayer, whose worst case is the 42 % higher rate with
-  dividends above it crossing from 10.75 % to 39.35 %) and `net_succ_ge`
+  for a Scottish taxpayer, whose worst case is pay in the 42 % higher rate below
+  the UK basic rate limit with dividends above it crossing both UK limits:
+  42 + 25 + 3.6 %) and `net_succ_ge`
   (between steps net income rises at least 0.234p per penny, 0.214p in Scotland,
   so the marginal rate there is at most 76.6 %, or 78.6 %).
 - `netAll_drop_only_at_steps` (`UkTax/Benefits.lean`): the same with Universal
@@ -424,10 +430,11 @@ given, the gross × 0.8, so both gross it up the same way). Pension contribution
 relieved at source are checked only where PolicyEngine's design and the law
 agree: PolicyEngine deducts the gross contribution from taxable income instead
 of raising the limits, so its `income_tax` is the liability less the 20 % relief
-at source. Adding that back, the two agree for a taxpayer outside Scotland whose
-taxable pay is at least the gross contribution, and only such cases are
-generated. Outside them PolicyEngine gives less relief than the law (findings #7,
-with a draft issue).
+at source. Adding that back, the two agree for a taxpayer outside Scotland with
+no savings or dividends whose taxable pay is at least the gross contribution,
+and only such cases are generated. Outside them PolicyEngine gives less relief
+than the law, or with savings in the starting rate band more (findings #7, a
+limitation PolicyEngine documents, with a draft issue to close it).
 
 It writes `harness/out/comparison.csv` and exits non-zero if any check fails.
 

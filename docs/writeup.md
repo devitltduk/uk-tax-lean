@@ -341,22 +341,24 @@ universal hours over £100,000, and gives nothing outside England. On 6,068 of
   the April 2026 term, so PolicyEngine values that term at £12.04 and the year at
   £11,339.20, not £10,146. PolicyEngine is the more precise here.
 
-### 6. Pension contributions relieved at source: likely a PolicyEngine error
+### 6. Pension contributions relieved at source: a documented PolicyEngine limitation
 
 PolicyEngine gives relief-at-source contributions (`personal_pension_contributions`)
 their relief as a deduction from taxable income and subtracts the gross
 contribution from net income. In law the member pays the contribution net of 20 %
 and keeps that 20 % whatever their own liability (FA 2004 s192(1)-(3)); HMRC does
 not recover the difference from a Scottish starter-rate taxpayer or from a
-non-taxpayer within the £3,600 basic amount (HMRC PTM044220; GOV.UK "If you do not
-pay Income Tax ... Your pension provider can claim tax relief for you at 20%").
-The deduction is worth the same for a taxpayer whose taxable income covers the
-contribution, so most cases agree; elsewhere PolicyEngine gives less: on £12,000
-of pay a £2,000 gross contribution costs the household £2,000 in PolicyEngine and
-£1,600 in law; on £15,000 and £3,600, £3,114 against £2,880; at the Scottish
-starter rate 19 % relief instead of 20 %. A consequence is that PolicyEngine's
-`income_tax` for these contributors is the liability less the relief at source.
-Draft issue: [`drafts/issues/01-relief-at-source-non-taxpayers.md`](drafts/issues/01-relief-at-source-non-taxpayers.md).
+non-taxpayer within the £3,600 basic amount (HMRC PTM044220), and s192(4), (4A)
+raise the rate limits. PolicyEngine documents the non-taxpayer case
+(`docs/book/programs/gov/hmrc/pension-tax-relief.md`; its #704 was closed by that
+page). The deduction is worth the same for a taxpayer outside Scotland with no
+savings or dividends whose taxable pay covers the contribution; elsewhere it
+differs both ways: £400 less relief on £12,000 of pay and £2,000 gross, £234 less
+on £15,000 and £3,600, 19 % instead of 20 % at the Scottish starter rate, £700.22
+less where the raised limits would move £10,000 of dividends down a band, and
+£286 more where the deduction frees starting-rate band for savings. Draft issue,
+asking to close the documented gap:
+[`drafts/issues/01-relief-at-source-non-taxpayers.md`](drafts/issues/01-relief-at-source-non-taxpayers.md).
 
 ### No differences found
 
