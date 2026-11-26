@@ -145,7 +145,7 @@ def main() -> int:
     worst = max(rows, key=lambda r: r["diff_in_steps"])
     print(
         f"{len(rows)} cases ({paid} with UC > 0): {len(rows) - len(bad)} within {args.steps:g} float32 "
-        f"steps, {len(bad)} beyond; max |diff| {max(abs(r['diff_pence']) for r in rows):.4f}p, "
+        f"steps + {NIC_GAP_UC_PENCE:.3f}p, {len(bad)} beyond; max |diff| {max(abs(r['diff_pence']) for r in rows):.4f}p, "
         f"worst {worst['diff_in_steps']} steps"
     )
     for r in sorted(bad, key=lambda r: -abs(r["diff_pence"]))[:20]:

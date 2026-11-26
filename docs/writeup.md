@@ -1,8 +1,5 @@
 # UK tax and benefit cliffs for 2026-27, formalised in Lean
 
-**Draft, not for publication.** Nothing here has been shared outside this
-repository. Suggested outreach is listed at the end for the owner to decide.
-
 ## Summary
 
 This repository models a UK taxpayer's 2026-27 income tax (England, Wales and
@@ -29,10 +26,12 @@ The main results:
 3. **The "60 % band" between £100,000 and £125,140 is a staircase of 12,570
    small cliffs**, not a smooth 60 % rate, because the tapered personal allowance
    is rounded *up* to a whole pound (ITA 2007 s35(3)).
-4. **PolicyEngine UK agrees** on income tax, NICs, HICBC and UC to within its
-   float32 precision on about 12,800 cases. The one difference that looks like
-   a PolicyEngine error is small: it leaves out a round-up in the NIC thresholds
-   for weekly and monthly pay (up to £1.12 a year).
+4. **PolicyEngine UK agrees** on income tax, NICs, HICBC and UC on about 12,800
+   cases, to within its float32 precision (plus, for NICs and UC, a documented
+   gap of under half a penny). The one difference that looks like a
+   PolicyEngine error is small: its monthly NIC thresholds are £1,047.50 and
+   £4,189.16 where the regulations say £1,048 and £4,189, which overcharges a
+   monthly-paid employee by about 48p to 60p a year.
 
 ## What is modelled
 
@@ -57,8 +56,8 @@ where both work, per-period rounding of NICs and UC, and every other tax year.
 Nothing is solver-checked. Every guarantee below is a Lean proof using only
 Lean's core `omega` decision procedure and the standard axioms (`propext`,
 `Classical.choice`, `Quot.sound`); `UkTax/Axioms.lean` fails the build if any of
-them changes or a `sorry` appears. Mathlib is not used. The roadmap allowed a Z3
-certificate as a fallback; it was not needed.
+them changes or a `sorry` appears. Mathlib is not used, and no SMT solver or
+external certificate is involved.
 
 ### Proved (Lean)
 
@@ -69,7 +68,8 @@ certificate as a fallback; it was not needed.
 | `nicExact_mono`, `hicbc_mono_income`, `hicbc_le` | NICs and the HICBC are monotone; the charge never exceeds the benefit. |
 | `taxExact_succ_le` | With both allowances fixed, one more penny of pay adds at most 0.686p of income tax. |
 | `net_succ_ge` | Between steps, one more penny of pay raises net income (after tax, NICs, HICBC) by at least 0.234p: the marginal rate there is at most 76.6 %. |
-| `earned_plus_uc_mono` | Earned income plus UC never falls as earned income rises. |
+| `earned_plus_uc_mono`, `earned_plus_uc_gain` | Earned income plus UC never falls as earned income rises, and keeps at least 45 % of any rise. |
+| `netAll_succ_ge` | Between steps, one more penny of pay raises net income with benefits by at least 0.1053p: the marginal rate there is at most 1 − 0.45 × 0.234 = 89.47 %. |
 | `netAll_drop_only_at_steps` | If one more penny of pay lowers net income (with UC, Tax-Free Childcare and funded hours), it is a step of the personal allowance, the HICBC, the personal savings allowance, or adjusted net income going over £100,000. |
 
 How the optimality proof works: with the income fixed, an allowance placement is
@@ -101,9 +101,15 @@ of the citations, the golden cases and the PolicyEngine comparison.
 |---|---|---|
 | Income tax (unrounded) | 7,198 | all within 2 float32 steps; worst 1.13 steps (1.76p) |
 | Personal allowance, savings allowance | 7,198 | all equal |
-| Employee NICs | 7,198 | all within 2 float32 steps + 0.32p (the threshold gap below); largest 0.39p |
+| Employee NICs | 7,198 | all within 2 float32 steps + 0.32p; largest 0.39p (3.35 steps) |
 | HICBC | 7,198 | all equal |
-| Universal Credit | 5,603 (2,729 paid) | all within 2 float32 steps + 0.176p; largest 0.43p |
+| Universal Credit | 5,603 (2,729 paid) | all within 2 float32 steps + 0.176p; largest 0.43p (2.79 steps) |
+
+The NIC and UC tolerances add a documented gap on top of 2 float32 steps:
+0.32p for NICs (PolicyEngine's annual thresholds are 4p below the legal ones,
+difference 1 below) and 0.176p for UC (55 % of that, through earned income). So
+their worst cases are above 2 steps; without those gaps every case is within 2
+steps.
 
 CI runs smaller versions of both comparisons (1,000 random cases each) on every
 pull request.
@@ -124,10 +130,18 @@ its level just before the step.
 | Personal savings allowance | Step 3 income past £37,700; past £125,140 | £99.99-£100.00; £199.99 | £139-£378 | with savings interest |
 | Tax-Free Childcare (and funded hours) | adjusted net income past £100,000 | £1,999.99 (one child in £10,000 of childcare), £3,999.99 (two), plus the value of any funded hours | £5,263; £10,526 | parents using childcare |
 
+The two lone-parent households take the larger of UC and Tax-Free Childcare. The
+model's UC has no childcare costs element, which would pay 85 % of childcare
+costs up to £1,071.09 a month for one child (£1,836.16 for two or more)
+(SI 2013/376 regs 34 and 36). With it, UC would stay the better choice to much
+higher pay, so where these households switch from UC to Tax-Free Childcare is
+illustrative, not realistic. The £100,000 cliff itself does not depend on it.
+
 No other drops exist for any household of this form (pay varying; savings,
 dividends, Child Benefit and claims fixed). UC adds none: with the taper, the
-marginal rate between steps is at most 89.5 %, and moving between UC and
-Tax-Free Childcare is smooth because the household takes the larger.
+marginal rate between steps is at most 89.47 % (`netAll_succ_ge`), and moving
+between UC and Tax-Free Childcare is smooth because the household takes the
+larger.
 
 ### The 60 % band is a staircase
 
@@ -159,49 +173,60 @@ divided by 0.38.
 
 ## Differences from PolicyEngine UK
 
-### 1. NIC thresholds for weekly and monthly pay: likely a PolicyEngine error (small)
+### 1. Monthly NIC thresholds: likely a PolicyEngine error (small)
 
-**What PolicyEngine does.** `parameters/gov/hmrc/national_insurance/class_1/employee_scale.yaml`
-stores the 2026-27 primary threshold as **£241.73 a week** and the upper earnings
-limit as **£966.73**. Its comment explains these as the annual figures divided by
-52, "as SI 2001/1004 reg 11(3)(c) does for periods of whole weeks". The employee
-NIC formulas (`ni_class_1_employee_primary.py`, `..._additional.py`) then work
-monthly with `threshold * WEEKS_IN_YEAR / MONTHS_IN_YEAR`, i.e. £1,047.50 a month.
+**What PolicyEngine does.** PolicyEngine works out employee NICs per month, on a
+twelfth of the year's pay (`ni_class_1_employee_primary.py` and
+`ni_class_1_employee_additional.py`, `definition_period = MONTH`); it has no
+weekly-pay mode. Its parameter file
+`parameters/gov/hmrc/national_insurance/class_1/employee_scale.yaml` stores the
+2026-27 primary threshold as £241.73 a week and the upper earnings limit as
+£966.73, the annual figures divided by 52, "as SI 2001/1004 reg 11(3)(c) does for
+periods of whole weeks". The same comments acknowledge the statutory weekly
+amounts: "The weekly amount in reg 10(c) is £242" and "The weekly amount in reg
+10(b) is £967". The monthly formulas convert the weekly figure with
+`threshold * WEEKS_IN_YEAR / MONTHS_IN_YEAR`, giving a monthly primary threshold
+of £1,047.50 (241.73 × 52 / 12 = 1,047.497) and a monthly upper earnings limit of
+£4,189.16 (966.73 × 52 / 12).
 
-**What the law says.** SI 2001/1004 reg 10 sets the weekly primary threshold at
-£242 and the upper earnings limit at £967 for 2026-27. Reg 11(3)(a) sets the
-monthly primary threshold at £1,048 and reg 11(2A)(a) the monthly upper limit at
-£4,189. Reg 11(3)(c) (a multiple of a week) does divide £12,570 by 52, but reg
-11(4) then says the result, "if not whole pounds, shall be rounded up to the next
-whole pound", which gives £242. GOV.UK's
+**What the law says.** For a monthly earnings period, SI 2001/1004 reg 11(3)(a)
+sets the primary threshold at £1,048 and reg 11(2A)(a) the upper earnings limit
+at £4,189, for 2026-27. GOV.UK's
 [rates and thresholds for employers 2026 to 2027](https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027)
-lists £242 / £1,048 / £12,570 and £967 / £4,189 / £50,270.
+lists the same: £1,048 and £4,189 a month (£242 and £967 a week, £12,570 and
+£50,270 a year).
 
-**Effect.** PolicyEngine's thresholds come to £12,569.96 and £50,269.96 a year.
-For an employee on £30,000:
+**Effect.** Checked with the model (monthly basis) and PolicyEngine 2.180.2:
 
-| Basis | Correct NICs | PolicyEngine | Difference |
+| Pay | Correct NICs, monthly pay | PolicyEngine | Difference |
 |---|---|---|---|
-| Annual earnings period (directors) | £1,394.40 | £1,394.40 | 0.32p |
-| Monthly pay (12 × £1,048) | £1,393.92 | £1,394.40 (£116.20 a month, not £116.16) | +£0.48 a year |
-| Weekly pay (52 × £242) | £1,393.28 | £1,394.40 | +£1.12 a year |
+| £30,000 | £1,393.92 (£116.16 a month) | £1,394.40 (£116.20 a month) | +48p a year |
+| £60,000 | £3,210.00 | £3,210.60 | +60p a year |
 
-The comparison harness confirms the annual-basis gap on every case (within
-0.32p plus float32), and it shows up in UC as 55 % of that (0.176p).
+Below the upper earnings limit the gap is 8 % of 12 × 50p of threshold, about
+48p a year; above it, the main-rate band is also wider, and the gap is about
+60p. On the annual earnings-period basis (directors) PolicyEngine's thresholds
+come to £12,569.96 and £50,269.96 against £12,570 and £50,270, a gap of at most
+0.32p a year, which is the basis the comparison harness uses.
 
-**Assessment.** This looks like an error: the comment cites reg 11(3)(c) but not
-reg 11(4), and the monthly calculation uses neither the monthly figures in reg
-11(3)(a) and (2A)(a) nor the weekly ones in reg 10. The amounts are tiny (at most
-£1.12 a year per employee). It might be deliberate: storing
-annual ÷ 52 makes yearly totals match the annual thresholds. If so, the comment
-should say that it approximates rather than follows reg 11.
+**Assessment.** For monthly-paid employees this looks like an error: the monthly
+thresholds come from the weekly ones, which are themselves the annual figures
+over 52 without the round-up to a whole pound in reg 11(4), rather than from the
+monthly figures reg 11 prescribes. The amounts are small. Storing annual ÷ 52 may
+be deliberate, since it makes yearly totals match the annual thresholds to
+within 4p; if so, the parameter comments could say that the monthly figures are
+an approximation to reg 11(3)(a) and (2A)(a).
 
 ### 2. `income_tax` includes the HICBC: by design
 
-PolicyEngine's `income_tax` adds `CB_HITC`. Its code cites Finance Act 2026 Sch 10
-para 4(3) as adding the charge to ITA 2007 s30(1) (not checked here). If so, that
-is correct as law. Anyone comparing "income tax" figures needs to
-know it, and the harness subtracts the charge.
+PolicyEngine's `income_tax` includes `CB_HITC`, through its list of Step 7 charges
+(`parameters/gov/hmrc/income_tax/step_7_additional_tax.yaml`, citing ITA 2007
+s30(1)). That is correct as law: Finance Act 2012 Sch 1 para 6(3) inserted
+"Chapter 8 of Part 10 of ITEPA 2003 (high income child benefit charge)" into ITA
+2007 s30(1), the list of amounts added at Step 7. Anyone comparing "income tax"
+figures needs to know it, and the harness subtracts the charge. (PolicyEngine
+cites Finance Act 2026 Sch 10 para 4(3) separately, correctly, for the winter
+fuel payment charge, which that paragraph adds to the same list.)
 
 ### 3. Marriage Allowance claimed by default for couples: a default
 
@@ -216,8 +241,9 @@ turns it off.
 
 PolicyEngine computes in float32, so a figure is only as precise as float32 at its
 size: 0.2p at £20,000, 0.8p at £100,000, 1.6p from £131,072. Every comparison
-allows 2 float32 steps; the worst seen was 1.13 steps for income tax and 2.79
-steps for UC (where monthly amounts are added up). This matters for
+allows 2 float32 steps, and the NIC and UC checks add the documented gaps above;
+the worst seen was 1.13 steps for income tax, 3.35 steps (0.39p) for NICs and 2.79
+steps (0.43p) for UC. This matters for
 penny-level questions; the 39.42p staircase above is still well resolved (0.8p
 steps at £100,000).
 
@@ -227,26 +253,6 @@ Personal allowance (including the s35(3) round-up), personal savings allowance,
 the s25(2) allowance placement for savings and dividends, HICBC (including all
 three s681C(3) roundings) and the UC award agree exactly or within float32 on
 every case.
-
-## Suggested outreach (for the owner to decide)
-
-None of this has been done. Each is a suggestion only.
-
-1. **PolicyEngine UK issue on the NIC thresholds** (difference 1), quoting reg 10,
-   reg 11(3)(a), 11(4) and GOV.UK, with the £30,000 example. Small fix,
-   clearly sourced.
-2. **PolicyEngine UK note on the Marriage Allowance default** (difference 3):
-   possibly a documentation point rather than an issue.
-3. **Share the "60 % band is a staircase" observation** with tax-policy people
-   who discuss the £100k trap (for example the Low Incomes Tax Reform Group, the
-   Institute for Fiscal Studies or the Chartered Institute of Taxation's
-   technical team) as a curiosity: it changes nothing material, but it is a
-   precise, checkable statement.
-4. **Lean community** (Zulip): the optimality proof (s25(2) search is optimal)
-   and the cliff theorem as an example of formal verification of tax law with
-   core `omega` only.
-5. **Make the repository public** once the owner is happy with the write-up and
-   the scope statements.
 
 ## What is left
 

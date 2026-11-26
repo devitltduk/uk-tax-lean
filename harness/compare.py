@@ -11,17 +11,19 @@ Employment is the part of non-savings income that is pay; the rest goes to
 PolicyEngine as private pension income. Child Benefit is set as an input on
 PolicyEngine's benefit unit, so both charge HICBC on the same amount.
 
-NICs: PolicyEngine works out NICs monthly with weekly thresholds times 52/12,
-and stores the weekly thresholds as the annual ones divided by 52 without the
-round-up to a whole pound in SI 2001/1004 reg 11(4) (£241.73 and £966.73, not
-£242 and £967). Over a year of equal months that is the annual basis with a
-primary threshold of £12,569.96 and an upper earnings limit of £50,269.96, so
-the model is run on the annual basis and NICs may differ by up to
+NICs: PolicyEngine works out NICs per month on a twelfth of the year's pay, with
+monthly thresholds of 52/12 times weekly ones stored as the annual figures over
+52 (£241.73 and £966.73; its comments note the reg 10 weekly amounts are £242
+and £967). That gives monthly thresholds of £1,047.50 and £4,189.16, not the
+£1,048 and £4,189 of SI 2001/1004 reg 11(3)(a) and (2A)(a). Over a year of
+equal months it is the annual basis with thresholds of £12,569.96 and
+£50,269.96, so the model is run on the annual basis and NICs may differ by up to
 8% x 4p = 0.32p (NIC_THRESHOLD_GAP_PENCE) on top of the float32 tolerance.
 
 Income tax: PolicyEngine's `income_tax` includes the High Income Child Benefit
-Charge (FA 2026 Sch 10 adds it to ITA 2007 s30), so the charge is taken off
-before comparing with the model's income tax.
+Charge, a Step 7 amount under ITA 2007 s30(1) (inserted by FA 2012 Sch 1
+para 6(3)), so the charge is taken off before comparing with the model's income
+tax.
 
     uv run python compare.py                  # edge cases + 500 random cases
     uv run python compare.py --random 5000 --seed 7
@@ -33,8 +35,9 @@ Exits non-zero if any allowance differs, or if any tax differs by more than
 Tolerance: PolicyEngine holds amounts in float32, so its tax is only as precise as
 float32 at the size of the incomes it adds up. One float32 step at £20,000 is
 0.2p, at £100,000 0.8p, from £131,072 1.6p. The tolerance is a number of steps at
-the taxpayer's total income (default 2). Over 7,046 cases the largest difference
-seen was 1.02 steps (1.59p).
+the taxpayer's total income (default 2). Over 7,198 cases (--random 5000) the
+largest income tax difference seen was 1.13 steps (1.76p). NICs allow the 0.32p
+gap above as well, so their worst case (0.39p) is 3.35 steps.
 """
 
 from __future__ import annotations
@@ -298,7 +301,8 @@ def main() -> int:
     hicbc_bad = [r for r in rows if not r["hicbc_ok"]]
     worst_nic = max(rows, key=lambda r: r["nic_diff_in_steps"])
     print(
-        f"employee NICs: {len(rows) - len(nic_bad)} within {args.steps:g} float32 steps, "
+        f"employee NICs: {len(rows) - len(nic_bad)} within {args.steps:g} float32 steps "
+        f"+ {NIC_THRESHOLD_GAP_PENCE:.2f}p, "
         f"{len(nic_bad)} beyond; max |diff| {max(abs(r['nic_diff_pence']) for r in rows):.4f}p, "
         f"worst {worst_nic['nic_diff_in_steps']} steps"
     )
