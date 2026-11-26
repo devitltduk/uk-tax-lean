@@ -305,8 +305,8 @@ For a one-earner couple PolicyEngine's defaults treat the couple as married and
 claiming Marriage Allowance (`would_claim_marriage_allowance`), which transfers
 £1,260 of allowance: £252 less tax and £138.60 more UC a year. This is a modelling
 default, not an error, but a user who builds a couple without setting it gets a
-claim they may not have made. The model has no Marriage Allowance, so the harness
-turns it off.
+claim they may not have made. The UC harness turns it off (its partner has no
+income); how PolicyEngine computes the allowance is in §7.
 
 ### 4. Float32 precision: a limitation
 
@@ -358,11 +358,38 @@ on £15,000 and £3,600, 19 % instead of 20 % at the Scottish starter rate, £70
 less where the raised limits would move £10,000 of dividends down a band, and
 £286 more where the deduction frees starting-rate band for savings. Draft issue,
 asking to close the documented gap:
-[`drafts/issues/01-relief-at-source-non-taxpayers.md`](drafts/issues/01-relief-at-source-non-taxpayers.md).
+[`drafts/issues/02-relief-at-source-non-taxpayers.md`](drafts/issues/02-relief-at-source-non-taxpayers.md).
+
+### 7. Marriage Allowance: the unused allowance, not the £1,260 transfer (already reported upstream)
+
+PolicyEngine gives the recipient 20 % of the transferor's *unused* personal
+allowance (allowance less net income), up to £1,257 and rounded up to £10
+(`marriage_allowance_if_income_conditions_met`), and never reduces the
+transferor's allowance. The law moves a fixed £1,260: the transferor's s35
+allowance falls by it (ITA 2007 s55B(4)(b), (6)) if, with it reduced, they pay
+tax at no rate outside the s55C(1)(c) list, and the recipient gets £252 at Step 6.
+The two give the same couple's total only where the transferor's income above
+the reduced allowance is taxed at 20 %. Of 666 couples compared
+(`harness/compare_reliefs.py`), 554 agree; 17 differ by under £2 (the £10
+round-up gives up to £1.98 more relief); 95 pay £6.90 to £252 more in PolicyEngine,
+all where the transferor's income above the reduced allowance is taxed below
+20 %: savings at the starting rate or nil rate, dividends at the nil or ordinary
+rate, or the Scottish starter rate. Example: A earns £30,000; B has £5,000 of pay
+and £10,000 of interest. In law the couple pays £252 less; PolicyEngine gives no
+allowance. PolicyEngine matches its own basis on all 666.
+
+This is PolicyEngine's open issue #1947 (filed 30 September 2026, with a fix
+proposed in #1963), which already covers the savings-income transferor and the
+round-up. So no new issue is drafted; the dividend and Scottish starter-rate
+cases and the count are drafted as a comment on it:
+[`drafts/comments/1947-marriage-allowance-dividends-scotland.md`](drafts/comments/1947-marriage-allowance-dividends-scotland.md).
 
 ### No differences found
 
-Scottish income tax (every band, savings and dividends on UK rates, the UK test
+Net pay pension contributions, the blind person's allowance, the married
+couple's allowance (10 % of it at Step 6, up to the tax), the trading allowance,
+the property allowance and rent-a-room relief (with no rent-a-room expenses,
+which PolicyEngine does not take) agree within float32 on every case. Scottish income tax (every band, savings and dividends on UK rates, the UK test
 for the savings allowance) and Gift Aid (raised limits, adjusted net income),
 personal allowance (including the s35(3) round-up, apart from float32 at a taper
 step), personal savings allowance,
@@ -374,14 +401,15 @@ every case.
 
 - Couples where both work beyond the childcare tests (the partner's pay is a
   fixed input there): joint UC earnings, the HICBC falling on the higher of two
-  incomes, both incomes varying, and Marriage Allowance.
-- Pension contributions and Gift Aid, which reduce adjusted net income and are the
-  usual way out of the £100,000 cliffs.
+  incomes, both incomes varying.
+- Gift Aid, pension contributions and trading or property income with Universal
+  Credit and the childcare tests.
 - UC housing, childcare, disability and carer elements, capital, the benefit cap
   and the first-child rate for children born before 6 April 2017.
 - Per-period rounding of NICs and UC, and weeks-in-year effects (53 Child Benefit
   Mondays in 2026-27).
-- Scottish income tax, self-employment (Class 4 NICs), and 2027-28 (where the
+- Losses and loss relief, capital allowances, property finance costs, Class 2
+  and 4 NICs on self-employment, and 2027-28 (where the
   enacted and announced savings rates differ).
 - The 15 hours for disadvantaged 2-year-olds, a child changing age band during
   the year, the childcare tests' routes for a disabled or carer partner, the lower

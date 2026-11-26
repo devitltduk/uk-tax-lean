@@ -1,6 +1,6 @@
 """Compare the reliefs and allowances of P2 with PolicyEngine UK for 2026-27.
 
-Four parts, each run through the `uktax` binary and PolicyEngine UK 2.180.2:
+Six parts, each run through the `uktax` binary and PolicyEngine UK 2.180.2:
 
 1. **Net pay pension contributions** (FA 2004 s193(2)): one employee with
    `employee_pension_contributions`; income tax, employee NICs (on the whole pay,
@@ -36,6 +36,13 @@ Four parts, each run through the `uktax` binary and PolicyEngine UK 2.180.2:
    So each couple is checked twice: PolicyEngine against its own stated basis,
    computed from the model's figures (`pe_basis`, the tolerance float32), and the
    law (the model) against PolicyEngine, the difference reported by cause.
+
+5. **Trading allowance** (ITTOIA 2005 ss 783AD-783AM): receipts and expenses
+   (expenses at most receipts: losses are not compared), PolicyEngine given the
+   profit and the gross receipts.
+6. **Property allowance and rent-a-room relief** (ss 783BD-783BH, 784-800):
+   other letting receipts and expenses, and rent-a-room receipts with no expenses
+   (PolicyEngine has no rent-a-room expenses and always deducts the limit).
 
     uv run python compare_reliefs.py [--binary ../.lake/build/bin/uktax]
 
@@ -163,6 +170,45 @@ def part_singles(binary, steps, rows) -> int:
     mca = {id(c): r["mca_reduction_ten_thousandths_pence"] / 1000 / 100 for c, r in zip(cases, lean(binary, cases))}
     bad += check_singles(binary, "married couple's allowance", cases,
                          lambda c: {"married_couples_allowance": mca[id(c)]}, steps, rows)
+    # 4. trading allowance (receipts and expenses; expenses at most receipts, as
+    # neither side's loss relief is compared)
+    cases = []
+    for r in (0, 50_000, 99_999, 100_000, 100_001, 150_000, 500_000, 2_000_000):
+        for e in (0, 30_000, 99_999, 100_000, 100_001, 400_000):
+            if e <= r:
+                for g in (pounds(20_000), pounds(60_000)):
+                    cases.append(person(g, trading_receipts_pence=r, trading_expenses_pence=e))
+    for _ in range(200):
+        r = rng.randint(0, pounds(60_000))
+        cases.append(person(rng.randint(0, pounds(120_000)), trading_receipts_pence=r,
+                            trading_expenses_pence=rng.choice([0, rng.randint(0, min(r, pounds(2_000))), rng.randint(0, r)]),
+                            country=rng.choice(["england", "scotland"])))
+    bad += check_singles(binary, "trading allowance", cases,
+                         lambda c: {"self_employment_income": (c["trading_receipts_pence"] - c["trading_expenses_pence"]) / 100,
+                                    "self_employment_gross_receipts": c["trading_receipts_pence"] / 100},
+                         steps, rows)
+    # 5. property allowance and rent-a-room relief (PolicyEngine has no rent-a-room
+    # expenses: it always deducts the limit, the s797 method, which is the law's
+    # least profit when the expenses are nil)
+    cases = []
+    for p in (0, 99_999, 100_000, 100_001, 250_000, 1_200_000):
+        for ep in (0, 50_000, 150_000):
+            for q in (0, 374_999, 375_000, 375_001, 750_000, 750_001, 1_000_000):
+                if ep <= p:
+                    cases.append(person(pounds(30_000), property_receipts_pence=p, property_expenses_pence=ep,
+                                        rent_a_room_receipts_pence=q))
+    for _ in range(200):
+        p = rng.choice([0, rng.randint(0, pounds(3_000)), rng.randint(0, pounds(40_000))])
+        cases.append(person(rng.randint(0, pounds(120_000)), property_receipts_pence=p,
+                            property_expenses_pence=rng.choice([0, rng.randint(0, p)]),
+                            rent_a_room_receipts_pence=rng.choice([0, rng.randint(0, pounds(15_000))]),
+                            country=rng.choice(["england", "scotland"])))
+    bad += check_singles(binary, "property allowance and rent-a-room", cases,
+                         lambda c: {"property_income": (c["property_receipts_pence"] - c["property_expenses_pence"]) / 100,
+                                    "property_rental_income": c["property_receipts_pence"] / 100,
+                                    "property_allowable_expenses": c["property_expenses_pence"] / 100,
+                                    "rent_a_room_receipts": c["rent_a_room_receipts_pence"] / 100},
+                         steps, rows)
     return bad
 
 
@@ -171,7 +217,8 @@ def check_singles(binary, label, cases, extra, steps, rows, nic=False) -> int:
     bad = 0
     worst = 0.0
     for i, (c, r) in enumerate(zip(cases, res)):
-        total = c["non_savings_pence"] + c["savings_pence"] + c["dividends_pence"]
+        total = c["non_savings_pence"] + c["savings_pence"] + c["dividends_pence"] \
+            + r["trading_profit_pence"] + r["property_profit_pence"]
         st = step(total)
         d_tax = pe["income_tax"][i] * 100 - r["tax_exact_ten_thousandths_pence"] / 10_000
         ok = abs(d_tax) <= steps * st

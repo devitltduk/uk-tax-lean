@@ -48,6 +48,17 @@ Optional fields:
   s46: a party born before 6 April 1935; this taxpayer is the husband or the
   partner with the higher income). Not with `marriage_allowance`
   (s55B(2)(d)). Default false;
+* `trading_receipts_pence` and `trading_expenses_pence`: one trade's receipts and
+  allowable expenses; `property_receipts_pence` and `property_expenses_pence`:
+  one UK property business's receipts and expenses, other than rent-a-room;
+  `rent_a_room_receipts_pence` and `rent_a_room_expenses_pence`: receipts from
+  letting furnished rooms in the taxpayer's only or main home, and
+  `rent_a_room_shared`: someone else also has such receipts from that home (the
+  limit is then halved). Default 0 / false. The profits, with the trading and
+  property allowances and rent-a-room relief elected as gives the least
+  (`UkTax/Profits.lean`), are added to `non_savings_pence` (which is then the
+  other non-savings income, such as pay). No losses: a loss counts as nil. Not
+  with `uc` or the childcare tests;
 * `funded_children`: children for the funded hours, e.g.
   `[{"age": "under_2"}, {"age": "3_4", "price_pence_per_hour": 750}]`, ages
   `"under_2"` (9 months to 2), `"2"` and `"3_4"` (until school); the hours are
@@ -93,6 +104,8 @@ structure Case where
   period : EarningsPeriod
   childBenefit : Nat
   claims : Claims
+  tradeProfit : Nat := 0
+  propertyProfit : Nat := 0
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -187,9 +200,22 @@ def parseCase (j : Json) : Except String Case := do
   let claims : Claims := {
     uc := uc.isSome, couple := ucCouple || partner.isSome, ucChildren := (uc.map (·.2)).getD 0,
     childcareCosts := costs, partner, england, fundedChildren := kids }
-  let income : Income := { income with nonSavings := income.nonSavings - netPay }
+  let tr ← optField "trading_receipts_pence"
+  let te ← optField "trading_expenses_pence"
+  let pr ← optField "property_receipts_pence"
+  let pe ← optField "property_expenses_pence"
+  let rr ← optField "rent_a_room_receipts_pence"
+  let re ← optField "rent_a_room_expenses_pence"
+  let shared := (j.getObjValAs? Bool "rent_a_room_shared").toOption.getD false
+  let profits := tradeProfit tr te + propertyProfit shared pr pe rr re
+  if tr + te + pr + pe + rr + re > 0 && (uc.isSome || !costs.isEmpty || partner.isSome
+      || (j.getObjVal? "funded_children").toOption.isSome) then
+    throw "trading, property and rent-a-room income are not modelled with Universal Credit or the childcare tests yet"
+  let income : Income :=
+    { income with nonSavings := income.nonSavings - netPay + profits }
   let rg : Regime := { scottish, relief, netPay, blind, maTransfer, maReceive, mca }
-  return ⟨income, income.settle rg, employment - netPay, period, ← optField "child_benefit_pence", claims⟩
+  return ⟨income, income.settle rg, employment - netPay, period, ← optField "child_benefit_pence", claims,
+    tradeProfit tr te, propertyProfit shared pr pe rr re⟩
 
 def result (c : Case) : Json :=
   let i := c.income
@@ -207,6 +233,8 @@ def result (c : Case) : Json :=
     ("adjusted_net_income_pence", toJson ani),
     ("personal_allowance_pence", toJson (i.personalAllowance rg)),
     ("savings_allowance_pence", toJson (savingsAllowanceFor rg (i.total - i.allowanceUsed rg))),
+    ("trading_profit_pence", toJson c.tradeProfit),
+    ("property_profit_pence", toJson c.propertyProfit),
     ("step3_income_pence", toJson (i.total - i.allowanceUsed rg)),
     ("allowance_against_savings_pence", toJson a.toSavings),
     ("allowance_against_dividends_pence", toJson a.toDividends),

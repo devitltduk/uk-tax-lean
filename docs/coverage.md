@@ -29,13 +29,13 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | | Area | Programmes |
 |---|---|---|
 | P1 | Scottish income tax, Gift Aid, relief at source | Scottish rates on non-savings income, savings and dividends on UK rates, s25(2) placement for Scottish taxpayers; Gift Aid and relief-at-source pension contributions raising the rate limits and reducing adjusted net income |
-| P2 | Reliefs and allowances | net pay pension contributions, Marriage Allowance, Blind Person's Allowance, trading and property allowances, self-employment profits |
+| P2 | Reliefs and allowances | net pay pension contributions, Marriage Allowance, married couple's allowance, Blind Person's Allowance, trading and property allowances, rent-a-room relief, self-employment and property profits (**done**) |
 | P3 | NICs completeness | Class 2, 3 and 4, employer Class 1, Class 1A |
 | P4 | Universal Credit in full | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
 | P5 | Other means-tested and disability benefits | Housing Benefit, legacy benefits still in payment, Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant |
 | P6 | Pensions | State Pension (new and basic), Pension Credit |
 | P7 | Council tax | council tax, Council Tax Reduction |
-| P8 | CGT and property taxes | Capital Gains Tax, SDLT, LBTT, LTT |
+| P8 | CGT, property taxes and the remaining income tax reliefs | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
 | P9 | The rest | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
 ## Taxes on income
@@ -47,19 +47,19 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Scottish income tax: Scottish rates on non-savings income, savings and dividends at UK rates in UK bands, the UK test for the savings allowance | `income_tax` via `gov.hmrc.income_tax.rates.scotland`, `tax_band` | ITA 2007 ss 11A, 11D(6), 12B(8), 13(5); Scottish rate resolution 2026-27 (S6M-20844); Scotland Act 1998 s80C | **done** (P1) |
 | High Income Child Benefit Charge | `child_benefit_hitc` (in `income_tax` at Step 7) | ITEPA 2003 ss 681B-681H; ITA 2007 s30 | **done** |
 | Pension contributions relieved at source: raised rate limits (rUK and Scottish), adjusted net income | `personal_pension_contributions`, `pension_contributions_relief` | Finance Act 2004 ss 190-192; ITA 2007 s58 | **done** (P1, the member's liability; findings #7, #8) |
-| Net pay pension contributions, the relief cap, the annual allowance charge | `employee_pension_contributions`, `net_pay_pension_relief`, `pension_annual_allowance`, `pension_annual_allowance_chargeable_amount` | Finance Act 2004 ss 190, 193, 227-228ZA | planned (P2) |
-| Salary sacrifice for pensions | `pension_contributions_via_salary_sacrifice_*`, `salary_sacrifice_pension_ni_*` | ITEPA 2003 s62 (a contract variation, no statutory rule for income tax); NICs cap: National Insurance Contributions (Employer Pensions Contributions) Act 2026 s1, inserting SSCBA 1992 s4(6A) | planned (P2, as lower pay) |
+| Net pay pension contributions, the relief cap, the annual allowance charge | `employee_pension_contributions`, `net_pay_pension_relief`, `pension_annual_allowance`, `pension_annual_allowance_chargeable_amount` | Finance Act 2004 ss 190, 193, 227-228ZA | **done** (P2: net pay contributions, income tax and NICs); the relief cap and the annual allowance charge planned (P8) |
+| Salary sacrifice for pensions | `pension_contributions_via_salary_sacrifice_*`, `salary_sacrifice_pension_ni_*` | ITEPA 2003 s62 (a contract variation, no statutory rule for income tax); NICs cap: National Insurance Contributions (Employer Pensions Contributions) Act 2026 s1, inserting SSCBA 1992 s4(6A) | **done** as lower pay (enter the salary after sacrifice; EIM42755; the NICs cap has effect only from 2029-30, s1(3)) |
 | Gift Aid: raised rate limits (rUK and Scottish), adjusted net income | `gift_aid`, `gift_aid_grossed_up` | ITA 2007 ss 414-415, 58 | **done** (P1) |
-| Gifts of shares and land to charity | `charitable_investment_gifts` | ITA 2007 Part 8 Ch 3 | planned (P2) |
-| Marriage Allowance | `marriage_allowance`, `marriage_allowance_tax_reduction` | ITA 2007 ss 55A-55E | planned (P2) |
-| Married couple's allowance | `married_couples_allowance`, `married_couples_allowance_deduction` | ITA 2007 ss 42-55 | planned (P2) |
-| Blind Person's Allowance | `blind_persons_allowance` | ITA 2007 s38 | planned (P2) |
-| Trading and property allowances | `trading_allowance_deduction`, `property_allowance_deduction`, `miscellaneous_income_trading_allowance_deduction` | ITTOIA 2005 ss 783A-783BQ | planned (P2) |
-| Self-employment and property income as non-savings income | `taxable_self_employment_income`, `taxable_property_income`, `property_finance_cost_relief` | ITTOIA 2005 Parts 2-3, s272A (finance costs restriction), ss 274A-274C (the tax reduction) | planned (P2) |
-| Trade loss relief, capital allowances, relief cap | `loss_relief`, `trade_loss_relief_against_general_income`, `capital_allowances`, `income_tax_relief_cap` | ITA 2007 ss 64, 24A; CAA 2001 | planned (P2: losses as an input) |
-| Rent-a-room relief | `rent_a_room_relief`, `rent_a_room_income_tax` | ITTOIA 2005 ss 784-802 | planned (P2) |
+| Gifts of shares and land to charity | `charitable_investment_gifts` | ITA 2007 Part 8 Ch 3 | planned (P8) |
+| Marriage Allowance | `marriage_allowance`, `marriage_allowance_tax_reduction` | ITA 2007 ss 55A-55E | **done** (P2; findings #12) |
+| Married couple's allowance | `married_couples_allowance`, `married_couples_allowance_deduction` | ITA 2007 ss 42-55 | **done** (P2; PolicyEngine takes the allowance as an input) |
+| Blind Person's Allowance | `blind_persons_allowance` | ITA 2007 s38 | **done** (P2) |
+| Trading and property allowances | `trading_allowance_deduction`, `property_allowance_deduction`, `miscellaneous_income_trading_allowance_deduction` | ITTOIA 2005 ss 783A-783BQ | **done** (P2: one trade, one property business; miscellaneous income not modelled) |
+| Self-employment and property income as non-savings income | `taxable_self_employment_income`, `taxable_property_income`, `property_finance_cost_relief` | ITTOIA 2005 Parts 2-3, s272A (finance costs restriction), ss 274A-274C (the tax reduction) | **done** for income tax (P2, profits from receipts and expenses); finance costs restriction and the s274A reduction planned (P8) |
+| Trade loss relief, capital allowances, relief cap | `loss_relief`, `trade_loss_relief_against_general_income`, `capital_allowances`, `income_tax_relief_cap` | ITA 2007 ss 64, 24A; CAA 2001 | planned (P8: losses as an input) |
+| Rent-a-room relief | `rent_a_room_relief`, `rent_a_room_income_tax` | ITTOIA 2005 ss 784-802 | **done** (P2, Part 3 receipts; findings #13) |
 | Company car and car fuel benefits | `company_car_benefit`, `car_fuel_benefit`, `ni_class_1a` | ITEPA 2003 ss 114-153 | planned (P3) |
-| Employment expenses and deductions | `employment_deductions`, `employment_expenses` | ITEPA 2003 Part 5 | planned (P2, as an input) |
+| Employment expenses and deductions | `employment_deductions`, `employment_expenses` | ITEPA 2003 Part 5 | planned (P8, as an input) |
 | Winter fuel payment charge | `winter_fuel_payment_charge` | Finance Act 2026 s57 and Sch 10 (inserting ITEPA 2003 Part 10 Ch 9) | planned (P9) |
 | ISA cash-interest charge (from 2027-28) | `isa_cash_interest_flat_rate_charge` | Budget 2026; from 6 April 2027 | out of scope: starts after 2026-27 |
 

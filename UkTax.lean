@@ -1,5 +1,6 @@
 import UkTax.Params
 import UkTax.Calc
+import UkTax.Profits
 import UkTax.Proofs
 import UkTax.Optimal
 import UkTax.Charges

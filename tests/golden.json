@@ -1158,5 +1158,113 @@
       }
     },
     "uc_millionths_pence": 91880000000
+  },
+  {
+    "name": "Trading receipts within the £1,000 allowance are not charged",
+    "input": {
+      "non_savings_pence": 2000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 2000000,
+      "trading_receipts_pence": 80000,
+      "trading_expenses_pence": 30000
+    },
+    "source": "ITTOIA 2005 s783AD(1), s783AE(1), s783AF(2)",
+    "working": "receipts 800 <= 1,000: full relief, profits nil (expenses 300 not deducted either); tax on pay only: (20,000 - 12,570) x 20% = 1,486",
+    "trading_profit_pence": 0,
+    "liability_pence": 148600
+  },
+  {
+    "name": "Trading allowance deducted instead of smaller expenses (partial relief)",
+    "input": {
+      "non_savings_pence": 2000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 2000000,
+      "trading_receipts_pence": 500000,
+      "trading_expenses_pence": 40000
+    },
+    "source": "ITTOIA 2005 s783AH, s783AI(2)-(3), s783AM",
+    "working": "receipts 5,000 > 1,000; expenses 400 < 1,000, so elect partial relief: 5,000 - 1,000 = 4,000; tax (20,000 + 4,000 - 12,570) x 20% = 2,286",
+    "trading_profit_pence": 400000,
+    "liability_pence": 228600
+  },
+  {
+    "name": "Actual expenses above the trading allowance are deducted instead",
+    "input": {
+      "non_savings_pence": 2000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 2000000,
+      "trading_receipts_pence": 500000,
+      "trading_expenses_pence": 180000
+    },
+    "source": "ITTOIA 2005 s783AM (no election); Part 2",
+    "working": "expenses 1,800 > 1,000: no election, profit 5,000 - 1,800 = 3,200; tax (23,200 - 12,570) x 20% = 2,126",
+    "trading_profit_pence": 320000,
+    "liability_pence": 212600
+  },
+  {
+    "name": "Property allowance and rent-a-room relief on separate receipts",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "property_receipts_pence": 1200000,
+      "property_expenses_pence": 300000,
+      "rent_a_room_receipts_pence": 900000,
+      "rent_a_room_expenses_pence": 50000
+    },
+    "source": "ITTOIA 2005 s783BB(2), s783BH, s789(4), s795, s797(4)",
+    "working": "other letting: 12,000 - 3,000 = 9,000 (beats 12,000 - 1,000); rooms: 9,000 > 7,500, elect the alternative method 9,000 - 7,500 = 1,500 (beats 9,000 - 500); profits 10,500; tax (30,000 + 10,500 - 12,570) x 20% = 5,586",
+    "property_profit_pence": 1050000,
+    "liability_pence": 558600
+  },
+  {
+    "name": "Rent-a-room limit halved when another person also lets rooms in the home",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "rent_a_room_receipts_pence": 500000,
+      "rent_a_room_shared": true
+    },
+    "source": "ITTOIA 2005 s789(3), s790, s797(4)",
+    "working": "limit 7,500 / 2 = 3,750; receipts 5,000 exceed it: 5,000 - 3,750 = 1,250; tax (31,250 - 12,570) x 20% = 3,736",
+    "property_profit_pence": 125000,
+    "liability_pence": 373600
+  },
+  {
+    "name": "Rent-a-room receipts within the limit are not charged",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "rent_a_room_receipts_pence": 500000
+    },
+    "source": "ITTOIA 2005 s789(4), s791, s793",
+    "working": "receipts 5,000 <= 7,500: full relief; tax on pay: (30,000 - 12,570) x 20% = 3,486",
+    "property_profit_pence": 0,
+    "liability_pence": 348600
+  },
+  {
+    "name": "Electing out of rent-a-room relief lets a loss on the rooms reduce other letting profits",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "property_receipts_pence": 600000,
+      "property_expenses_pence": 100000,
+      "rent_a_room_receipts_pence": 200000,
+      "rent_a_room_expenses_pence": 300000
+    },
+    "source": "ITTOIA 2005 s799 (election out of full relief), s783BB(2)",
+    "working": "other letting 6,000 - 1,000 = 5,000 (the property allowance gives the same); rooms 2,000 - 3,000 = -1,000 in the same property business once full relief is disapplied; profits 4,000; tax (34,000 - 12,570) x 20% = 4,286",
+    "property_profit_pence": 400000,
+    "liability_pence": 428600
   }
 ]
