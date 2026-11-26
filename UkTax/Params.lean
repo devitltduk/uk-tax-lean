@@ -23,7 +23,9 @@ structure Rates where
 
 /-- Personal allowance, £12,570.
 ITA 2007 s35(1) <https://www.legislation.gov.uk/ukpga/2007/3/section/35>; amount
-frozen to 2030-31 by FA 2021 s5 and FA 2026 s10. GOV.UK:
+frozen for 2026-27 by FA 2021 s5(2) as amended by FA 2023 s5
+<https://www.legislation.gov.uk/ukpga/2023/1/section/5> (and to 2030-31 by FA 2026
+s10). GOV.UK:
 <https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past> -/
 def personalAllowance : Nat := 1_257_000
 
@@ -33,8 +35,8 @@ rounded up to a whole pound (s35(3)). -/
 def paIncomeLimit : Nat := 10_000_000
 
 /-- Basic rate limit, £37,700. ITA 2007 s10(5)
-<https://www.legislation.gov.uk/ukpga/2007/3/section/10>; frozen by FA 2021 s5 and
-FA 2026 s10. With the full personal allowance the higher rate starts at £50,270 of
+<https://www.legislation.gov.uk/ukpga/2007/3/section/10>; frozen for 2026-27 by FA 2021
+s5(1) as amended by FA 2023 s5. With the full personal allowance the higher rate starts at £50,270 of
 total income (GOV.UK <https://www.gov.uk/income-tax-rates>). -/
 def basicRateLimit : Nat := 3_770_000
 
@@ -86,6 +88,69 @@ ordinary and upper rates raised from 8.75 % and 33.75 % by Finance Act 2026 s4 f
 2026-27 onwards. GOV.UK policy paper
 <https://www.gov.uk/government/publications/changes-to-tax-rates-for-property-savings-and-dividend-income> -/
 def dividendRates : Rates := ⟨1075, 3575, 3935⟩
+
+/-! ## Scottish rates of income tax, 2026-27
+
+A Scottish taxpayer's non-savings income is charged at the Scottish rates
+(ITA 2007 s11A(1A) <https://www.legislation.gov.uk/ukpga/2007/3/section/11A>),
+set for 2026-27 by the Scottish rate resolution, motion S6M-20844, agreed by the
+Scottish Parliament on 19 February 2026
+<https://www.parliament.scot/chamber-and-committees/votes-and-motions/S6M-20844>
+(power: Scotland Act 1998 s80C). The resolution charges each rate on income
+"charged above the personal allowance": "(a) a starter rate of 19%, charged on
+income up to a limit of £3,967, (b) the Scottish basic rate is 20%, charged on
+income above £3,967 and up to a limit of £16,956, (c) an intermediate rate of
+21% ... up to a limit of £31,092, (d) a higher rate of 42% ... up to a limit of
+£62,430, (e) an advanced rate of 45% ... up to a limit of £125,140, and (f) a top
+rate of 48%, charged on income above £125,140". GOV.UK
+<https://www.gov.uk/scottish-income-tax> gives the same bands as gross income with
+the standard allowance (£12,571 to £16,537 starter, ... £75,001 to £125,140
+advanced). Savings and dividends of a Scottish taxpayer are charged at the UK
+rates in the UK bands, "as if the individual were not a Scottish taxpayer"
+(s11D(6), s13(5)), and so is the personal savings allowance's test of
+higher-rate and additional-rate income (s12B(8)(a)(iv), (b)(iv)). -/
+
+/-- Starter rate limit, £3,967 of income above the personal allowance. Not raised
+by Gift Aid or pension contributions (ITA 2007 s414(2)(b) and FA 2004 s192(4A)
+raise only the Scottish basic rate's limit and those above it). -/
+def scotStarterLimit : Nat := 396_700
+
+/-- Upper limit of the Scottish basic rate, £16,956. -/
+def scotBasicLimit : Nat := 1_695_600
+
+/-- Upper limit of the intermediate rate, £31,092. -/
+def scotIntermediateLimit : Nat := 3_109_200
+
+/-- Upper limit of the Scottish higher rate, £62,430. -/
+def scotHigherLimit : Nat := 6_243_000
+
+/-- Upper limit of the advanced rate, £125,140; the top rate is charged above it. -/
+def scotAdvancedLimit : Nat := 12_514_000
+
+/-- Starter, basic, intermediate, higher, advanced and top rates: 19, 20, 21, 42,
+45 and 48 %, in basis points. -/
+def scotStarterRate : Nat := 1900
+def scotBasicRate : Nat := 2000
+def scotIntermediateRate : Nat := 2100
+def scotHigherRate : Nat := 4200
+def scotAdvancedRate : Nat := 4500
+def scotTopRate : Nat := 4800
+
+/-! ## Gift Aid and pension contributions relieved at source
+
+A Gift Aid donation is treated as made after deduction of income tax at the
+basic rate, and the basic rate limit and the higher rate limit, and for a
+Scottish taxpayer "the upper limit for the Scottish basic rate and the limits for
+any Scottish rates above the Scottish basic rate", are "increased by an amount
+equal to the grossed up amount of the gift" (ITA 2007 s414(2)
+<https://www.legislation.gov.uk/ukpga/2007/3/section/414>), grossed up at the
+basic rate (s415). Pension contributions relieved at source raise the same
+limits by the gross contribution (Finance Act 2004 s192(4), and s192(4A) for the
+Scottish limits <https://www.legislation.gov.uk/ukpga/2004/12/section/192>). Both
+are deducted from net income to give adjusted net income (ITA 2007 s58, steps 2
+and 3 <https://www.legislation.gov.uk/ukpga/2007/3/section/58>). The model takes
+the gross amounts as inputs. For 2026-27 the Scottish basic rate equals the basic
+rate (20 %), so the s414A and FA 2004 ss192A-192B adjustments are nil. -/
 
 /-! ## Employee (primary) Class 1 National Insurance contributions, 2026-27
 

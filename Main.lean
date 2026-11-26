@@ -24,8 +24,15 @@ Optional fields:
   partner who must also pass the childcare tests (minimum earnings, £100,000);
   fixed. Not allowed with a UC couple, whose partner has no pay. A UC couple
   with no `partner` fails the tests;
-* `country`: `"england"` (default), `"wales"` or `"northern_ireland"`; the
+* `country`: `"england"` (default), `"wales"`, `"northern_ireland"` or
+  `"scotland"` (a Scottish taxpayer: Scottish rates on non-savings income); the
   funded hours are England's;
+* `gift_aid_gross_pence`: Gift Aid donations, grossed up at the basic rate (the
+  amount given ÷ 0.8), and `pension_relief_at_source_gross_pence`: pension
+  contributions relieved at source, gross (default 0 each). Both raise the rate
+  limits (ITA 2007 s414(2), FA 2004 s192(4), (4A)) and come off adjusted net
+  income (ITA 2007 s58). Not allowed with `uc` (Universal Credit deducts pension
+  contributions from earned income, which is not modelled yet);
 * `funded_children`: children for the funded hours, e.g.
   `[{"age": "under_2"}, {"age": "3_4", "price_pence_per_hour": 750}]`, ages
   `"under_2"` (9 months to 2), `"2"` and `"3_4"` (until school); the hours are
@@ -61,6 +68,7 @@ open Lean UkTax
 /-- One taxpayer: income, employment earnings, pay period and Child Benefit. -/
 structure Case where
   income : Income
+  regime : Regime
   employment : Nat
   period : EarningsPeriod
   childBenefit : Nat
@@ -113,11 +121,15 @@ def parseCase (j : Json) : Except String Case := do
         | .error _ => .error s!"partner.{k} must be a non-negative whole number of pence"
       pure (some (← f "pay_pence", ← f "adjusted_net_income_pence"))
     | .error _ => pure none
-  let england ← match j.getObjValAs? String "country" with
-    | .ok "england" => pure true
-    | .ok "wales" | .ok "northern_ireland" => pure false
-    | .ok c => throw s!"country must be england, wales or northern_ireland, not {c}"
-    | .error _ => pure true
+  let (england, scottish) ← match j.getObjValAs? String "country" with
+    | .ok "england" => pure (true, false)
+    | .ok "wales" | .ok "northern_ireland" => pure (false, false)
+    | .ok "scotland" => pure (false, true)
+    | .ok c => throw s!"country must be england, wales, northern_ireland or scotland, not {c}"
+    | .error _ => pure (true, false)
+  let relief := (← optField "gift_aid_gross_pence") + (← optField "pension_relief_at_source_gross_pence")
+  if uc.isSome && relief > 0 then
+    throw "uc: Gift Aid and pension contributions are not modelled with Universal Credit yet"
   let kids ← match j.getObjValAs? (Array Json) "funded_children" with
     | .ok xs => xs.toList.mapM fun k => do
       let band ← match k.getObjValAs? String "age" with
@@ -140,32 +152,35 @@ def parseCase (j : Json) : Except String Case := do
   let claims : Claims := {
     uc := uc.isSome, couple := ucCouple || partner.isSome, ucChildren := (uc.map (·.2)).getD 0,
     childcareCosts := costs, partner, england, fundedChildren := kids }
-  return ⟨income, employment, period, ← optField "child_benefit_pence", claims⟩
+  return ⟨income, { scottish, relief }, employment, period, ← optField "child_benefit_pence", claims⟩
 
 def result (c : Case) : Json :=
   let i := c.income
-  let a := i.bestAlloc
+  let rg := c.regime
+  let a := i.bestAlloc rg
   let nic := nicExact c.period c.employment
+  let ani := i.ani rg
   Json.mkObj [
-    ("liability_pence", toJson (liability i)),
-    ("tax_exact_ten_thousandths_pence", toJson (taxExact i)),
-    ("personal_allowance_pence", toJson i.personalAllowance),
-    ("savings_allowance_pence", toJson (savingsAllowanceFor (i.total - i.allowanceUsed))),
-    ("step3_income_pence", toJson (i.total - i.allowanceUsed)),
+    ("liability_pence", toJson (liability rg i)),
+    ("tax_exact_ten_thousandths_pence", toJson (taxExact rg i)),
+    ("adjusted_net_income_pence", toJson ani),
+    ("personal_allowance_pence", toJson (i.personalAllowance rg)),
+    ("savings_allowance_pence", toJson (savingsAllowanceFor rg (i.total - i.allowanceUsed rg))),
+    ("step3_income_pence", toJson (i.total - i.allowanceUsed rg)),
     ("allowance_against_savings_pence", toJson a.toSavings),
     ("allowance_against_dividends_pence", toJson a.toDividends),
     ("nic_exact_ten_thousandths_pence", toJson nic),
     ("nic_pence", toJson (nic / 10_000)),
-    -- adjusted net income is total income: no reliefs are modelled
-    ("hicbc_pence", toJson (hicbc i.total c.childBenefit)),
-    ("uc_millionths_pence", toJson (ucAward c.claims (earned c.period i.savings i.dividends c.employment))),
-    ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment i.total)),
-    ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment i.total)),
-    ("childcare_eligible", toJson (childcareEligible c.claims c.employment i.total)),
+    ("hicbc_pence", toJson (hicbc ani c.childBenefit)),
+    ("uc_millionths_pence",
+      toJson (ucAward c.claims (earned c.period rg i.savings i.dividends c.employment))),
+    ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment ani)),
+    ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment ani)),
+    ("childcare_eligible", toJson (childcareEligible c.claims c.employment ani)),
     -- `netAll` takes all non-savings income as pay
     ("net_income_millionths_pence",
       if c.employment = i.nonSavings then
-        toJson (netAll c.period c.childBenefit c.claims i.savings i.dividends c.employment)
+        toJson (netAll c.period c.childBenefit rg c.claims i.savings i.dividends c.employment)
       else Json.null)]
 
 def run (input : String) : Except String Json := do

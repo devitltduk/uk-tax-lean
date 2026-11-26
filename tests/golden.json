@@ -738,5 +738,167 @@
       ]
     },
     "net_income_millionths_pence": 6855800580000
+  },
+  {
+    "name": "Scottish taxpayer, pay 50,000",
+    "source": "Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "taxable 37,430: 3,967 x 19% = 753.73; 12,989 x 20% = 2,597.80; 14,136 x 21% = 2,968.56; 6,338 x 42% = 2,661.96; total 8,982.05",
+    "input": {
+      "non_savings_pence": 5000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland"
+    },
+    "liability_pence": 898205
+  },
+  {
+    "name": "Scottish taxpayer at the top of the intermediate band (43,662)",
+    "source": "Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "taxable 31,092: 753.73 + 2,597.80 + 2,968.56 = 6,320.09",
+    "input": {
+      "non_savings_pence": 4366200,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland"
+    },
+    "tax_exact_ten_thousandths_pence": 6320090000
+  },
+  {
+    "name": "Scottish taxpayer 1p into the higher rate (43,662.01)",
+    "source": "Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "6,320.09 + 1p x 42% = 6,320.0942",
+    "input": {
+      "non_savings_pence": 4366201,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland"
+    },
+    "tax_exact_ten_thousandths_pence": 6320094200
+  },
+  {
+    "name": "Scottish taxpayer 1p over the starter limit (16,537.01)",
+    "source": "Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "taxable 3,967.01: 3,967 x 19% = 753.73; 1p x 20% = 0.2p",
+    "input": {
+      "non_savings_pence": 1653701,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland"
+    },
+    "tax_exact_ten_thousandths_pence": 753732000
+  },
+  {
+    "name": "Scottish top rate, pay 150,000",
+    "source": "Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "no allowance; 753.73 + 2,597.80 + 2,968.56 + 31,338 x 42% = 13,161.96 + 62,710 x 45% = 28,219.50 + 24,860 x 48% = 11,932.80; total 59,634.35",
+    "input": {
+      "non_savings_pence": 15000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland"
+    },
+    "liability_pence": 5963435
+  },
+  {
+    "name": "Scottish higher-rate taxpayer keeps the 1,000 savings allowance",
+    "source": "ITA 2007 s12B(8)(b)(iv), s11D(6); Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "pay 45,000, savings 2,000; taxable 34,430, below the UK basic rate limit 37,700, so PSA 1,000; pay: 6,320.09 + 1,338 x 42% = 561.96; savings: 1,000 at 0%, 1,000 x 20% = 200; total 7,082.05 (a Scottish test would give PSA 500 and 7,182.05)",
+    "input": {
+      "non_savings_pence": 4500000,
+      "savings_pence": 200000,
+      "dividends_pence": 0,
+      "country": "scotland"
+    },
+    "liability_pence": 708205
+  },
+  {
+    "name": "Scottish taxpayer's dividends at UK rates in UK bands",
+    "source": "ITA 2007 s13(5), s25(2); Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "pay 30,000, dividends 10,000; allowance against pay (least tax); pay taxable 17,430: 753.73 + 2,597.80 + 474 x 21% = 99.54; dividends at 17,430-27,430 (UK basic band): 500 at 0%, 9,500 x 10.75% = 1,021.25; total 4,472.32",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 1000000,
+      "country": "scotland"
+    },
+    "liability_pence": 447232
+  },
+  {
+    "name": "Gift Aid raises the rate limits",
+    "source": "ITA 2007 s414(2), s415",
+    "working": "pay 60,000, Gift Aid 4,000 given (5,000 gross); basic rate limit 42,700; taxable 47,430: 42,700 x 20% = 8,540; 4,730 x 40% = 1,892; total 10,432 (11,432 without)",
+    "input": {
+      "non_savings_pence": 6000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "gift_aid_gross_pence": 500000
+    },
+    "liability_pence": 1043200
+  },
+  {
+    "name": "Gift Aid restores the personal allowance",
+    "source": "ITA 2007 s58, s35, s414(2)",
+    "working": "pay 110,000, Gift Aid 10,000 gross: adjusted net income 100,000, allowance 12,570; taxable 97,430; basic rate limit 47,700: 9,540 + 49,730 x 40% = 19,892; total 29,432",
+    "input": {
+      "non_savings_pence": 11000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "gift_aid_gross_pence": 1000000
+    },
+    "liability_pence": 2943200,
+    "adjusted_net_income_pence": 10000000,
+    "personal_allowance_pence": 1257000
+  },
+  {
+    "name": "Gift Aid takes adjusted net income below the HICBC threshold",
+    "source": "ITA 2007 s58; ITEPA 2003 s681C",
+    "working": "pay 70,000, Gift Aid 10,000 gross: adjusted net income 60,000, no charge (without it, 50% of 1,406 = 703)",
+    "input": {
+      "non_savings_pence": 7000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 7000000,
+      "gift_aid_gross_pence": 1000000,
+      "child_benefit_pence": 140660
+    },
+    "hicbc_pence": 0
+  },
+  {
+    "name": "Gift Aid keeps the 1,000 savings allowance",
+    "source": "ITA 2007 s12B, s414(2)",
+    "working": "pay 50,000, savings 2,000, Gift Aid 3,000 gross; taxable 39,430, below the raised basic rate limit 40,700, so PSA 1,000; pay 37,430 x 20% = 7,486; savings 1,000 at 0%, 1,000 x 20% = 200; total 7,686 (8,086 without: PSA 500, 1,500 x 40%)",
+    "input": {
+      "non_savings_pence": 5000000,
+      "savings_pence": 200000,
+      "dividends_pence": 0,
+      "gift_aid_gross_pence": 300000
+    },
+    "liability_pence": 768600
+  },
+  {
+    "name": "Gift Aid does not raise the Scottish starter limit",
+    "source": "ITA 2007 s414(2)(b); Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "Scottish, pay 20,000, Gift Aid 1,000 gross; taxable 7,430; starter limit stays 3,967: 753.73 + 3,463 x 20% = 692.60; total 1,446.33 (1,436.33 if it were raised)",
+    "input": {
+      "non_savings_pence": 2000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland",
+      "gift_aid_gross_pence": 100000
+    },
+    "liability_pence": 144633
+  },
+  {
+    "name": "Pension relief at source raises the Scottish limits",
+    "source": "FA 2004 s192(4A); Scottish rate resolution 2026-27 (S6M-20844); ITA 2007 s11A; https://www.gov.uk/scottish-income-tax",
+    "working": "Scottish, pay 80,000, contributions 10,000 gross; adjusted net income 70,000; taxable 67,430; limits 3,967 / 26,956 / 41,092 / 72,430: 753.73 + 22,989 x 20% = 4,597.80 + 14,136 x 21% = 2,968.56 + 26,338 x 42% = 11,061.96; total 19,382.05",
+    "input": {
+      "non_savings_pence": 8000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland",
+      "pension_relief_at_source_gross_pence": 1000000
+    },
+    "liability_pence": 1938205
   }
 ]

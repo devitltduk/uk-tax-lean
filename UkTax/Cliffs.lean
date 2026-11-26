@@ -33,63 +33,110 @@ namespace UkTax
 /-! ## The rate at a point of the bands -/
 
 /-- The rate on the penny of Step 3 income just above position `y`. -/
-def rateAt (r : Rates) (y : Nat) : Nat :=
-  if y < basicRateLimit then r.basic else if y < higherRateLimit then r.higher else r.additional
+def rateAt (r : Rates) (rg : Regime) (y : Nat) : Nat :=
+  if y < rg.brl then r.basic else if y < rg.hrl then r.higher else r.additional
+
+/-- The Scottish rate on the penny of non-savings income just above position `y`. -/
+def scotRateAt (rg : Regime) (y : Nat) : Nat :=
+  if y < scotStarterLimit then scotStarterRate
+  else if y < scotBasicLimit + rg.relief then scotBasicRate
+  else if y < scotIntermediateLimit + rg.relief then scotIntermediateRate
+  else if y < scotHigherLimit + rg.relief then scotHigherRate
+  else if y < scotAdvancedLimit + rg.relief then scotAdvancedRate
+  else scotTopRate
+
+/-- The non-savings rate on the penny just above position `y`. -/
+def nsRateAt (rg : Regime) (y : Nat) : Nat :=
+  if rg.scottish then scotRateAt rg y else rateAt nonSavingsRates rg y
 
 macro "rate_tac" : tactic => `(tactic| (
   unfold bandTax rateAt at *
   (try unfold nonSavingsRates at *)
   (try unfold savingsRates at *)
   (try unfold dividendRates at *)
+  unfold Regime.brl Regime.hrl at *
   unfold basicRateLimit higherRateLimit personalAllowance at *
   dsimp only at *
   split <;> (try split) <;> omega))
 
-theorem bandTax_succ_ns (y : Nat) :
-    bandTax nonSavingsRates (y + 1) = bandTax nonSavingsRates y + rateAt nonSavingsRates y := by
+theorem bandTax_succ_sav (rg : Regime) (y : Nat) :
+    bandTax savingsRates rg (y + 1) = bandTax savingsRates rg y + rateAt savingsRates rg y := by
   rate_tac
 
-theorem bandTax_succ_sav (y : Nat) :
-    bandTax savingsRates (y + 1) = bandTax savingsRates y + rateAt savingsRates y := by
+theorem bandTax_succ_div (rg : Regime) (y : Nat) :
+    bandTax dividendRates rg (y + 1) = bandTax dividendRates rg y + rateAt dividendRates rg y := by
   rate_tac
 
-theorem bandTax_succ_div (y : Nat) :
-    bandTax dividendRates (y + 1) = bandTax dividendRates y + rateAt dividendRates y := by
-  rate_tac
+theorem nsTax_succ (rg : Regime) (y : Nat) : nsTax rg (y + 1) = nsTax rg y + nsRateAt rg y := by
+  unfold nsTax nsRateAt
+  split
+  · unfold scotTax scotRateAt scotStarterRate scotBasicRate scotIntermediateRate scotHigherRate
+      scotAdvancedRate scotTopRate scotStarterLimit scotBasicLimit scotIntermediateLimit
+      scotHigherLimit scotAdvancedLimit
+    repeat' split
+    all_goals omega
+  · rate_tac
 
 /-- Which rate applies where, as a disjunction `omega` can use. -/
-theorem rateAt_sav_cases (y : Nat) :
-    (y < 3_770_000 ∧ rateAt savingsRates y = 2000) ∨
-      (3_770_000 ≤ y ∧ y < 12_514_000 ∧ rateAt savingsRates y = 4000) ∨
-      (12_514_000 ≤ y ∧ rateAt savingsRates y = 4500) := by
-  unfold rateAt savingsRates basicRateLimit higherRateLimit personalAllowance
+theorem rateAt_sav_cases (rg : Regime) (y : Nat) :
+    (y < rg.brl ∧ rateAt savingsRates rg y = 2000) ∨
+      (rg.brl ≤ y ∧ y < rg.hrl ∧ rateAt savingsRates rg y = 4000) ∨
+      (rg.hrl ≤ y ∧ rateAt savingsRates rg y = 4500) := by
+  unfold rateAt savingsRates
   dsimp only
   split <;> (try split) <;> omega
 
-theorem rateAt_ns_cases (y : Nat) :
-    (y < 3_770_000 ∧ rateAt nonSavingsRates y = 2000) ∨
-      (3_770_000 ≤ y ∧ y < 12_514_000 ∧ rateAt nonSavingsRates y = 4000) ∨
-      (12_514_000 ≤ y ∧ rateAt nonSavingsRates y = 4500) := by
-  unfold rateAt nonSavingsRates basicRateLimit higherRateLimit personalAllowance
+theorem rateAt_ns_cases (rg : Regime) (y : Nat) :
+    (y < rg.brl ∧ rateAt nonSavingsRates rg y = 2000) ∨
+      (rg.brl ≤ y ∧ y < rg.hrl ∧ rateAt nonSavingsRates rg y = 4000) ∨
+      (rg.hrl ≤ y ∧ rateAt nonSavingsRates rg y = 4500) := by
+  unfold rateAt nonSavingsRates
   dsimp only
   split <;> (try split) <;> omega
 
-theorem rateAt_div_cases (y : Nat) :
-    (y < 3_770_000 ∧ rateAt dividendRates y = 1075) ∨
-      (3_770_000 ≤ y ∧ y < 12_514_000 ∧ rateAt dividendRates y = 3575) ∨
-      (12_514_000 ≤ y ∧ rateAt dividendRates y = 3935) := by
-  unfold rateAt dividendRates basicRateLimit higherRateLimit personalAllowance
+theorem rateAt_div_cases (rg : Regime) (y : Nat) :
+    (y < rg.brl ∧ rateAt dividendRates rg y = 1075) ∨
+      (rg.brl ≤ y ∧ y < rg.hrl ∧ rateAt dividendRates rg y = 3575) ∨
+      (rg.hrl ≤ y ∧ rateAt dividendRates rg y = 3935) := by
+  unfold rateAt dividendRates
   dsimp only
   split <;> (try split) <;> omega
+
+/-- The Scottish rates, by where `y` is. Only what the marginal-rate bound needs:
+below the basic rate limit the rate is at most 21 % until the Scottish higher rate
+starts, then 42 %; at or above it, at most 48 %. -/
+theorem scotRateAt_cases (rg : Regime) (y : Nat) :
+    (y < scotIntermediateLimit + rg.relief ∧ scotRateAt rg y ≤ 2100) ∨
+      (scotIntermediateLimit + rg.relief ≤ y ∧ y < scotHigherLimit + rg.relief ∧
+        scotRateAt rg y = 4200) ∨
+      (scotHigherLimit + rg.relief ≤ y ∧ scotRateAt rg y ≤ 4800) := by
+  unfold scotRateAt scotStarterRate scotBasicRate scotIntermediateRate scotHigherRate
+    scotAdvancedRate scotTopRate scotStarterLimit scotBasicLimit scotIntermediateLimit
+    scotHigherLimit scotAdvancedLimit
+  repeat' split
+  all_goals omega
+
+/-- The most income tax a penny more non-savings income can add, with both
+allowances fixed, in 1/10 000 pence: 0.686p, or 0.706p for a Scottish taxpayer
+(`G_succ_le`). -/
+def Regime.maxStep (rg : Regime) : Nat := if rg.scottish then 7060 else 6860
 
 /-! ## One penny more non-savings income, allowances fixed -/
 
+set_option maxRecDepth 100000 in
 /-- With the allowances fixed, moving a share's non-savings income, its top and
-the total all up by one penny adds at most 0.686p (6,860 ten-thousandths) of
-tax. -/
-theorem G_succ_le {A T x w : Nat} (hxw : x ≤ w) (hwT : w ≤ T) :
-    G A (T + 1) (x + 1) (w + 1) ≤ G A T x w + 6860 := by
-  have hLB : startingRateLimitSavings < 3_770_000 := by unfold startingRateLimitSavings; decide
+the total all up by one penny adds at most `rg.maxStep` of tax: 0.686p (6,860
+ten-thousandths), or 0.706p for a Scottish taxpayer. -/
+theorem G_succ_le {rg : Regime} {A T x w : Nat} (hxw : x ≤ w) (hwT : w ≤ T) :
+    G rg A (T + 1) (x + 1) (w + 1) ≤ G rg A T x w + rg.maxStep := by
+  have hLB : startingRateLimitSavings < rg.brl := by
+    unfold startingRateLimitSavings Regime.brl basicRateLimit; omega
+  have hBH : rg.brl < rg.hrl := by
+    unfold Regime.brl Regime.hrl basicRateLimit higherRateLimit personalAllowance; omega
+  have hS : scotIntermediateLimit + rg.relief < rg.brl ∧ rg.brl ≤ scotHigherLimit + rg.relief ∧
+      startingRateLimitSavings ≤ scotIntermediateLimit + rg.relief := by
+    unfold scotIntermediateLimit scotHigherLimit Regime.brl basicRateLimit
+      startingRateLimitSavings; omega
   -- the bottom of the taxed savings moves up by 0 or 1; if 0, `x` is below £5,000
   -- or no savings are taxed
   have hlo : (loSav A (x + 1) (w + 1) = loSav A x w ∧
@@ -98,74 +145,92 @@ theorem G_succ_le {A T x w : Nat} (hxw : x ≤ w) (hwT : w ≤ T) :
     unfold loSav; omega
   have hlow : loSav A x w ≤ w := loSav_le A x w
   have hlodw : w ≤ loDiv T w ∧ loDiv T w ≤ T := by unfold loDiv; omega
-  have m1 := bandTax_le savingsRates (loSav_le A x w)
-  have m2 := bandTax_le dividendRates (loDiv_le hwT)
-  have m3 := bandTax_le savingsRates (loSav_le A (x + 1) (w + 1))
-  have m4 := bandTax_le dividendRates (loDiv_le (T := T + 1) (w := w + 1) (by omega))
-  have e1 := bandTax_succ_ns x
-  have e2 := bandTax_succ_sav w
-  have e3 : (bandTax savingsRates (loSav A (x + 1) (w + 1)) = bandTax savingsRates (loSav A x w) ∧
+  have m1 := bandTax_le savingsRates rg (loSav_le A x w)
+  have m2 := bandTax_le dividendRates rg (loDiv_le hwT)
+  have m3 := bandTax_le savingsRates rg (loSav_le A (x + 1) (w + 1))
+  have m4 := bandTax_le dividendRates rg (loDiv_le (T := T + 1) (w := w + 1) (by omega))
+  have e1 := nsTax_succ rg x
+  have e2 := bandTax_succ_sav rg w
+  have e3 : (bandTax savingsRates rg (loSav A (x + 1) (w + 1))
+        = bandTax savingsRates rg (loSav A x w) ∧
         (x < startingRateLimitSavings ∨ loSav A x w = w + 1)) ∨
-      (bandTax savingsRates (loSav A (x + 1) (w + 1))
-        = bandTax savingsRates (loSav A x w) + rateAt savingsRates (loSav A x w) ∧
+      (bandTax savingsRates rg (loSav A (x + 1) (w + 1))
+        = bandTax savingsRates rg (loSav A x w) + rateAt savingsRates rg (loSav A x w) ∧
         x ≤ loSav A x w) := by
     rcases hlo with ⟨h, h'⟩ | ⟨h, h'⟩
     · exact Or.inl ⟨by rw [h], h'⟩
-    · exact Or.inr ⟨by rw [h]; exact bandTax_succ_sav _, h'⟩
-  have e4 := bandTax_succ_div T
-  have e5 : bandTax dividendRates (loDiv (T + 1) (w + 1))
-      = bandTax dividendRates (loDiv T w) + rateAt dividendRates (loDiv T w) := by
+    · exact Or.inr ⟨by rw [h]; exact bandTax_succ_sav rg _, h'⟩
+  have e4 := bandTax_succ_div rg T
+  have e5 : bandTax dividendRates rg (loDiv (T + 1) (w + 1))
+      = bandTax dividendRates rg (loDiv T w) + rateAt dividendRates rg (loDiv T w) := by
     have : loDiv (T + 1) (w + 1) = loDiv T w + 1 := by unfold loDiv; omega
-    rw [this]; exact bandTax_succ_div _
+    rw [this]; exact bandTax_succ_div rg _
   have k1 := Nat.sub_add_cancel m1
   have k2 := Nat.sub_add_cancel m2
   have k3 := Nat.sub_add_cancel m3
   have k4 := Nat.sub_add_cancel m4
-  have r1 := rateAt_ns_cases x
-  have r2 := rateAt_sav_cases w
-  have r3 := rateAt_sav_cases (loSav A x w)
-  have r4 := rateAt_div_cases T
-  have r5 := rateAt_div_cases (loDiv T w)
+  have r2 := rateAt_sav_cases rg w
+  have r3 := rateAt_sav_cases rg (loSav A x w)
+  have r4 := rateAt_div_cases rg T
+  have r5 := rateAt_div_cases rg (loDiv T w)
   unfold G
   generalize loSav A (x + 1) (w + 1) = lo' at *
   generalize loSav A x w = lo at *
   generalize loDiv (T + 1) (w + 1) = ld' at *
   generalize loDiv T w = ld at *
-  generalize startingRateLimitSavings = L at *
-  omega
+  cases hsc : rg.scottish
+  · have hns : nsRateAt rg x = rateAt nonSavingsRates rg x := by
+      unfold nsRateAt; simp [hsc]
+    have hmax : rg.maxStep = 6860 := by unfold Regime.maxStep; simp [hsc]
+    have r1 := rateAt_ns_cases rg x
+    generalize startingRateLimitSavings = L at *
+    omega
+  · have hns : nsRateAt rg x = scotRateAt rg x := by
+      unfold nsRateAt; simp [hsc]
+    have hmax : rg.maxStep = 7060 := by unfold Regime.maxStep; simp [hsc]
+    have r1 := scotRateAt_cases rg x
+    generalize startingRateLimitSavings = L at *
+    omega
+
+/-- No income, no tax. -/
+theorem taxOnStep3_zero (rg : Regime) : taxOnStep3 rg 0 0 0 = 0 := by
+  unfold taxOnStep3 sliceTax nsTax
+  split <;> simp [scotTax, bandTax]
 
 /-- The personal savings allowance a taxpayer gets. -/
-def Income.psa (i : Income) : Nat := savingsAllowanceFor (i.total - i.allowanceUsed)
+def Income.psa (rg : Regime) (i : Income) : Nat :=
+  savingsAllowanceFor rg (i.total - i.allowanceUsed rg)
 
 /-- Step 3 income in all. -/
-def Income.step3 (i : Income) : Nat := i.total - i.allowanceUsed
+def Income.step3 (rg : Regime) (i : Income) : Nat := i.total - i.allowanceUsed rg
 
 /-- **Marginal income tax rate between steps.** If a penny more non-savings income
 changes neither the personal allowance nor the personal savings allowance, it adds
 at most 0.686p of income tax (with s25(2) placement on both sides). -/
-theorem taxExact_succ_le {n s d : Nat}
-    (hPA : personalAllowanceFor (n + 1 + s + d) = personalAllowanceFor (n + s + d))
-    (hPSA : Income.psa ⟨n + 1, s, d⟩ = Income.psa ⟨n, s, d⟩) :
-    taxExact ⟨n + 1, s, d⟩ ≤ taxExact ⟨n, s, d⟩ + 6860 := by
-  have hopt := (isLeastTax_taxExact ⟨n + 1, s, d⟩).2
+theorem taxExact_succ_le {rg : Regime} {n s d : Nat}
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.relief))
+    (hPSA : Income.psa rg ⟨n + 1, s, d⟩ = Income.psa rg ⟨n, s, d⟩) :
+    taxExact rg ⟨n + 1, s, d⟩ ≤ taxExact rg ⟨n, s, d⟩ + rg.maxStep := by
+  have hopt := (isLeastTax_taxExact rg ⟨n + 1, s, d⟩).2
   have htot : Income.total ⟨n + 1, s, d⟩ = n + 1 + s + d := rfl
   have htot0 : Income.total ⟨n, s, d⟩ = n + s + d := rfl
-  have hPA' : Income.personalAllowance ⟨n + 1, s, d⟩ = Income.personalAllowance ⟨n, s, d⟩ := hPA
-  by_cases hfull : Income.personalAllowance ⟨n, s, d⟩ ≤ n + s + d
+  have hPA' : Income.personalAllowance rg ⟨n + 1, s, d⟩ = Income.personalAllowance rg ⟨n, s, d⟩ := hPA
+  by_cases hfull : Income.personalAllowance rg ⟨n, s, d⟩ ≤ n + s + d
   · -- the whole allowance is used on both sides: keep the same share
-    have ha := bestAlloc_feasible ⟨n, s, d⟩
+    have ha := bestAlloc_feasible rg ⟨n, s, d⟩
     unfold taxExact
-    generalize Income.bestAlloc ⟨n, s, d⟩ = a at ha ⊢
-    have hU : Income.allowanceUsed ⟨n, s, d⟩ = Income.personalAllowance ⟨n, s, d⟩ := by
+    generalize Income.bestAlloc rg ⟨n, s, d⟩ = a at ha ⊢
+    have hU : Income.allowanceUsed rg ⟨n, s, d⟩ = Income.personalAllowance rg ⟨n, s, d⟩ := by
       unfold Income.allowanceUsed; rw [htot0]
-      generalize Income.personalAllowance ⟨n, s, d⟩ = P at *; omega
-    have hU' : Income.allowanceUsed ⟨n + 1, s, d⟩ = Income.personalAllowance ⟨n, s, d⟩ := by
+      generalize Income.personalAllowance rg ⟨n, s, d⟩ = P at *; omega
+    have hU' : Income.allowanceUsed rg ⟨n + 1, s, d⟩ = Income.personalAllowance rg ⟨n, s, d⟩ := by
       unfold Income.allowanceUsed; rw [htot, hPA']
-      generalize Income.personalAllowance ⟨n, s, d⟩ = P at *; omega
+      generalize Income.personalAllowance rg ⟨n, s, d⟩ = P at *; omega
     have hfa : a.toNonSavings ≤ n ∧ a.toSavings ≤ s ∧ a.toDividends ≤ d ∧
-        a.toNonSavings + a.toSavings + a.toDividends = Income.personalAllowance ⟨n, s, d⟩ := by
+        a.toNonSavings + a.toSavings + a.toDividends = Income.personalAllowance rg ⟨n, s, d⟩ := by
       have := ha; unfold Alloc.Feasible at this; rw [hU] at this; exact this
-    have ha' : a.Feasible ⟨n + 1, s, d⟩ := by
+    have ha' : a.Feasible rg ⟨n + 1, s, d⟩ := by
       unfold Alloc.Feasible; rw [hU']
       exact ⟨by simp only; omega, hfa.2.1, hfa.2.2.1, hfa.2.2.2⟩
     obtain ⟨hF, hG⟩ := taxWith_eq_G ha
@@ -173,10 +238,10 @@ theorem taxExact_succ_le {n s d : Nat}
     have h1 := hopt a ha'
     rw [hG'] at h1
     rw [hG]
-    have hA : savingsAllowanceFor (Income.total ⟨n + 1, s, d⟩ - Income.allowanceUsed ⟨n + 1, s, d⟩)
-        = savingsAllowanceFor (Income.total ⟨n, s, d⟩ - Income.allowanceUsed ⟨n, s, d⟩) := hPSA
-    have hT : Income.total ⟨n + 1, s, d⟩ - Income.allowanceUsed ⟨n + 1, s, d⟩
-        = Income.total ⟨n, s, d⟩ - Income.allowanceUsed ⟨n, s, d⟩ + 1 := by
+    have hA : savingsAllowanceFor rg (Income.total ⟨n + 1, s, d⟩ - Income.allowanceUsed rg ⟨n + 1, s, d⟩)
+        = savingsAllowanceFor rg (Income.total ⟨n, s, d⟩ - Income.allowanceUsed rg ⟨n, s, d⟩) := hPSA
+    have hT : Income.total ⟨n + 1, s, d⟩ - Income.allowanceUsed rg ⟨n + 1, s, d⟩
+        = Income.total ⟨n, s, d⟩ - Income.allowanceUsed rg ⟨n, s, d⟩ + 1 := by
       rw [htot, htot0, hU, hU']; omega
     rw [hA, hT] at h1
     simp only at h1 hF ⊢
@@ -187,10 +252,10 @@ theorem taxExact_succ_le {n s d : Nat}
     unfold Feas at hF
     exact Nat.le_trans h1 (G_succ_le hF.2.1 hF.2.2.2.2)
   · -- all income is covered by the allowance on both sides: no tax
-    have h0 : taxWith ⟨n + 1, s, d⟩ (Income.inOrder ⟨n + 1, s, d⟩) = 0 := by
-      have hU' : Income.allowanceUsed ⟨n + 1, s, d⟩ = n + 1 + s + d := by
+    have h0 : taxWith rg ⟨n + 1, s, d⟩ (Income.inOrder rg ⟨n + 1, s, d⟩) = 0 := by
+      have hU' : Income.allowanceUsed rg ⟨n + 1, s, d⟩ = n + 1 + s + d := by
         unfold Income.allowanceUsed; rw [htot, hPA']
-        generalize Income.personalAllowance ⟨n, s, d⟩ = P at *; omega
+        generalize Income.personalAllowance rg ⟨n, s, d⟩ = P at *; omega
       unfold taxWith Income.inOrder
       rw [hU']
       simp only
@@ -198,8 +263,8 @@ theorem taxExact_succ_le {n s d : Nat}
       have e2 : s - min (n + 1 + s + d - (n + 1)) s = 0 := by omega
       have e3 : d - min (n + 1 + s + d - (n + 1) - s) d = 0 := by omega
       rw [e1, e2, e3]
-      decide
-    have := hopt _ (inOrder_feasible _)
+      exact taxOnStep3_zero rg
+    have := hopt _ (inOrder_feasible rg _)
     omega
 
 /-! ## Net income -/
@@ -207,37 +272,48 @@ theorem taxExact_succ_le {n s d : Nat}
 /-- Net income, in 1/10 000 pence, for pay `g` (all of it employment income) with
 savings interest `s`, dividends `d` and Child Benefit `cb`, paid per period `p`:
 gross income less income tax, employee NICs and the High Income Child Benefit
-Charge, plus Child Benefit. -/
-def net (p : EarningsPeriod) (cb s d g : Nat) : Int :=
-  10_000 * ((g + s + d : Nat) : Int) + 10_000 * (cb : Int) - (taxExact ⟨g, s, d⟩ : Int)
-    - (nicExact p g : Int) - 10_000 * (hicbc (g + s + d) cb : Int)
+Charge (on adjusted net income), plus Child Benefit. Gift Aid and pension
+contributions, being fixed, are left out: they move net income by a constant. -/
+def net (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d g : Nat) : Int :=
+  10_000 * ((g + s + d : Nat) : Int) + 10_000 * (cb : Int) - (taxExact rg ⟨g, s, d⟩ : Int)
+    - (nicExact p g : Int) - 10_000 * (hicbc (g + s + d - rg.relief) cb : Int)
 
 theorem nicExact_succ_le (p : EarningsPeriod) (g : Nat) : nicExact p (g + 1) ≤ nicExact p g + 800 := by
   unfold nicExact nicMainRate nicAdditionalRate
   omega
 
+/-- The least net income gained from a penny more pay between steps, in 1/10 000
+pence: a penny less the most income tax (`Regime.maxStep`) and NICs (0.08p) it can
+cost. 0.234p, or 0.214p for a Scottish taxpayer. -/
+def Regime.minGain (rg : Regime) : Nat := 9200 - rg.maxStep
+
+theorem Regime.minGain_eq (rg : Regime) : rg.minGain + rg.maxStep = 9200 := by
+  unfold Regime.minGain Regime.maxStep; split <;> omega
+
 /-- Between steps, net income never falls: if a penny more pay changes neither
-allowance nor the charge, net income rises by at least 0.234p. -/
-theorem net_succ_ge {p : EarningsPeriod} {cb s d g : Nat}
-    (hPA : personalAllowanceFor (g + 1 + s + d) = personalAllowanceFor (g + s + d))
-    (hPSA : Income.psa ⟨g + 1, s, d⟩ = Income.psa ⟨g, s, d⟩)
-    (hC : hicbc (g + 1 + s + d) cb = hicbc (g + s + d) cb) :
-    net p cb s d g + 2340 ≤ net p cb s d (g + 1) := by
+allowance nor the charge, net income rises by at least `rg.minGain`. -/
+theorem net_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {s d g : Nat}
+    (hPA : personalAllowanceFor (g + 1 + s + d - rg.relief)
+      = personalAllowanceFor (g + s + d - rg.relief))
+    (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
+    (hC : hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb) :
+    net p cb rg s d g + rg.minGain ≤ net p cb rg s d (g + 1) := by
   have h1 := taxExact_succ_le hPA hPSA
   have h2 := nicExact_succ_le p g
+  have h3 := rg.minGain_eq
   unfold net
   rw [hC]
   omega
 
 /-! ## The steps -/
 
-/-- Total income `t + 1` is a whole multiple of £2 above £100,000, up to £125,140:
-one penny more from `t` and the personal allowance falls by £1. -/
+/-- Adjusted net income `t + 1` is a whole multiple of £2 above £100,000, up to
+£125,140: one penny more from `t` and the personal allowance falls by £1. -/
 def PaStep (t : Nat) : Prop :=
   10_000_000 < t + 1 ∧ (t + 1) % 200 = 0 ∧ t + 1 ≤ 12_514_000
 
-/-- Total income `t + 1` is a whole multiple of £200 from £60,200 to £80,000: one
-penny more from `t` and the charge goes up 1 %. -/
+/-- Adjusted net income `t + 1` is a whole multiple of £200 from £60,200 to
+£80,000: one penny more from `t` and the charge goes up 1 %. -/
 def HicbcStep (t : Nat) : Prop :=
   6_020_000 ≤ t + 1 ∧ t + 1 ≤ 8_000_000 ∧ (t + 1) % 20_000 = 0
 
@@ -256,51 +332,69 @@ theorem hicbc_succ (t cb : Nat) : hicbc (t + 1) cb = hicbc t cb ∨ HicbcStep t 
     unfold HicbcStep
     omega
 
-theorem psa_succ {n s d : Nat}
-    (hPA : personalAllowanceFor (n + 1 + s + d) = personalAllowanceFor (n + s + d)) :
-    Income.psa ⟨n + 1, s, d⟩ = Income.psa ⟨n, s, d⟩ ∨
-      Income.step3 ⟨n, s, d⟩ = basicRateLimit ∨ Income.step3 ⟨n, s, d⟩ = higherRateLimit := by
-  have hPA' : Income.personalAllowance ⟨n + 1, s, d⟩ = Income.personalAllowance ⟨n, s, d⟩ := hPA
+theorem psa_succ {rg : Regime} {n s d : Nat}
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.relief)) :
+    Income.psa rg ⟨n + 1, s, d⟩ = Income.psa rg ⟨n, s, d⟩ ∨
+      Income.step3 rg ⟨n, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨n, s, d⟩ = rg.hrl := by
+  have hPA' : Income.personalAllowance rg ⟨n + 1, s, d⟩
+      = Income.personalAllowance rg ⟨n, s, d⟩ := hPA
   unfold Income.psa Income.step3 Income.allowanceUsed
   rw [hPA']
   have htot : Income.total ⟨n + 1, s, d⟩ = n + 1 + s + d := rfl
   have htot0 : Income.total ⟨n, s, d⟩ = n + s + d := rfl
   rw [htot, htot0]
-  generalize Income.personalAllowance ⟨n, s, d⟩ = P
+  generalize Income.personalAllowance rg ⟨n, s, d⟩ = P
   unfold savingsAllowanceFor savingsAllowanceAdditional savingsAllowanceHigher
     savingsAllowanceBasic
-  generalize basicRateLimit = B at *
-  generalize higherRateLimit = H at *
+  generalize rg.brl = B at *
+  generalize rg.hrl = H at *
   repeat' split
   all_goals omega
 
+/-- One penny more income moves adjusted net income up one penny, or (while the
+reliefs exceed income) leaves it at nil. Either way the allowance and the charge
+change only at a step of adjusted net income. -/
+theorem ani_succ (rg : Regime) (t : Nat) :
+    t + 1 - rg.relief = (t - rg.relief) + 1 ∨
+      (t + 1 - rg.relief = 0 ∧ t - rg.relief = 0) := by
+  omega
+
 /-- **Where net income can fall.** If a penny more pay lowers net income, then at
 that penny the personal allowance falls by £1, the charge goes up 1 % (with some
-Child Benefit), or Step 3 income passes £37,700 or £125,140 (where the personal
-savings allowance falls). This holds for every pay, savings, dividends, Child
-Benefit and pay period. -/
-theorem net_drop_only_at_steps (p : EarningsPeriod) (cb s d g : Nat)
-    (h : net p cb s d (g + 1) < net p cb s d g) :
-    PaStep (g + s + d) ∨ (0 < cb ∧ HicbcStep (g + s + d)) ∨
-      Income.step3 ⟨g, s, d⟩ = basicRateLimit ∨ Income.step3 ⟨g, s, d⟩ = higherRateLimit := by
+Child Benefit), or Step 3 income passes the basic or the higher rate limit (where
+the personal savings allowance falls); the allowance and the charge step with
+adjusted net income, and the limits are raised by Gift Aid and pension
+contributions relieved at source. This holds for every pay, savings, dividends,
+Child Benefit, pay period, reliefs, and for Scottish taxpayers. -/
+theorem net_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d g : Nat)
+    (h : net p cb rg s d (g + 1) < net p cb rg s d g) :
+    PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) ∨
+      Income.step3 rg ⟨g, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g, s, d⟩ = rg.hrl := by
   have ht : g + 1 + s + d = (g + s + d) + 1 := by omega
-  rcases personalAllowanceFor_succ (g + s + d) with hPA | hPA
-  · rw [← ht] at hPA
-    rcases psa_succ hPA with hPSA | hT | hT
-    · have hC : hicbc (g + 1 + s + d) cb = hicbc (g + s + d) cb ∨
-          (0 < cb ∧ HicbcStep (g + s + d)) := by
-        rw [ht]
-        rcases hicbc_succ (g + s + d) cb with hc | hc
-        · exact Or.inl hc
+  have hA : (personalAllowanceFor (g + 1 + s + d - rg.relief)
+        = personalAllowanceFor (g + s + d - rg.relief) ∧
+      hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb) ∨
+      PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) := by
+    rw [ht]
+    rcases ani_succ rg (g + s + d) with ha | ⟨ha, hb⟩
+    · rw [ha]
+      rcases personalAllowanceFor_succ (g + s + d - rg.relief) with hPA | hPA
+      · rcases hicbc_succ (g + s + d - rg.relief) cb with hc | hc
+        · exact Or.inl ⟨hPA, hc⟩
         · by_cases hcb : cb = 0
-          · left; subst hcb; unfold hicbc; simp
-          · exact Or.inr ⟨by omega, hc⟩
-      rcases hC with hC | hC
-      · have := net_succ_ge (p := p) hPA hPSA hC
-        omega
-      · exact Or.inr (Or.inl hC)
+          · left; subst hcb; unfold hicbc; simp [hPA]
+          · exact Or.inr (Or.inr ⟨by omega, hc⟩)
+      · exact Or.inr (Or.inl hPA)
+    · left; rw [ha, hb]; exact ⟨rfl, rfl⟩
+  rcases hA with ⟨hPA, hC⟩ | hA
+  · rcases psa_succ hPA with hPSA | hT | hT
+    · have := net_succ_ge (p := p) hPA hPSA hC
+      omega
     · exact Or.inr (Or.inr (Or.inl hT))
     · exact Or.inr (Or.inr (Or.inr hT))
-  · exact Or.inl hPA
+  · rcases hA with hA | hA
+    · exact Or.inl hA
+    · exact Or.inr (Or.inl hA)
 
 end UkTax
