@@ -22,18 +22,74 @@ the combination), since earned income for UC counts only the tax on pay.
 
 ## Tax-Free Childcare and funded hours
 
-A lone parent is eligible when they expect to earn at least the minimum
-(16 hours a week at the National Living Wage) and their adjusted net income is
-not over £100,000. Tax-Free Childcare adds 20 % of each child's childcare costs,
-up to £2,000 a child a year; it cannot be had together with Universal Credit, so
-the household takes whichever of the two is worth more. The funded hours for
-working parents are in kind; their value is an input (no default figure).
+A parent is eligible when they, and their partner if they have one, each expect
+to earn at least the minimum (16 hours a week at the National Living Wage) and
+each have adjusted net income not over £100,000. The partner's pay and income are
+fixed while the parent's pay varies. Tax-Free Childcare adds 20 % of each child's
+childcare costs, up to £2,000 a child a year; it cannot be had together with
+Universal Credit, so the household takes whichever of the two is worth more.
+
+The funded hours (England only) are in kind, valued at DfE's 2026-27 national
+average hourly funding rate for the child's age band, or at a price per hour given
+for the child, over 38 weeks:
+
+* a 3 or 4-year-old gets the universal 15 hours whatever the parents earn, and
+  15 more working-parent hours when eligible;
+* a child from 9 months to 2, or a 2-year-old, gets 30 working-parent hours when
+  eligible, and none otherwise (the 15 hours for disadvantaged 2-year-olds,
+  which depend on benefits, are not modelled).
+
+So going over £100,000 loses only the working-parent hours; the universal hours
+stay (`fundedHours_over_limit`, `fundedHours_drop_at_limit`). Reaching the minimum
+earnings gains them, so it is a rise in net income, not a drop.
 
 All amounts here are in 1/1 000 000 of a penny, so the 55 % taper and the 20 %
 top-up stay exact.
 -/
 
 namespace UkTax
+
+/-- A child's age band for the funded hours. -/
+inductive AgeBand where
+  /-- 9 months to 2: working-parent hours only. -/
+  | under2
+  /-- 2 years old: working-parent hours only. -/
+  | two
+  /-- 3 or 4, until the child starts school: universal hours, plus the
+  working-parent extension. -/
+  | threeFour
+  deriving DecidableEq, Repr
+
+/-- DfE 2026-27 national average hourly funding rate for the band, pence. -/
+def AgeBand.rate : AgeBand → Nat
+  | .under2 => eyRateUnder2
+  | .two => eyRate2
+  | .threeFour => eyRate34
+
+/-- Universal hours a week, whatever the parents earn. -/
+def AgeBand.universalHours : AgeBand → Nat
+  | .threeFour => universalHoursWeekly
+  | _ => 0
+
+/-- Working-parent hours a week, on top of the universal hours. -/
+def AgeBand.workingHours (b : AgeBand) : Nat := workingParentHoursWeekly - b.universalHours
+
+/-- A child for the funded hours: age band and, optionally, a local price per
+hour in pence to value the hours at instead of the DfE rate. -/
+structure FundedChild where
+  band : AgeBand
+  price : Option Nat := none
+
+/-- The price each funded hour is valued at, pence. -/
+def FundedChild.hourly (ch : FundedChild) : Nat := ch.price.getD ch.band.rate
+
+/-- Yearly value of the universal hours, pence. -/
+def FundedChild.universalValue (ch : FundedChild) : Nat :=
+  ch.hourly * ch.band.universalHours * fundedWeeks
+
+/-- Yearly value of the working-parent hours (beyond the universal ones), pence. -/
+def FundedChild.workingValue (ch : FundedChild) : Nat :=
+  ch.hourly * ch.band.workingHours * fundedWeeks
 
 /-- A household's benefit claims. -/
 structure Claims where
@@ -45,8 +101,13 @@ structure Claims where
   ucChildren : Nat := 0
   /-- Yearly childcare costs for each child, in pence, for Tax-Free Childcare. -/
   childcareCosts : List Nat := []
-  /-- Yearly value, in pence, of the working-parent funded hours. -/
-  fundedHoursValue : Nat := 0
+  /-- A partner whose own pay and adjusted net income (pence, fixed) must also pass
+  the childcare tests. A UC couple (`couple`) has a partner with no pay. -/
+  partner : Option (Nat × Nat) := none
+  /-- Lives in England, where the funded hours are (Tax-Free Childcare is UK-wide). -/
+  england : Bool := true
+  /-- Children of the ages that get funded hours. -/
+  fundedChildren : List FundedChild := []
 
 /-- 1/1 000 000 of a penny per penny. -/
 def micro : Int := 1_000_000
@@ -66,20 +127,41 @@ def ucAward (c : Claims) (e : Int) : Int :=
     max 0 (micro * 12 * maxMonthly - (ucTaperPercent : Int) * max 0 (e - 10_000 * 12 * wa))
   else 0
 
-/-- Eligible for Tax-Free Childcare and the working-parent funded hours. -/
-def childcareEligible (pay ani : Nat) : Bool :=
+/-- One parent's part of the childcare tests: minimum earnings and the £100,000
+limit. -/
+def parentTest (pay ani : Nat) : Bool :=
   childcareMinimumEarnings ≤ pay && ani ≤ childcareIncomeLimit
+
+/-- The partner's part, fixed while the parent's pay varies: passes for a lone
+parent, fails for a UC couple's partner (no pay) unless given. -/
+def Claims.partnerOk (c : Claims) : Bool :=
+  match c.partner with
+  | some (pay, ani) => parentTest pay ani
+  | none => !c.couple
+
+/-- Eligible for Tax-Free Childcare and the working-parent funded hours. -/
+def childcareEligible (c : Claims) (pay ani : Nat) : Bool :=
+  parentTest pay ani && c.partnerOk
 
 /-- Tax-Free Childcare top-up for the year, in 1/1 000 000 pence. -/
 def tfcTopUp (c : Claims) (pay ani : Nat) : Int :=
-  if childcareEligible pay ani then
+  if childcareEligible c pay ani then
     ((c.childcareCosts.map fun cost => min (1_000_000 * tfcCapPerChild) (1_000_000 * cost / 5)).sum
       : Nat)
   else 0
 
-/-- Funded hours, as their yearly value, in 1/1 000 000 pence. -/
+/-- Yearly value of the universal hours, pence (England only). -/
+def universalValue (c : Claims) : Nat :=
+  if c.england then (c.fundedChildren.map FundedChild.universalValue).sum else 0
+
+/-- Yearly value of the working-parent hours, pence, if eligible (England only). -/
+def workingValue (c : Claims) : Nat :=
+  if c.england then (c.fundedChildren.map FundedChild.workingValue).sum else 0
+
+/-- Funded hours, as their yearly value, in 1/1 000 000 pence: the universal hours
+always, the working-parent hours when eligible. -/
 def fundedHours (c : Claims) (pay ani : Nat) : Int :=
-  if childcareEligible pay ani then micro * c.fundedHoursValue else 0
+  micro * universalValue c + if childcareEligible c pay ani then micro * workingValue c else 0
 
 /-- Net income with benefits, in 1/1 000 000 pence: `net` (gross less income tax,
 NICs and HICBC, plus Child Benefit), plus the better of Universal Credit and
@@ -115,11 +197,36 @@ theorem earned_plus_uc_gain (c : Claims) {e e' : Int} (h : e ≤ e') :
   · omega
 
 /-- Eligibility is only lost where adjusted net income goes over £100,000. -/
-theorem childcareEligible_succ {pay ani : Nat} (h : childcareEligible pay ani = true) :
-    childcareEligible (pay + 1) (ani + 1) = true ∨ ani = childcareIncomeLimit := by
-  unfold childcareEligible at *
-  simp only [Bool.and_eq_true, decide_eq_true_eq] at *
-  omega
+theorem childcareEligible_succ {c : Claims} {pay ani : Nat}
+    (h : childcareEligible c pay ani = true) :
+    childcareEligible c (pay + 1) (ani + 1) = true ∨ ani = childcareIncomeLimit := by
+  by_cases hx : ani = childcareIncomeLimit
+  · exact Or.inr hx
+  · left
+    unfold childcareEligible parentTest at *
+    simp only [Bool.and_eq_true, decide_eq_true_eq] at *
+    exact ⟨⟨by omega, by omega⟩, h.2⟩
+
+/-- **The universal hours are never lost.** Over £100,000 of adjusted net income
+the funded hours are worth exactly the universal hours: only the working-parent
+hours go. -/
+theorem fundedHours_over_limit (c : Claims) {pay ani : Nat} (h : childcareIncomeLimit < ani) :
+    fundedHours c pay ani = micro * universalValue c := by
+  have : childcareEligible c pay ani = false := by
+    unfold childcareEligible parentTest
+    have : ¬ ani ≤ childcareIncomeLimit := by omega
+    simp [this]
+  unfold fundedHours; rw [this]; simp
+
+/-- **The £100,000 drop in funded hours.** For a parent eligible at exactly £100,000
+of adjusted net income, the penny that takes it over loses exactly the working-parent
+hours. -/
+theorem fundedHours_drop_at_limit (c : Claims) {pay : Nat}
+    (h : childcareEligible c pay childcareIncomeLimit = true) :
+    fundedHours c pay childcareIncomeLimit
+      = fundedHours c (pay + 1) (childcareIncomeLimit + 1) + micro * workingValue c := by
+  rw [fundedHours_over_limit c (pay := pay + 1) (ani := childcareIncomeLimit + 1) (by omega)]
+  unfold fundedHours; rw [h]; simp only [↓reduceIte]
 
 /-- **Marginal rate between steps, with benefits.** Away from the steps, a penny more
 pay raises net income with benefits by at least 0.1053p (105,300 millionths of a
@@ -147,24 +254,24 @@ theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {c : Claims} {s d g : Nat
     generalize earned p s d (g + 1) = E' at *
     omega
   have huc := earned_plus_uc_gain c hle
-  have hEl : childcareEligible g (g + s + d) = true →
-      childcareEligible (g + 1) (g + 1 + s + d) = true := by
+  have hEl : childcareEligible c g (g + s + d) = true →
+      childcareEligible c (g + 1) (g + 1 + s + d) = true := by
     intro h1; rw [ht]
-    rcases childcareEligible_succ h1 with h2 | h2
+    rcases childcareEligible_succ (c := c) h1 with h2 | h2
     · exact h2
     · exact absurd h2 hLim
   have htfc : tfcTopUp c g (g + s + d) ≤ tfcTopUp c (g + 1) (g + 1 + s + d) := by
     unfold tfcTopUp
-    by_cases h1 : childcareEligible g (g + s + d) = true
+    by_cases h1 : childcareEligible c g (g + s + d) = true
     · rw [h1, hEl h1]; simp
-    · rw [show childcareEligible g (g + s + d) = false by simpa using h1]
+    · rw [show childcareEligible c g (g + s + d) = false by simpa using h1]
       simp only [Bool.false_eq_true, ↓reduceIte]
       split <;> omega
   have hfh : fundedHours c g (g + s + d) ≤ fundedHours c (g + 1) (g + 1 + s + d) := by
     unfold fundedHours micro
-    by_cases h1 : childcareEligible g (g + s + d) = true
+    by_cases h1 : childcareEligible c g (g + s + d) = true
     · rw [h1, hEl h1]; simp
-    · rw [show childcareEligible g (g + s + d) = false by simpa using h1]
+    · rw [show childcareEligible c g (g + s + d) = false by simpa using h1]
       simp only [Bool.false_eq_true, ↓reduceIte]
       split <;> omega
   have hsplit : ∀ g' : Nat, 100 * net p cb s d g'
