@@ -1,0 +1,6 @@
+/.lake/
+/.elan/
+/harness/.venv/
+/harness/.uv-cache/
+/harness/out/
+__pycache__/
