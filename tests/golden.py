@@ -57,6 +57,7 @@ CHECKED = (
     "pension_credit_tenths_pence",
     "guarantee_credit_tenths_pence",
     "new_state_pension_weekly_35ths_pence",
+    "housing_benefit_twentieths_pence",
 )
 
 failures = 0

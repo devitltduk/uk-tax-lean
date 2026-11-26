@@ -9,4 +9,5 @@ import UkTax.Cliffs
 import UkTax.Benefits
 import UkTax.Disability
 import UkTax.Pension
+import UkTax.HousingBenefit
 import UkTax.Axioms

@@ -259,6 +259,28 @@ the whole £4,495.40; £10,608.52 (£204.01 a week) loses it, and net income fal
   reached pensionable age before 6 April 2016) is amount A, rounded up, less amount
   B, rounded down. Yearly figures are 52 weeks.
 
+### Housing Benefit for pensioners (`UkTax/HousingBenefit.lean`)
+
+The Housing Benefit (Persons who have attained the qualifying age for state
+pension credit) Regulations 2006 (SI 2006/214), figures from SI 2026/148:
+
+| Figure | 2026-27 a week | Source |
+|---|---|---|
+| Personal allowance | single £256.00 (pensionable age before 1 April 2021) or £238.00; couple £383.35 or £363.25 | [Sch 3 para 1](https://www.legislation.gov.uk/uksi/2006/214/schedule/3/paragraph/1) |
+| Child, family premium (protected) | £87.88 each; £20.22 | Sch 3 paras 2-3 |
+| Premiums | severe disability £86.05 (£172.10), enhanced disability child £33.99, disabled child £84.46, carer £48.15 | Sch 3 para 12 |
+| Taper, capital limit, tariff income | 65 %; £16,000; £1 per £500 or part above £10,000 | [regs 51](https://www.legislation.gov.uk/uksi/2006/214/regulation/51), [43](https://www.legislation.gov.uk/uksi/2006/214/regulation/43), [29(2)](https://www.legislation.gov.uk/uksi/2006/214/regulation/29) |
+| Non-dependant deductions | £131.45, or by gross income £20.40 / £46.85 / £64.35 / £105.20 / £119.85 (bands at £192, £279, £365, £485, £605); £20.40 not in work | [reg 55](https://www.legislation.gov.uk/uksi/2006/214/regulation/55) |
+| Earnings disregards | £25 lone parent, £20 carer / disabled / listed jobs, else £10 couple, £5 single | [Sch 4](https://www.legislation.gov.uk/uksi/2006/214/schedule/4) |
+
+With the guarantee credit, Housing Benefit is the eligible rent less non-dependant
+deductions (reg 26); with savings credit only, income is the Pension Credit
+assessment plus the savings credit (reg 27); otherwise HB's own means test, with
+income net of tax (reg 33(12)) and nothing over £16,000 of capital. Input
+`housing_benefit` with the household's income in `pension_credit`. Not modelled:
+working-age Housing Benefit, the additional £17.10 earnings disregard, childcare
+charges, and the LHA itself (an input).
+
 ### Tax-Free Childcare and the funded hours (England)
 
 A parent is eligible when they, and their partner if they have one, each expect
@@ -425,6 +447,11 @@ relief-at-source contributions.
   penny a week where amount B's rounding steps; above the minimum guarantee it
   keeps at least 60 % of a rise; and each £500 of capital above £10,000 is exactly
   £1 a week of deemed income.
+- `hb_total_gain`, `hb_passport`, `hb_capital_cliff`, `nonDep_mono`
+  (`UkTax/HousingBenefit.lean`): income plus Housing Benefit keeps at least 35 % of
+  any rise; with the guarantee credit it is the maximum whatever the income and
+  capital; without it, a penny over £16,000 of capital loses all of it; and a
+  non-dependant's deduction never falls as their income rises.
 - `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
@@ -474,7 +501,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 137 cases with the expected figures worked out by hand
+`tests/golden.json` holds 144 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -501,6 +528,9 @@ threshold and the cap, JSA's 10p minimum, ESA's pension deduction and the grant.
 savings credit at its rounded maximum and with amount A rounded up, income net of
 tax, a couple's £10 earnings disregard, the capital step 1p over £12,000, the
 severe disability amount, and the new State Pension's reduced rate and minimum.
+For Housing Benefit: the passport, the 65 % taper with tax deducted, the pre-2021
+allowance, a non-dependant band, the capital limit 1p over, savings credit only,
+and the LHA cap.
 
 ### Where earning more lowers net income
 
@@ -704,6 +734,15 @@ the reg 7(4) rounding PolicyEngine leaves out (up to 2p a week; at most 61p a ye
 seen; findings #22) and a penny a partner for the income tax, which PolicyEngine
 deducts unrounded.
 
+### Housing Benefit for pensioners against PolicyEngine
+
+`uv run python compare_housing.py` compares social renters aged 70 or 80, single
+or couples, with pensions, savings and, in some households, a working
+non-dependant in each band. Latest local run: 1,013 of 1,013 agree (893 paid),
+within 2 float32 steps plus 65 % of the savings credit rounding of findings #22
+(largest difference 39p a year). Households with a non-dependant have no savings,
+since PolicyEngine shares household savings between benefit units (findings #26).
+
 ### Funded hours against PolicyEngine
 
 `uv run python compare_childcare.py` compares the funded hours' yearly value for a
@@ -730,4 +769,5 @@ GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
 comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs,
-non-means-tested benefits and Pension Credit, with 1,000 random cases each; reliefs and allowances).
+non-means-tested benefits, Pension Credit and Housing Benefit, with 1,000 random
+cases each; reliefs and allowances).

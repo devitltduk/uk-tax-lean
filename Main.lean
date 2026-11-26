@@ -117,6 +117,14 @@ Optional fields:
   `guarantee_credit_tenths_pence` for the year (52 weeks), the income
   (`pension_credit_income_tenths_pence`, also units of 1/520 penny a week) and the
   appropriate minimum guarantee (`minimum_guarantee_weekly_pence`);
+* `housing_benefit` (with `pension_credit` describing the household's income):
+  `{"rent_weekly_pence": n, "lha_weekly_pence": n (private renter), "non_dependants":
+  [{"working": true, "gross_weekly_pence": n}], "non_dependant_exempt": false,
+  "pensionable_age_before_april_2021": false, "lone_parent": false,
+  "family_premium": false, "severe_disability": 0, "enhanced_disability_children": 0,
+  "disabled_children": 0, "carers": 0}`, Housing Benefit for pensioners
+  (`UkTax/HousingBenefit.lean`); output `housing_benefit_twentieths_pence` for the
+  year (52 weeks), and the weekly maximum and applicable amount;
 * `new_state_pension`: `{"qualifying_years": n}` for someone with no qualifying
   year before 6 April 2016 (output `new_state_pension_weekly_35ths_pence`).
 
@@ -173,6 +181,7 @@ structure Case where
   ssmgIn : Option (Bool × Nat × Nat) := none
   pc : Option PcClaim := none
   nspYears : Option Nat := none
+  hb : Option HbClaim := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -397,6 +406,30 @@ def parseCase (j : Json) : Except String Case := do
         throw "pension_credit: severe_disability and carers must be 0, 1 or 2"
       pure (some pcl)
     | none => pure none
+  let hb ← match obj "housing_benefit" with
+    | some o => do
+      if pc.isNone then
+        throw "housing_benefit: give the household's income as pension_credit (HB(SPC), for pensioners)"
+      let lha ← match o.getObjVal? "lha_weekly_pence" with
+        | .ok _ => some <$> sub o "lha_weekly_pence"
+        | .error _ => pure none
+      let nds ← match o.getObjValAs? (Array Json) "non_dependants" with
+        | .ok xs => xs.toList.mapM fun n => do
+            let g ← sub n "gross_weekly_pence"
+            pure ({ working := subB n "working", grossWeekly := g } : NonDep)
+        | .error _ => pure []
+      let rent ← sub o "rent_weekly_pence"
+      let sd ← sub o "severe_disability"
+      let edc ← sub o "enhanced_disability_children"
+      let dc ← sub o "disabled_children"
+      let cr ← sub o "carers"
+      let h : HbClaim := {
+        rent := rent, lha := lha, nonDeps := nds, nonDepExempt := subB o "non_dependant_exempt",
+        oldRates := subB o "pensionable_age_before_april_2021", lone := subB o "lone_parent",
+        familyPremium := subB o "family_premium", severeDisability := sd,
+        enhancedDisabilityChildren := edc, disabledChildren := dc, carers := cr }
+      pure (some h)
+    | none => pure none
   let nspYears ← match obj "new_state_pension" with
     | some o => pure (some (← sub o "qualifying_years"))
     | none => pure none
@@ -410,7 +443,7 @@ def parseCase (j : Json) : Except String Case := do
     zeroRated := (j.getObjValAs? Bool "employer_zero_rated").toOption.getD false,
     class1A := c1, class2Weeks := c2,
     class3Weeks := c3, disability := disability, carer := carer,
-    maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears }
+    maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb }
   return res
 
 def result (c : Case) : Json :=
@@ -485,6 +518,12 @@ def result (c : Case) : Json :=
         ("pension_credit_income_tenths_pence", toJson pc.income),
         ("minimum_guarantee_weekly_pence", toJson pc.mg)]
       | none => [])
+    ++ (match c.hb, c.pc with
+      | some h, some pc => [
+        ("housing_benefit_twentieths_pence", toJson (housingBenefit h pc)),
+        ("housing_benefit_maximum_weekly_pence", toJson h.maximum),
+        ("housing_benefit_applicable_amount_weekly_pence", toJson (h.applicable pc))]
+      | _, _ => [])
     ++ (match c.nspYears with
       | some y => [("new_state_pension_weekly_35ths_pence", toJson (nspReduced35 y))]
       | none => [])

@@ -573,4 +573,49 @@ def pcDisregardHigher : Nat := 2_000
 def pcDisregardSingle : Nat := 500
 def pcDisregardCouple : Nat := 1_000
 
+/-! ## Housing Benefit for pensioners, 2026-27 (weekly amounts, pence)
+
+The Housing Benefit (Persons who have attained the qualifying age for state
+pension credit) Regulations 2006 (SI 2006/214), as uprated by SI 2026/148 art 24
+and Schs 6-7. Checked against legislation.gov.uk on 2026-11-26. -/
+
+/-- Personal allowances (Sch 3 para 1): single claimant or lone parent £256.00 if
+they reached pensionable age before 1 April 2021, £238.00 on or after; couple
+£383.35 if either did, £363.25 if both reached it on or after. -/
+def hbSingleOld : Nat := 25_600
+def hbSingleNew : Nat := 23_800
+def hbCoupleOld : Nat := 38_335
+def hbCoupleNew : Nat := 36_325
+
+/-- Each child or young person £87.88 (Sch 3 para 2); the family premium £20.22,
+kept only by those entitled on 30 April 2016 (para 3; SI 2015/1857 reg 4). -/
+def hbChild : Nat := 8_788
+def hbFamilyPremium : Nat := 2_022
+
+/-- Premiums (Sch 3 para 12): severe disability £86.05 (£172.10 for a couple both
+qualifying with no carer benefit for either); enhanced disability £33.99 and
+disabled child £84.46 for each child; carer £48.15 each. -/
+def hbSevereDisability : Nat := 8_605
+def hbEnhancedDisabilityChild : Nat := 3_399
+def hbDisabledChild : Nat := 8_446
+def hbCarer : Nat := 4_815
+
+/-- Taper (reg 51): 65 % of income above the applicable amount. Capital limit
+(reg 43): £16,000. Tariff income (reg 29(2)): £1 a week for each £500 or part
+above £10,000. -/
+def hbTaperPercent : Nat := 65
+def hbCapitalLimit : Nat := 1_600_000
+
+/-- Non-dependant deductions (reg 55(1), (2)): £131.45 for one aged 18 or over in
+remunerative work, less on lower gross weekly income: under £192.00, £20.40;
+under £279.00, £46.85; under £365.00, £64.35; under £485.00, £105.20; under
+£605.00, £119.85; £20.40 for one not in remunerative work. -/
+def hbNonDepTop : Nat := 13_145
+def hbNonDepBase : Nat := 2_040
+
+/-- Earnings disregards (Sch 4): £25 lone parent, £20 for a carer, a disabled
+claimant or partner or listed employments (paras 2-5, at most £25 for a lone
+parent and £20 otherwise, para 1), else £10 for a couple and £5 single (para 7). -/
+def hbDisregardLoneParent : Nat := 2_500
+
 end UkTax
