@@ -2,8 +2,9 @@
 
 ## Summary
 
-This repository models a UK taxpayer's 2026-27 income tax (England, Wales and
-Northern Ireland), employee National Insurance, the High Income Child Benefit
+This repository models a UK taxpayer's 2026-27 income tax (including Scottish
+rates, Gift Aid and pension contributions relieved at source), employee National
+Insurance, the High Income Child Benefit
 Charge (HICBC), a minimal Universal Credit (UC), Tax-Free Childcare and England's
 funded childcare hours (valued at the Department for Education's funding rates),
 in Lean 4. It proves facts about
@@ -46,15 +47,21 @@ against legislation.gov.uk and GOV.UK on 2026-11-26.
 
 | Part | What | Main sources |
 |---|---|---|
-| Income tax | Non-savings, savings and dividend income; personal allowance £12,570 tapered above £100,000 and rounded up to £1; bands £37,700 / £125,140; 20 / 40 / 45 %; starting rate for savings (£5,000 at 0 %); personal savings allowance £1,000 / £500 / nil; dividend allowance £500; dividend rates 10.75 / 35.75 / 39.35 %; s25(2) allowance placement | ITA 2007 ss 6-16, 25, 35; Finance Act 2026 ss 2-4, 9-10 |
+| Income tax | Non-savings, savings and dividend income; personal allowance £12,570 tapered above £100,000 and rounded up to £1; bands £37,700 / £125,140; 20 / 40 / 45 %; starting rate for savings (£5,000 at 0 %); personal savings allowance £1,000 / £500 / nil; dividend allowance £500; dividend rates 10.75 / 35.75 / 39.35 %; s25(2) allowance placement | ITA 2007 ss 6-16, 25, 35; Finance Act 2026 ss 2-4, 9; FA 2021 s5 as amended by FA 2023 s5 |
 | Employee NICs | Class 1 primary, category A: 8 % from the primary threshold (£12,570 a year, £1,048 a month, £242 a week) to the upper earnings limit (£50,270 / £4,189 / £967), 2 % above; annual, monthly or weekly earnings period, equal pay each period | SSCBA 1992 s8; SI 2001/1004 regs 10-11 as amended by SI 2026/231 |
 | HICBC | 1 % of Child Benefit per whole £200 of adjusted net income over £60,000, capped at 100 %; benefit, percentage and charge each rounded down | ITEPA 2003 s681C |
 | Universal Credit | Standard allowance (£424.90 single, £666.97 joint, 25 or over), child element £303.94 with no two-child limit, higher work allowance £710, 55 % taper on pay less tax and NICs | SI 2013/376 regs 22, 36, 55; SI 2026/148; Universal Credit (Removal of Two Child Limit) Act 2026 |
 | Childcare | Tax-Free Childcare (20 % of costs up to £2,000 a child); each parent must earn at least £2,643.68 a quarter and have adjusted net income not over £100,000 | SI 2015/448 regs 9, 15; GOV.UK |
 | Funded hours (England) | Universal 15 hours a week at 3 and 4, any income; working-parent hours (30 a week from 9 months, universal included) on the same tests; 38 weeks; valued at DfE's national average local authority rates, £12.04 / £8.90 / £6.61 an hour (under 2 / 2 / 3 and 4), or a local price | Childcare Act 2006 s7, 2016 s1; SI 2022/1134 regs 14, 15, 18, 44; DfE 2026-27 technical note Table 6 |
 
-Out of scope (see the README for the full list): Scottish rates, reliefs (pension
-contributions, Gift Aid), Marriage Allowance, self-employment, UC housing,
+Scottish taxpayers pay the Scottish rates (19 / 20 / 21 / 42 / 45 / 48 %, Scottish
+rate resolution 2026-27) on non-savings income and the UK rates in the UK bands on
+savings and dividends (ITA 2007 ss 11A, 11D(6), 13(5), 12B(8)). Gift Aid and
+relief-at-source pension contributions raise the rate limits (ITA 2007 s414(2), FA
+2004 s192(4), (4A)) and reduce adjusted net income (s58).
+
+Out of scope (see the README for the full list): net pay pension contributions,
+Marriage Allowance, self-employment, UC housing,
 childcare, disability and carer elements, capital and the benefit cap, couples
 where both work, per-period rounding of NICs and UC, and every other tax year.
 
@@ -73,7 +80,7 @@ external certificate is involved.
 | `isLeastTax_taxExact` | For every income, the allowance placement the model picks gives the least Step 4 tax over every legal placement (s25(2)). |
 | `liability_mono` | The computed liability never goes down when any kind of income goes up. |
 | `nicExact_mono`, `hicbc_mono_income`, `hicbc_le` | NICs and the HICBC are monotone; the charge never exceeds the benefit. |
-| `taxExact_succ_le` | With both allowances fixed, one more penny of pay adds at most 0.686p of income tax. |
+| `taxExact_succ_le` | With both allowances fixed, one more penny of pay adds at most 0.686p of income tax (0.706p for a Scottish taxpayer), with any Gift Aid and relief-at-source contributions. |
 | `net_succ_ge` | Between steps, one more penny of pay raises net income (after tax, NICs, HICBC) by at least 0.234p: the marginal rate there is at most 76.6 %. |
 | `earned_plus_uc_mono`, `earned_plus_uc_gain` | Earned income plus UC never falls as earned income rises, and keeps at least 45 % of any rise. |
 | `netAll_succ_ge` | Between steps, one more penny of pay raises net income with benefits by at least 0.1053p: the marginal rate there is at most 1 − 0.45 × 0.234 = 89.47 %. |
@@ -110,10 +117,10 @@ of the citations, the golden cases and the PolicyEngine comparison.
 
 | Comparison | Cases | Result |
 |---|---|---|
-| Income tax (unrounded) | 7,198 | all within 2 float32 steps; worst 1.13 steps (1.76p) |
-| Personal allowance, savings allowance | 7,198 | all equal |
-| Employee NICs | 7,198 | all within 2 float32 steps + 0.32p; largest 0.39p (3.35 steps) |
-| HICBC | 7,198 | all equal |
+| Income tax (unrounded), including 1,738 Scottish taxpayers, 1,354 with Gift Aid and 90 with relief at source | 7,723 | all within 2 float32 steps (worst 0.96 steps, 1.71p), apart from 4 cases at a taper step (below) |
+| Personal allowance, savings allowance | 7,723 | all equal, apart from 4 personal allowances £1 apart where adjusted net income is 1p from a £2 taper step and PolicyEngine's float32 sum crosses it |
+| Employee NICs | 7,723 | all within 2 float32 steps + 0.32p; largest 0.39p (3.34 steps) |
+| HICBC | 7,723 | all equal |
 | Universal Credit | 5,603 (2,729 paid) | all within 2 float32 steps + 0.176p; largest 0.43p (2.79 steps) |
 | Funded hours | 6,090 (1,413 with working-parent hours) | 6,068 within 2 float32 steps a child, largest 0.12p; 22 differ only by PolicyEngine's disadvantaged 2-year-old hours (not modelled) |
 
@@ -334,9 +341,29 @@ universal hours over £100,000, and gives nothing outside England. On 6,068 of
   the April 2026 term, so PolicyEngine values that term at £12.04 and the year at
   £11,339.20, not £10,146. PolicyEngine is the more precise here.
 
+### 6. Pension contributions relieved at source: likely a PolicyEngine error
+
+PolicyEngine gives relief-at-source contributions (`personal_pension_contributions`)
+their relief as a deduction from taxable income and subtracts the gross
+contribution from net income. In law the member pays the contribution net of 20 %
+and keeps that 20 % whatever their own liability (FA 2004 s192(1)-(3)); HMRC does
+not recover the difference from a Scottish starter-rate taxpayer or from a
+non-taxpayer within the £3,600 basic amount (HMRC PTM044220; GOV.UK "If you do not
+pay Income Tax ... Your pension provider can claim tax relief for you at 20%").
+The deduction is worth the same for a taxpayer whose taxable income covers the
+contribution, so most cases agree; elsewhere PolicyEngine gives less: on £12,000
+of pay a £2,000 gross contribution costs the household £2,000 in PolicyEngine and
+£1,600 in law; on £15,000 and £3,600, £3,114 against £2,880; at the Scottish
+starter rate 19 % relief instead of 20 %. A consequence is that PolicyEngine's
+`income_tax` for these contributors is the liability less the relief at source.
+Draft issue: [`drafts/issues/01-relief-at-source-non-taxpayers.md`](drafts/issues/01-relief-at-source-non-taxpayers.md).
+
 ### No differences found
 
-Personal allowance (including the s35(3) round-up), personal savings allowance,
+Scottish income tax (every band, savings and dividends on UK rates, the UK test
+for the savings allowance) and Gift Aid (raised limits, adjusted net income),
+personal allowance (including the s35(3) round-up, apart from float32 at a taper
+step), personal savings allowance,
 the s25(2) allowance placement for savings and dividends, HICBC (including all
 three s681C(3) roundings) and the UC award agree exactly or within float32 on
 every case.

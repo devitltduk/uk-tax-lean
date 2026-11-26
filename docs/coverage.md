@@ -28,8 +28,8 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 
 | | Area | Programmes |
 |---|---|---|
-| P1 | Scottish income tax | Scottish rates on non-savings income, savings and dividends on UK rates, s25(2) placement for Scottish taxpayers |
-| P2 | Reliefs and allowances | pension contributions (relief at source, net pay), Gift Aid, Marriage Allowance, Blind Person's Allowance, trading and property allowances, self-employment profits |
+| P1 | Scottish income tax, Gift Aid, relief at source | Scottish rates on non-savings income, savings and dividends on UK rates, s25(2) placement for Scottish taxpayers; Gift Aid and relief-at-source pension contributions raising the rate limits and reducing adjusted net income |
+| P2 | Reliefs and allowances | net pay pension contributions, Marriage Allowance, Blind Person's Allowance, trading and property allowances, self-employment profits |
 | P3 | NICs completeness | Class 2, 3 and 4, employer Class 1, Class 1A |
 | P4 | Universal Credit in full | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
 | P5 | Other means-tested and disability benefits | Housing Benefit, legacy benefits still in payment, Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant |
@@ -42,13 +42,15 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
-| Income tax, rUK rates: personal allowance and taper, bands, savings (starting rate, personal savings allowance), dividends, s25(2) allowance placement | `income_tax`, `personal_allowance`, `earned_income_tax`, `savings_income_tax`, `dividend_income_tax`, `savings_allowance`, `dividend_allowance` | ITA 2007 ss 6-16, 23, 25, 35; Finance Act 2026 ss 1-4, 9; FA 2021 s5 as extended (allowance and basic rate limit frozen) | **done** (England, Wales, NI; Welsh rates equal rUK for 2026-27) |
+| Income tax, rUK rates: personal allowance and taper, bands, savings (starting rate, personal savings allowance), dividends, s25(2) allowance placement | `income_tax`, `personal_allowance`, `earned_income_tax`, `savings_income_tax`, `dividend_income_tax`, `savings_allowance`, `dividend_allowance` | ITA 2007 ss 6-16, 23, 25, 35; Finance Act 2026 ss 1-4, 9; FA 2021 s5 as amended by FA 2023 s5 (allowance and basic rate limit frozen) | **done** (England, Wales, NI; Welsh rates equal rUK for 2026-27) |
 | Welsh rates of income tax | `income_tax` (country = Wales) | ITA 2007 s6B; Senedd rate resolution NDM9117 | **done** (10p in each band, so the rUK rates) |
-| Scottish income tax | `income_tax` via `gov.hmrc.income_tax.rates.scotland` | ITA 2007 ss 6A, 11A-11D; Scottish Rate Resolution 2026-27 | planned (P1) |
+| Scottish income tax: Scottish rates on non-savings income, savings and dividends at UK rates in UK bands, the UK test for the savings allowance | `income_tax` via `gov.hmrc.income_tax.rates.scotland`, `tax_band` | ITA 2007 ss 11A, 11D(6), 12B(8), 13(5); Scottish rate resolution 2026-27 (S6M-20844); Scotland Act 1998 s80C | **done** (P1) |
 | High Income Child Benefit Charge | `child_benefit_hitc` (in `income_tax` at Step 7) | ITEPA 2003 ss 681B-681H; ITA 2007 s30 | **done** |
-| Pension contributions relief (relief at source, net pay, annual allowance charge) | `pension_contributions_relief`, `net_pay_pension_relief`, `pension_annual_allowance`, `pension_annual_allowance_chargeable_amount` | Finance Act 2004 ss 188-194, 227-228ZA; ITA 2007 s58 | planned (P2) |
+| Pension contributions relieved at source: raised rate limits (rUK and Scottish), adjusted net income | `personal_pension_contributions`, `pension_contributions_relief` | Finance Act 2004 ss 190-192; ITA 2007 s58 | **done** (P1, the member's liability; findings #7, #8) |
+| Net pay pension contributions, the relief cap, the annual allowance charge | `employee_pension_contributions`, `net_pay_pension_relief`, `pension_annual_allowance`, `pension_annual_allowance_chargeable_amount` | Finance Act 2004 ss 190, 193, 227-228ZA | planned (P2) |
 | Salary sacrifice for pensions | `pension_contributions_via_salary_sacrifice_*`, `salary_sacrifice_pension_ni_*` | ITEPA 2003 s62 (a contract variation, no statutory rule for income tax); NICs cap: National Insurance Contributions (Employer Pensions Contributions) Act 2026 s1, inserting SSCBA 1992 s4(6A) | planned (P2, as lower pay) |
-| Gift Aid | `gift_aid`, `charitable_investment_gifts` | ITA 2007 Part 8 Ch 2 (ss 413-430), s58 | planned (P2) |
+| Gift Aid: raised rate limits (rUK and Scottish), adjusted net income | `gift_aid`, `gift_aid_grossed_up` | ITA 2007 ss 414-415, 58 | **done** (P1) |
+| Gifts of shares and land to charity | `charitable_investment_gifts` | ITA 2007 Part 8 Ch 3 | planned (P2) |
 | Marriage Allowance | `marriage_allowance`, `marriage_allowance_tax_reduction` | ITA 2007 ss 55A-55E | planned (P2) |
 | Married couple's allowance | `married_couples_allowance`, `married_couples_allowance_deduction` | ITA 2007 ss 42-55 | planned (P2) |
 | Blind Person's Allowance | `blind_persons_allowance` | ITA 2007 s38 | planned (P2) |

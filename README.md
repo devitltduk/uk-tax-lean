@@ -1,9 +1,10 @@
 # uk-tax-lean
 
-UK income tax, employee National Insurance, the High Income Child Benefit
+UK income tax (including Scottish rates, Gift Aid and pension contributions
+relieved at source), employee National Insurance, the High Income Child Benefit
 Charge, a minimal Universal Credit and the £100,000 childcare cliff for 2026-27,
-for taxpayers in England, Wales and Northern Ireland (not Scottish taxpayers;
-childcare rules are England's), formalised in Lean 4, with proofs about it and a harness that checks it against
+for taxpayers anywhere in the UK (childcare rules are England's), formalised in
+Lean 4, with proofs about it and a harness that checks it against
 [PolicyEngine UK](https://github.com/PolicyEngine/policyengine-uk).
 
 A write-up of the results, with the cliff map and the differences from
@@ -40,6 +41,18 @@ interest and dividends, following the steps of ITA 2007 s23:
 - **Dividend allowance** £500 at 0 %, then the dividend rates **10.75 / 35.75 / 39.35 %**.
 - Savings sit above non-savings income and dividends on top (s16). Income at a nil
   rate still uses up its band.
+- **Scottish taxpayers** (`"country": "scotland"`): non-savings income at the
+  Scottish rates 19 / 20 / 21 / 42 / 45 / 48 % (s11A); savings and dividends at
+  the UK rates in the UK bands, and the savings allowance by the UK limits, "as if
+  the individual were not a Scottish taxpayer" (s11D(6), s13(5), s12B(8)). The
+  s25(2) search covers Scottish limits too.
+- **Gift Aid and pension contributions relieved at source**, as gross amounts:
+  both raise the basic and higher rate limits, and for a Scottish taxpayer the
+  Scottish basic rate limit and those above it but not the starter limit (ITA 2007
+  s414(2); FA 2004 s192(4), (4A)), and both come off adjusted net income (ITA 2007
+  s58), which sets the personal allowance taper, the HICBC and the childcare
+  income limit. The relief at source itself (20 % of the gross, kept by the member
+  whatever their liability) is not part of the liability.
 
 All amounts are whole pence (`Nat`), and rates are basis points. Tax is computed
 exactly, in 1/10,000 of a penny, and rounded down to the penny once at the end.
@@ -51,7 +64,7 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26. Each one is in
 
 | Figure | 2026-27 | Source |
 |---|---|---|
-| Personal allowance | £12,570 | [ITA 2007 s35(1)](https://www.legislation.gov.uk/ukpga/2007/3/section/35); frozen by FA 2021 s5, FA 2026 s10 |
+| Personal allowance | £12,570 | [ITA 2007 s35(1)](https://www.legislation.gov.uk/ukpga/2007/3/section/35); frozen for 2026-27 by FA 2021 s5 as amended by [FA 2023 s5](https://www.legislation.gov.uk/ukpga/2023/1/section/5) |
 | Taper | above £100,000, half the excess, round up to £1 | ITA 2007 s35(2)-(3) |
 | Basic rate limit | £37,700 | [ITA 2007 s10(5)](https://www.legislation.gov.uk/ukpga/2007/3/section/10) |
 | Higher rate limit | £125,140 (2 × PA + £100,000) | ITA 2007 s10(5A) |
@@ -61,6 +74,11 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26. Each one is in
 | Personal savings allowance | £1,000 / £500 / £0 | [ITA 2007 s12B](https://www.legislation.gov.uk/ukpga/2007/3/section/12B) |
 | Dividend allowance | £500 | [ITA 2007 s13A](https://www.legislation.gov.uk/ukpga/2007/3/section/13A) |
 | Dividend ordinary / upper / additional | 10.75 / 35.75 / 39.35 % | [ITA 2007 s8](https://www.legislation.gov.uk/ukpga/2007/3/section/8) as amended by FA 2026 s4 |
+| Scottish rates and limits (on income above the allowance) | starter 19 % to £3,967; basic 20 % to £16,956; intermediate 21 % to £31,092; higher 42 % to £62,430; advanced 45 % to £125,140; top 48 % | [Scottish rate resolution 2026-27, S6M-20844](https://www.parliament.scot/chamber-and-committees/votes-and-motions/S6M-20844); ITA 2007 s11A; [GOV.UK](https://www.gov.uk/scottish-income-tax) |
+| Scottish savings and dividends; savings allowance test | UK rates and limits, as if not a Scottish taxpayer | [ITA 2007 s11D(6)](https://www.legislation.gov.uk/ukpga/2007/3/section/11D), s13(5), s12B(8)(a)(iv), (b)(iv) |
+| Gift Aid | grossed up at 20 %; raises the basic and higher rate limits and the Scottish limits from the basic rate up | [ITA 2007 s414(2)](https://www.legislation.gov.uk/ukpga/2007/3/section/414), s415 |
+| Pension contributions relieved at source | 20 % at source; raise the same limits | [FA 2004 s192(1), (4), (4A)](https://www.legislation.gov.uk/ukpga/2004/12/section/192); [GOV.UK](https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief) |
+| Adjusted net income | net income less grossed-up Gift Aid and gross relief-at-source contributions | [ITA 2007 s58](https://www.legislation.gov.uk/ukpga/2007/3/section/58) |
 
 GOV.UK summary pages: [Income Tax rates](https://www.gov.uk/income-tax-rates),
 [tax on savings interest](https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free),
@@ -169,8 +187,8 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26; each is in
 
 ## Out of scope
 
-Scottish rates (Welsh rates are in scope only because they equal the rUK rates
-in 2026-27), National Insurance other than employee Class 1 primary contributions
+Welsh rates other than 2026-27's (in scope only because they equal the rUK
+rates), National Insurance other than employee Class 1 primary contributions
 (employer, self-employed, voluntary, other category letters), Universal Credit
 beyond the minimal model (housing, childcare, disability and carer elements,
 capital, unearned income, the benefit cap, the minimum income floor, under-25
@@ -180,8 +198,10 @@ disabled children, the childcare tests' routes for a partner who is disabled or 
 carer, the lower minimum earnings for parents under 21 or apprentices, the 15
 hours for disadvantaged 2-year-olds (which depend on benefits), a child changing
 age band during the year (the model takes one band for the year), Wales's,
-Scotland's and Northern Ireland's own childcare schemes, legacy benefits, reliefs and deductions (pension
-contributions, Gift Aid, losses, the trading and property allowances), Marriage
+Scotland's and Northern Ireland's own childcare schemes, legacy benefits, reliefs and deductions other than Gift Aid and pension
+contributions relieved at source (net pay pension contributions, losses, the
+trading and property allowances; Gift Aid and pension contributions with
+Universal Credit), Marriage
 Allowance and Blind Person's Allowance, other tax reductions, property income's
 own rates (from 2027-28), the default rates for non-residents, top-slicing relief,
 foreign income, capital gains, and every tax year other than 2026-27.
@@ -197,6 +217,9 @@ In `UkTax/Proofs.lean` and `UkTax/Optimal.lean`, with no `sorry`.
 `UkTax/Axioms.lean` fails the build if any of these theorems ever depends on more
 than Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`). Nothing
 is assumed: every result below holds for every income.
+
+Every result holds for every regime: rUK or Scottish, with any Gift Aid and
+relief-at-source contributions.
 
 - `isLeastTax_taxExact`: the search finds the least tax. For every income, the
   allowance share the model picks gives the least Step 4 tax over every legal
@@ -220,9 +243,14 @@ is assumed: every result below holds for every income.
   of the personal allowance (total income reaching a multiple of £2 in
   (£100,000, £125,140]), of the HICBC (a multiple of £200 in [£60,200, £80,000])
   or of the personal savings allowance (Step 3 income at £37,700 or £125,140).
-  It rests on `taxExact_succ_le` (with both allowances fixed, a penny more pay
-  adds at most 0.686p of income tax) and `net_succ_ge` (between steps net income
-  rises at least 0.234p per penny, so the marginal rate there is at most 76.6 %).
+  The allowance and the charge step with adjusted net income, and the limits are
+  raised by Gift Aid and relief-at-source contributions. Scottish rates add no
+  step: they are rates, not cliffs. It rests on `taxExact_succ_le` (with both
+  allowances fixed, a penny more pay adds at most 0.686p of income tax, 0.706p
+  for a Scottish taxpayer, whose worst case is the 42 % higher rate with
+  dividends above it crossing from 10.75 % to 39.35 %) and `net_succ_ge`
+  (between steps net income rises at least 0.234p per penny, 0.214p in Scotland,
+  so the marginal rate there is at most 76.6 %, or 78.6 %).
 - `netAll_drop_only_at_steps` (`UkTax/Benefits.lean`): the same with Universal
   Credit, Tax-Free Childcare (whichever is larger) and the funded hours added,
   with one more kind of step: adjusted net income going over £100,000. The
@@ -234,8 +262,8 @@ is assumed: every result below holds for every income.
   universal 15.
   `earned_plus_uc_mono`: earned income plus UC never falls as earned income
   rises (the taper is 55 %). `netAll_succ_ge`: between steps, a penny more pay
-  raises net income with benefits by at least 0.1053p, so the marginal rate there
-  is at most 1 − 0.45 × 0.234 = 89.47 %.
+  raises net income with benefits by at least 0.1053p (0.0963p in Scotland), so
+  the marginal rate there is at most 1 − 0.45 × 0.234 = 89.47 % (90.37 %).
 
 How the optimality proof works (details at the top of `UkTax/Optimal.lean`): with
 the income fixed, a way of sharing the allowance is a point `(x, w)` (non-savings
@@ -273,7 +301,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 50 cases with the expected figures worked out by hand
+`tests/golden.json` holds 63 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -370,7 +398,11 @@ it checks:
   the model's exact tax. PolicyEngine works in float32, so it can be no more
   precise than float32 at the size of the taxpayer's total income: one step is
   0.2p at £20,000, 0.8p at £100,000 and 1.6p from £131,072.
-- The personal allowance is the same in both.
+- The personal allowance is the same in both, except where adjusted net income
+  is within 2 float32 steps of a £2 step of the tapered allowance: PolicyEngine
+  adds incomes in float32 and can land on the other side of the step, so the
+  allowance differs by £1 and the tax by the rate on £1. Those cases are counted
+  and reported, not failed (findings #9).
 - The personal savings allowance is the same in both.
 - Employee NICs are within the same float32 tolerance (at the employee's pay),
   plus 0.32p. PolicyEngine works out NICs monthly from weekly thresholds stored
@@ -385,14 +417,28 @@ it checks:
 
 Cases split non-savings income between pay and pension (passed to PolicyEngine as
 `private_pension_income`) and carry 0 to 3 children's Child Benefit, with extra
-edge cases at the NIC thresholds and at the HICBC steps.
+edge cases at the NIC thresholds and at the HICBC steps. They include Scottish
+taxpayers (PolicyEngine's region `SCOTLAND`), 1p either side of each Scottish
+limit with savings and dividends above, and Gift Aid (passed as the amount
+given, the gross × 0.8, so both gross it up the same way). Pension contributions
+relieved at source are checked only where PolicyEngine's design and the law
+agree: PolicyEngine deducts the gross contribution from taxable income instead
+of raising the limits, so its `income_tax` is the liability less the 20 % relief
+at source. Adding that back, the two agree for a taxpayer outside Scotland whose
+taxable pay is at least the gross contribution, and only such cases are
+generated. Outside them PolicyEngine gives less relief than the law (findings #7,
+with a draft issue).
 
 It writes `harness/out/comparison.csv` and exits non-zero if any check fails.
 
 It runs in CI as well (about 30 s for 3,000 cases). Latest local run:
-7,198 cases (2,198 edge, 5,000 random). Every income tax is within 2 steps
-(worst 1.13 steps, 1.76p), every NIC figure within 2 steps plus the 0.32p gap
-(largest difference 0.39p, 3.35 steps), and every personal allowance, savings allowance and HICBC agrees. On NixOS, numpy needs
+7,723 cases (2,723 edge, 5,000 random; 1,738 Scottish, 1,354 with Gift Aid, 90
+with relief at source). Every income tax is within 2 steps (worst 0.96 steps,
+1.71p) apart from 4 edge cases built 1p from a taper step, where PolicyEngine's
+float32 sum lands on the other side and the allowance differs by £1; every NIC
+figure is within 2 steps plus the 0.32p gap (largest difference 0.39p, 3.34
+steps); and every other personal allowance, every savings allowance and every
+HICBC agrees. On NixOS, numpy needs
 `libstdc++`: run with `LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH` (nix-ld) or from a
 shell that provides it.
 
