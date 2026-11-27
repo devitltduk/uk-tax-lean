@@ -31,3 +31,4 @@ import UkTax.StudentSupport
 import UkTax.CliffMap
 import UkTax.CheckParams
 import UkTax.Axioms
+import UkTax.Rules.Prose

@@ -20,6 +20,13 @@ jobs:
       # fails on it) and the axiom guard in UkTax/Axioms.lean, and builds uktax.
       - name: Build and check proofs
         run: lake build --wfail
+      # Print ITA 2007 s35 (and the s6/s10 bands) from the rules in UkTax/Rules/
+      # as plain English and statute text; fail if docs/prose no longer matches.
+      - name: Rules printed as prose
+        run: |
+          lake env lean --run Prose.lean
+          git diff --exit-code -- docs/prose
+          test -z "$(git status --porcelain -- docs/prose)"
       - name: Golden cases
         run: python3 tests/golden.py
       - uses: astral-sh/setup-uv@v6
