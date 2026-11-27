@@ -189,6 +189,15 @@ Optional fields:
   reduction in 1/36 400 000 000 pence; for the default-scheme councils the
   withdrawal and the weekly applicable amount, for Oxford the band's percentage and
   the year's income in 1/1 000 000 pence (52 weeks);
+* `land_tax`: `{"tax": "sdlt" | "lbtt" | "ltt", "kind": "residential" |
+  "first_time_buyer" | "additional_dwelling" | "non_residential",
+  "consideration_pence": n, "non_resident": false, "lease_rents_pence": [n, ...],
+  "lease_residential": false}` (`UkTax/LandTax.lean`): the tax on the consideration
+  (`land_tax_exact_ten_thousandths_pence`; LBTT with first-time buyer relief and the
+  additional dwelling supplement, LTT with the higher rates, SDLT with the 2 %
+  non-resident surcharge), and on a lease's rent, one entry a year, by its NPV at
+  3.5 %: `land_tax_rent_scaled_ten_thousandths_pence` is the tax × 207ⁿ, with the
+  NPV's numerator and the denominator 207ⁿ;
 * `sdlt`: `{"kind": "residential" | "first_time_buyer" | "additional_dwelling" |
   "non_residential", "consideration_pence": n}`, Stamp Duty Land Tax in England or
   Northern Ireland (`UkTax/Sdlt.lean`; output `sdlt_exact_ten_thousandths_pence`);
@@ -274,6 +283,10 @@ structure Case where
   /-- English local working-age CTR: the council, the bill, the household and the
   children with no amount under a two-child limit. -/
   ctrLocal : Option (LocalAuthority × Nat × HbWaClaim × Nat × Nat) := none
+  /-- A land transaction: the tax (0 SDLT, 1 LBTT, 2 LTT), the kind, the
+  consideration, non-resident, and the lease's yearly rents with whether the land
+  is residential. -/
+  land : Option (Nat × LandKind × Nat × Bool × List Nat × Bool) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -618,6 +631,30 @@ def parseCase (j : Json) : Except String Case := do
       pure (some (la, ← sub o "council_tax_pence", h, ← sub o "limited_children",
         childBenefitFor (← sub o "child_benefit_children") 1))
     | none => pure none
+  let land ← match obj "land_tax" with
+    | some o => do
+      let tax ← match o.getObjValAs? String "tax" with
+        | .ok "sdlt" => pure 0
+        | .ok "lbtt" => pure 1
+        | .ok "ltt" => pure 2
+        | _ => throw "land_tax.tax must be sdlt, lbtt or ltt"
+      let kind ← match o.getObjValAs? String "kind" with
+        | .ok "residential" | .error _ => pure LandKind.residential
+        | .ok "first_time_buyer" => pure .firstTime
+        | .ok "additional_dwelling" => pure .additional
+        | .ok "non_residential" => pure .nonResidential
+        | .ok v => throw s!"land_tax.kind must be residential, first_time_buyer, additional_dwelling or non_residential, not {v}"
+      let nr := (o.getObjValAs? Bool "non_resident").toOption.getD false
+      if nr && tax ≠ 0 then throw "land_tax.non_resident: the 2 % surcharge is SDLT's (FA 2003 s75ZA)"
+      let rents ← match o.getObjValAs? (List Nat) "lease_rents_pence" with
+        | .ok rs => pure rs
+        | .error _ => do
+          if (o.getObjVal? "lease_rents_pence").toOption.isSome then
+            throw "land_tax.lease_rents_pence must be a list of whole pence, one a year"
+          pure []
+      pure (some (tax, kind, ← sub o "consideration_pence", nr, rents,
+        (o.getObjValAs? Bool "lease_residential").toOption.getD false))
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -667,7 +704,7 @@ def parseCase (j : Json) : Except String Case := do
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
-    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal }
+    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land }
   return res
 
 def result (c : Case) : Json :=
@@ -850,6 +887,26 @@ def result (c : Case) : Json :=
            ("council_tax_reduction_local_withdrawal_lcu_pence",
              if capOk then toJson (localWithdrawal s nd x) else Json.null),
            ("council_tax_reduction_local_applicable_weekly_pence", toJson (s.applicable h limited))]
+      | none => [])
+    ++ (match c.land with
+      | some (tax, kind, p, nr, rents, resi) =>
+        let sk : SdltKind := match kind with
+          | .residential => .residential | .firstTime => .firstTime
+          | .additional => .additional | .nonResidential => .nonResidential
+        let purchase := if tax = 1 then lbttExact kind p else if tax = 2 then lttExact kind p
+          else if nr then sdltNonResident sk p else sdltExact sk p
+        -- Residential leases are exempt from LBTT (Sch 1 para 3) and not charged on
+        -- rent in LTT (Sch 6 para 27).
+        let table : List (Nat × Nat) :=
+          if tax = 1 then (if resi then [] else lbttRent)
+          else if tax = 2 then (if resi then [] else lttRent)
+          else if resi then (if nr then bandsAdd sdltNonResidentRate sdltRentResidential else sdltRentResidential)
+          else sdltRentNonResidential
+        [("land_tax_exact_ten_thousandths_pence", toJson purchase)]
+        ++ (if rents.isEmpty then [] else
+          [("land_tax_rent_scaled_ten_thousandths_pence", toJson (if table.isEmpty then 0 else rentTaxScaled table rents)),
+           ("land_tax_rent_npv_numerator_pence", toJson (npvNum rents)),
+           ("land_tax_rent_denominator", toJson (npvDen rents))])
       | none => [])
     ++ (match c.sdlt with
       | some (k, p) => [("sdlt_exact_ten_thousandths_pence", toJson (sdltExact k p))]

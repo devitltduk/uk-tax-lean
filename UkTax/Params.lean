@@ -846,4 +846,65 @@ def sdltHigherMin : Nat := 4_000_000
 5 % above. -/
 def sdltNonResidential : List (Nat × Nat) := [(15_000_000, 0), (25_000_000, 200), (0, 500)]
 
+/-- Rent under a lease (Sch 5 para 2(3)), on the net present value of the rent
+(para 3, discounted at 3.5 % a year, para 8): residential (Table A) 0 % to £125,000,
+1 % above; non-residential or mixed (Table B) 0 % to £150,000, 1 % to £5 million,
+2 % above. -/
+def sdltRentResidential : List (Nat × Nat) := [(12_500_000, 0), (0, 100)]
+def sdltRentNonResidential : List (Nat × Nat) := [(15_000_000, 0), (500_000_000, 100), (0, 200)]
+
+/-- Non-resident transactions (s75ZA, Sch 9A, from 1 April 2021): 2 % added to each
+rate of s55(1B) Table A, Sch 4ZA Table A, Sch 6ZA Table A and Sch 5 Table A. -/
+def sdltNonResidentRate : Nat := 200
+
+/-! ## Land and Buildings Transaction Tax (Scotland), 2026-27
+
+LBTT(S)A 2013; the Tax Rates and Tax Bands Order (SSI 2015/126 Schedule, as amended
+by SSI 2018/372, 2019 and 2020 Orders; consolidated text checked 2026-11-27, no
+amending instrument in 2025 or 2026). -/
+
+/-- Table A, residential: 0 % to £145,000, 2 % to £250,000, 5 % to £325,000, 10 % to
+£750,000, 12 % above. -/
+def lbttResidential : List (Nat × Nat) :=
+  [(14_500_000, 0), (25_000_000, 200), (32_500_000, 500), (75_000_000, 1_000), (0, 1_200)]
+
+/-- First-time buyer relief (Sch 4A para 3): no tax on the first £175,000. -/
+def lbttFirstTime : List (Nat × Nat) :=
+  [(17_500_000, 0), (25_000_000, 200), (32_500_000, 500), (75_000_000, 1_000), (0, 1_200)]
+
+/-- Additional dwelling supplement (Sch 2A paras 2(1)(b), 4(2)): 8 % of the relevant
+consideration where it is £40,000 or more. -/
+def lbttAdsRate : Nat := 800
+def lbttAdsMin : Nat := 4_000_000
+
+/-- Table B, non-residential: 0 % to £150,000, 1 % to £250,000, 5 % above. Table C,
+rent (on the NPV, Sch 19 paras 3, 7: 3.5 %): 0 % to £150,000, 1 % to £2 million, 2 %
+above. Residential leases are exempt (Sch 1 para 3). -/
+def lbttNonResidential : List (Nat × Nat) := [(15_000_000, 0), (25_000_000, 100), (0, 500)]
+def lbttRent : List (Nat × Nat) := [(15_000_000, 0), (200_000_000, 100), (0, 200)]
+
+/-! ## Land Transaction Tax (Wales), 2026-27
+
+LTTA 2017; the Tax Bands and Tax Rates Regulations (WSI 2018/128 Schedule, as
+amended to 2024; consolidated text checked 2026-11-27). -/
+
+/-- Table 1, residential: 0 % to £225,000, 6 % to £400,000, 7.5 % to £750,000, 10 %
+to £1,500,000, 12 % above. -/
+def lttResidential : List (Nat × Nat) :=
+  [(22_500_000, 0), (40_000_000, 600), (75_000_000, 750), (150_000_000, 1_000), (0, 1_200)]
+
+/-- Table 2, higher rates (where Sch 5 applies: an individual buying a dwelling for
+£40,000 or more who owns another, para 3(2)(c)): 5 % to £180,000, 8.5 % to
+£250,000, 10 % to £400,000, 12.5 % to £750,000, 15 % to £1,500,000, 17 % above. -/
+def lttHigher : List (Nat × Nat) :=
+  [(18_000_000, 500), (25_000_000, 850), (40_000_000, 1_000), (75_000_000, 1_250), (150_000_000, 1_500), (0, 1_700)]
+def lttHigherMin : Nat := 4_000_000
+
+/-- Table 3, non-residential: 0 % to £225,000, 1 % to £250,000, 5 % to £1,000,000, 6 %
+above. Table 4, rent (on the NPV, Sch 6 paras 31, 32: 3.5 %): 0 % to £225,000, 1 %
+to £2 million, 2 % above; residential leases are not charged on rent (Sch 6 para
+27). -/
+def lttNonResidential : List (Nat × Nat) := [(22_500_000, 0), (25_000_000, 100), (100_000_000, 500), (0, 600)]
+def lttRent : List (Nat × Nat) := [(22_500_000, 0), (200_000_000, 100), (0, 200)]
+
 end UkTax

@@ -3088,5 +3088,239 @@
     "source": "Oxford City Council Council Tax Reduction Scheme 2026 to 2027 paras 9, 37, 43, Appendix 4",
     "working": "pay £32,000 less tax £3,886 and Class 1 £1,554.40 = £26,559.60, £510.7615 a week (all earnings counted, Child Benefit ignored): between £480.01 and £530.00, so 75 % of the £2,000 bill = £1,500",
     "council_tax_reduction_local_lcu_pence": 5460000000000000
+  },
+  {
+    "name": "LBTT, residential, £300,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "lbtt",
+        "kind": "residential",
+        "consideration_pence": 30000000,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "SSI 2015/126 Sch Table A",
+    "working": "2 % of £105,000 = £2,100; 5 % of £50,000 = £2,500; £4,600",
+    "land_tax_exact_ten_thousandths_pence": 4600000000
+  },
+  {
+    "name": "LBTT, first-time buyer, £300,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "lbtt",
+        "kind": "first_time_buyer",
+        "consideration_pence": 30000000,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "LBTT(S)A 2013 Sch 4A para 3",
+    "working": "no tax on the first £175,000: 2 % of £75,000 = £1,500; 5 % of £50,000 = £2,500; £4,000",
+    "land_tax_exact_ten_thousandths_pence": 4000000000
+  },
+  {
+    "name": "LBTT, additional dwelling, £300,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "lbtt",
+        "kind": "additional_dwelling",
+        "consideration_pence": 30000000,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "LBTT(S)A 2013 Sch 2A paras 2, 4",
+    "working": "£4,600 plus 8 % of the whole £300,000 (£24,000): £28,600",
+    "land_tax_exact_ten_thousandths_pence": 28600000000
+  },
+  {
+    "name": "LBTT, additional dwelling, £39,999.99",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "lbtt",
+        "kind": "additional_dwelling",
+        "consideration_pence": 3999999,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "LBTT(S)A 2013 Sch 2A para 2(1)(b)",
+    "working": "below £40,000 no supplement, and Table A is nil to £145,000: nil",
+    "land_tax_exact_ten_thousandths_pence": 0
+  },
+  {
+    "name": "LTT, residential, £300,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "ltt",
+        "kind": "residential",
+        "consideration_pence": 30000000,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "WSI 2018/128 Sch Table 1",
+    "working": "6 % of £75,000 = £4,500",
+    "land_tax_exact_ten_thousandths_pence": 4500000000
+  },
+  {
+    "name": "LTT, higher rates, £300,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "ltt",
+        "kind": "additional_dwelling",
+        "consideration_pence": 30000000,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "WSI 2018/128 Sch Table 2; LTTA 2017 Sch 5",
+    "working": "5 % of £180,000 = £9,000; 8.5 % of £70,000 = £5,950; 10 % of £50,000 = £5,000; £19,950",
+    "land_tax_exact_ten_thousandths_pence": 19950000000
+  },
+  {
+    "name": "LTT, additional dwelling, £30,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "ltt",
+        "kind": "additional_dwelling",
+        "consideration_pence": 3000000,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "LTTA 2017 Sch 5 para 3(2)(c)",
+    "working": "below £40,000 not a higher rates transaction: Table 1, nil",
+    "land_tax_exact_ten_thousandths_pence": 0
+  },
+  {
+    "name": "LTT, non-residential, £500,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "ltt",
+        "kind": "non_residential",
+        "consideration_pence": 50000000,
+        "non_resident": false,
+        "lease_residential": false
+      }
+    },
+    "source": "WSI 2018/128 Sch Table 3",
+    "working": "1 % of £25,000 = £250; 5 % of £250,000 = £12,500; £12,750",
+    "land_tax_exact_ten_thousandths_pence": 12750000000
+  },
+  {
+    "name": "SDLT, non-resident, residential £300,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "sdlt",
+        "kind": "residential",
+        "consideration_pence": 30000000,
+        "non_resident": true,
+        "lease_residential": false
+      }
+    },
+    "source": "FA 2003 s55(1B) Table A, s75ZA",
+    "working": "resident: 2 % of £125,000 = £2,500 and 5 % of £50,000 = £2,500; each rate 2 % higher adds 2 % of £300,000 = £6,000: £11,000",
+    "land_tax_exact_ten_thousandths_pence": 11000000000
+  },
+  {
+    "name": "SDLT, non-residential lease, £100,000 a year for 3 years",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "sdlt",
+        "kind": "non_residential",
+        "consideration_pence": 0,
+        "non_resident": false,
+        "lease_residential": false,
+        "lease_rents_pence": [
+          10000000,
+          10000000,
+          10000000
+        ]
+      }
+    },
+    "source": "FA 2003 Sch 5 paras 2(3) Table B, 3, 8",
+    "working": "NPV = £100,000 × (1/1.035 + 1/1.035² + 1/1.035³) = £280,163.70; 1 % of the £130,163.70 above £150,000 = £1,301.64",
+    "land_tax_rent_scaled_ten_thousandths_pence": 11545185500000000,
+    "land_tax_rent_denominator": 8869743
+  },
+  {
+    "name": "LTT, non-residential lease, £100,000 a year for 3 years",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "ltt",
+        "kind": "non_residential",
+        "consideration_pence": 0,
+        "non_resident": false,
+        "lease_residential": false,
+        "lease_rents_pence": [
+          10000000,
+          10000000,
+          10000000
+        ]
+      }
+    },
+    "source": "LTTA 2017 Sch 6 paras 31, 32; WSI 2018/128 Table 4",
+    "working": "the same NPV £280,163.70; 1 % above £225,000 = £551.64",
+    "land_tax_rent_scaled_ten_thousandths_pence": 4892878250000000,
+    "land_tax_rent_denominator": 8869743
+  },
+  {
+    "name": "LBTT, residential lease (exempt)",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "land_tax": {
+        "tax": "lbtt",
+        "kind": "residential",
+        "consideration_pence": 0,
+        "non_resident": false,
+        "lease_residential": true,
+        "lease_rents_pence": [
+          10000000,
+          10000000,
+          10000000
+        ]
+      }
+    },
+    "source": "LBTT(S)A 2013 Sch 1 para 3",
+    "working": "residential leases are exempt: nil on the rent",
+    "land_tax_rent_scaled_ten_thousandths_pence": 0,
+    "land_tax_rent_denominator": 8869743
   }
 ]
