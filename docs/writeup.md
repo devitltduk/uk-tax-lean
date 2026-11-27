@@ -40,6 +40,38 @@ The main results:
    £4,189.16 where the regulations say £1,048 and £4,189, which overcharges a
    monthly-paid employee by about 48p to 60p a year.
 
+## Why a reference like this matters
+
+HM Treasury's [algorithmic transparency record for PolicyEngine
+UK](https://www.gov.uk/algorithmic-transparency-records/hmt-modelling-policy-engine),
+published on 17 December 2024 (ATRS v3.0), describes a Beta/Pilot by its
+Personal Tax, Welfare and Pensions team, exploring PolicyEngine to supplement
+its existing model (IGOTM). It states: "HMT does not currently use
+PolicyEngine." The record may be out of date.
+
+Comparing household results with that model, the record says NI calculations
+"proved to be very accurate, with almost 60% of datapoints falling within 0.5%
+of one another", and "Income tax calculations were less promising although this
+was likely due to difficulty in finding appropriate variables to compare
+between PolicyEngine and our existing model. Further evaluation is pending."
+Among its risks is "Erroneous Operation of the Code", mitigated by ensuring
+that scripts running PolicyEngine for decision-making "should undergo thorough
+review and testing".
+
+This project is an independent reference for the household-level rules: every
+parameter is cited to legislation, the model's properties are machine-checked
+in Lean, and PolicyEngine is compared with it case by case, down to the lines
+of its source where they differ. That is the kind of "thorough review and
+testing" the record names, applied to the rules. The project has no connection
+with HM Treasury and is not endorsed by it.
+
+It does not explain HM Treasury's income-tax gap. Besides the variable matching
+the record mentions, such a gap probably comes largely from data and
+imputation (the FRS, the imputation models, the reweighting), which this
+project does not cover. The rule-level differences found here, listed under
+[Differences from PolicyEngine UK](#differences-from-policyengine-uk), are
+mostly small.
+
 ## What is modelled
 
 All figures for 2026-27, each cited in `UkTax/Params.lean` and the README, checked
