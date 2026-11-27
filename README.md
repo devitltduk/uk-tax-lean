@@ -442,6 +442,27 @@ disabled child element. Output `council_tax_reduction_local_lcu_pence`, the year
 reduction in 1/36 400 000 000 pence. Not modelled: premiums, self-employment,
 childcare, the class F (second adult) reduction.
 
+### LBTT, LTT, lease rent and non-resident SDLT (`UkTax/LandTax.lean`)
+
+Input `land_tax` with `"tax": "lbtt"`, `"ltt"` or `"sdlt"`. Tax by slices, in
+1/10 000 pence.
+
+| Tax | 2026-27 | Source |
+|---|---|---|
+| LBTT residential | 0 % to £145,000, 2 % to £250,000, 5 % to £325,000, 10 % to £750,000, 12 % | SSI 2015/126 Table A |
+| LBTT first-time buyer | no tax on the first £175,000 | LBTT(S)A 2013 Sch 4A |
+| LBTT additional dwelling supplement | 8 % of the whole price, from £40,000 | Sch 2A |
+| LBTT non-residential; rent (NPV) | 0/1/5 % at £150,000, £250,000; 0/1/2 % at £150,000, £2m; residential leases exempt | Tables B, C; Sch 1 para 3 |
+| LTT residential | 0 % to £225,000, 6 % to £400,000, 7.5 % to £750,000, 10 % to £1.5m, 12 % | WSI 2018/128 Table 1 |
+| LTT higher rates | 5 %, 8.5 %, 10 %, 12.5 %, 15 %, 17 % at £180,000, £250,000, £400,000, £750,000, £1.5m; from £40,000 | Table 2; LTTA 2017 Sch 5 para 3 |
+| LTT non-residential; rent (NPV) | 0/1/5/6 % at £225,000, £250,000, £1m; 0/1/2 % at £225,000, £2m | Tables 3, 4 |
+| SDLT rent (NPV) | residential 0/1 % at £125,000; non-residential 0/1/2 % at £150,000, £5m | FA 2003 Sch 5 para 2 |
+| SDLT non-resident | 2 % added to each residential rate | s75ZA |
+
+A lease's rent, one entry a year, is taxed by its NPV at 3.5 % a year,
+`Σ rᵢ / 1.035ⁱ`, held exactly over 207ⁿ. Not modelled: premiums with rent
+(linked), multiple dwellings, rent reviews and overlap relief.
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -682,6 +703,12 @@ relief-at-source contributions.
   raises the reduction and each unit costs at most the taper for 365/7 weeks;
   Oxford's reduction never rises with income, and a penny a week above £480.00
   (likewise £530, £580, £660) costs a quarter of the bill.
+- `bandsTax_add`, `sdlt_nonResident`, `lbtt_ads_cliff`, `ltt_higher_cliff`,
+  `lbtt_succ`, `ltt_succ` (`UkTax/LandTax.lean`): adding 2 % to every rate adds
+  exactly 2 % of the whole price, so the SDLT non-resident surcharge is 2 % of the
+  consideration for every residential kind; Scotland's supplement and Wales's higher
+  rates start at £40,000 (nil, then £3,200 and £2,000); a penny more never lowers
+  LBTT or LTT.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1052,6 +1079,16 @@ steps plus 0.4p (552 claiming UC; 175 households left out as not like with like)
 Under the schemes a lone parent with two children and £15,000 of pay gets the whole
 £1,800 bill in Kingston, Merton and Westminster (£1,260 in Newham); PolicyEngine
 gives nil.
+
+### LBTT, LTT and lease rent against PolicyEngine
+
+`uv run python compare_land.py` compares purchases in Scotland and Wales (random
+prices and 1p either side of each limit) and non-residential leases of 1 to 25
+years in all three nations, giving PolicyEngine each lease's NPV as its rent
+input. Latest local run: 1,122 of 1,122 agree (526 leases). PolicyEngine charges
+Scotland's supplement and Wales's higher rates below £40,000 (£2,400 and £1,500 on
+a £30,000 additional dwelling, where the law charges nil); those 34 purchases are
+counted, not compared (findings #38).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

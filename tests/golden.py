@@ -75,6 +75,9 @@ CHECKED = (
     "council_tax_reduction_wa_total_su_pence",
     "council_tax_reduction_local_lcu_pence",
     "council_tax_reduction_local_applicable_weekly_pence",
+    "land_tax_exact_ten_thousandths_pence",
+    "land_tax_rent_scaled_ten_thousandths_pence",
+    "land_tax_rent_denominator",
 )
 
 failures = 0

@@ -18,4 +18,5 @@ import UkTax.UcSelfEmployed
 import UkTax.HousingBenefitWa
 import UkTax.CtrWorkingAge
 import UkTax.CtrEnglandLocal
+import UkTax.LandTax
 import UkTax.Axioms
