@@ -70,6 +70,9 @@ CHECKED = (
     "housing_benefit_wa_payable_728_millionths_pence",
     "council_tax_reduction_wa_364m_pence",
     "council_tax_reduction_wa_applicable_weekly_pence",
+    "council_tax_reduction_wa_second_adult_364m_pence",
+    "council_tax_reduction_wa_bands_e_h_su_pence",
+    "council_tax_reduction_wa_total_su_pence",
 )
 
 failures = 0

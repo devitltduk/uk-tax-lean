@@ -390,6 +390,34 @@ Income is net earnings from pay (gross less tax, Class 1 and half the pension
 contributions) less the disregards, other income and tariff income; income support,
 income-based JSA or income-related ESA give the maximum (`passported`). Not
 modelled: self-employment, childcare charges, the extended reduction.
+
+### Council Tax Reduction for working-age applicants in Scotland (`UkTax/CtrWorkingAge.lean`)
+
+[SSI 2021/249](https://www.legislation.gov.uk/ssi/2021/249), input
+`council_tax_reduction_working_age` with `"country": "scotland"`. Reg 13 is the
+Welsh shape (the bill by the day less the deductions × 1/7, less 2 6/7 % a day of
+the week's excess income), or the second adult rebate if greater; reg 14 gives
+dwellings in bands E to H the part of the bill due to the 2017 band rise, tapered
+above £321 or £479 a week, where that is greater.
+
+| Figure | 2026-27 | Source |
+|---|---|---|
+| Personal allowance | £95.55 single 25 or over or lone parent, £75.65 single under 25, £150.15 couple | Sch 1 para 1 |
+| Child premium, family premium | £109.85 each; no family premium | Sch 1 para 2 |
+| Premiums, components | as working-age Housing Benefit | Sch 1 Parts 3-6 |
+| Earnings disregards | £5, £10, £20, £25; the £17.10 step without UC | Sch 3 |
+| Capital | £16,000; £1 a week per £250 or part above £6,000 (with UC £4.35 a month) | regs 63, 66 |
+| Non-dependants | £16.55, £13.90, £10.95, £5.55 by income (£286, £497, £614) | reg 90 |
+| On UC (an award above nil) | own applicable amount; UC earned income less the disregards, unearned and tariff income, the relevant UC payments (child and childcare elements, or the award if lower), less childcare costs element × 100/85 × 12/52 to the penny, up to £290 or £497 a week | regs 42, 49, 57(1)(p), 78 |
+| Bands E to H | share (C − 1)/C of the bill: 3/43, 1/9, 7/47, 9/49; threshold £321 single with no child, £479 otherwise | regs 14, 79(2), (3) |
+| Second adult rebate | 25 % (second adults on benefits), 15 % (gross income under £282), 7.5 % (under £383), 100 % (students) | Sch 2 |
+
+Outputs: `council_tax_reduction_wa_364m_pence` (the reg 13 main reduction),
+`council_tax_reduction_wa_second_adult_364m_pence`,
+`council_tax_reduction_wa_bands_e_h_su_pence` and the entitlement
+`council_tax_reduction_wa_total_su_pence`, in 1/(364 000 000 × 891 261) pence so
+that the band shares are exact. Not modelled: self-employment, childcare charges
+without UC, the extended reduction, joint liability.
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -618,6 +646,12 @@ relief-at-source contributions.
   Carer's Allowance or childcare element (they cancel while UC is in payment), so
   the reduction depends on earnings alone; a reduction never exceeds the bill and
   each unit of excess costs at most 73/364 of it.
+- `scotBandsEH_le_main`, `scotBandsEH_floor`, `scotTotal_bounds`,
+  `scot_capital_cliff` (`UkTax/CtrWorkingAge.lean`): in Scotland the bands E to H
+  reduction adds nothing while income is at most the applicable amount; up to £321
+  or £479 a week it is the whole band-rise share less the deductions, however far
+  income is above the applicable amount; the entitlement is at least each part and
+  at most the bill; a penny of capital over £16,000 ends all of it.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -967,6 +1001,15 @@ under 25, lone parents, couples, 0 to 3 children) with pay and savings, half on
 UC. On PolicyEngine's 52-week basis (findings #27: its withdrawal is 364/365 of the
 law's), latest local run: 1,009 of 1,009 agree within 2 float32 steps plus 0.4p
 (and 2 steps of the UC amounts on UC; 796 paid, 510 on UC).
+
+With `--country scotland` it compares the same households in Scotland, with UC
+childcare costs for lone parents, against the reg 13 main reduction (PolicyEngine
+models neither reg 14 nor the second adult rebate). Latest local run: 1,021 of
+1,021 agree within the same tolerance plus 5.3p where there are childcare costs
+(reg 78(3) rounds the weekly charges to the penny; 846 paid, 515 on UC). The
+bands E to H reduction PolicyEngine leaves out is worth £244.44 a year to a single
+person in band F with a £2,200 bill and £321 a week, and £164.13 more than reg 13
+to a couple in band H with £4,000 and £479 a week (findings #36).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 
