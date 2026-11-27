@@ -7,7 +7,7 @@ Main result: `isLeastTax_taxExact`, `∀ i, IsLeastTax i (taxExact i)`. The allo
 share that `Income.bestAlloc` picks gives the least Step 4 tax over every legal
 share, so the computed liability is the s25(2) liability. With `leastTax_mono`
 this makes the computed `liability` monotone in every kind of income
-(`liability_mono`), with no hypothesis.
+(`liability_mono`), for every parameter set meeting `TaxParams.Valid`.
 
 ## The argument
 
@@ -43,9 +43,9 @@ namespace UkTax
 /-- `x` is one of the non-savings limits (`nsLimits`): a UK rate limit or a
 Scottish one. -/
 def NsLine (rg : Regime) (x : Nat) : Prop :=
-  x = rg.brl ∨ x = rg.hrl ∨ x = scotStarterLimit ∨ x = scotBasicLimit + rg.relief ∨
-    x = scotIntermediateLimit + rg.relief ∨ x = scotHigherLimit + rg.relief ∨
-    x = scotAdvancedLimit + rg.relief
+  x = rg.brl ∨ x = rg.hrl ∨ x = rg.params.scStarterLimit ∨ x = rg.params.scBasicLimit + rg.relief ∨
+    x = rg.params.scIntermediateLimit + rg.relief ∨ x = rg.params.scHigherLimit + rg.relief ∨
+    x = rg.params.scAdvancedLimit + rg.relief
 
 /-- `a ≤ b ≤ c` evenly spaced, with no UK rate limit strictly between `a` and `c`. -/
 def Even3 (rg : Regime) (a b c : Nat) : Prop :=
@@ -53,28 +53,25 @@ def Even3 (rg : Regime) (a b c : Nat) : Prop :=
 
 /-- The same, with no Scottish limit strictly between `a` and `c` either. -/
 def Even3NS (rg : Regime) (a b c : Nat) : Prop :=
-  Even3 rg a b c ∧ (c ≤ scotStarterLimit ∨ scotStarterLimit ≤ a) ∧
-    (c ≤ scotBasicLimit + rg.relief ∨ scotBasicLimit + rg.relief ≤ a) ∧
-    (c ≤ scotIntermediateLimit + rg.relief ∨ scotIntermediateLimit + rg.relief ≤ a) ∧
-    (c ≤ scotHigherLimit + rg.relief ∨ scotHigherLimit + rg.relief ≤ a) ∧
-    (c ≤ scotAdvancedLimit + rg.relief ∨ scotAdvancedLimit + rg.relief ≤ a)
+  Even3 rg a b c ∧ (c ≤ rg.params.scStarterLimit ∨ rg.params.scStarterLimit ≤ a) ∧
+    (c ≤ rg.params.scBasicLimit + rg.relief ∨ rg.params.scBasicLimit + rg.relief ≤ a) ∧
+    (c ≤ rg.params.scIntermediateLimit + rg.relief ∨ rg.params.scIntermediateLimit + rg.relief ≤ a) ∧
+    (c ≤ rg.params.scHigherLimit + rg.relief ∨ rg.params.scHigherLimit + rg.relief ≤ a) ∧
+    (c ≤ rg.params.scAdvancedLimit + rg.relief ∨ rg.params.scAdvancedLimit + rg.relief ≤ a)
 
-theorem bandTax_even3 (r : Rates) (rg : Regime) {a b c : Nat} (h : Even3 rg a b c) :
+/-- A product with a fixed rate is linear on three evenly spaced points. -/
+theorem mul_even3 (r : Nat) {A B C : Nat} (h : A + C = 2 * B) : r * A + r * C = 2 * (r * B) := by
+  rw [← Nat.mul_add, h, Nat.mul_left_comm]
+
+theorem bandTax_even3 (r : Rates) {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) {a b c : Nat}
+    (h : Even3 rg a b c) :
     bandTax r rg a + bandTax r rg c = 2 * bandTax r rg b := by
   unfold Even3 at h
-  have hBH : rg.brl ≤ rg.hrl := by
-    unfold Regime.brl Regime.hrl basicRateLimit higherRateLimit personalAllowance; omega
-  have e1 : min a rg.brl + min c rg.brl = 2 * min b rg.brl := by omega
-  have e2 : (min a rg.hrl - rg.brl) + (min c rg.hrl - rg.brl)
-      = 2 * (min b rg.hrl - rg.brl) := by omega
-  have e3 : (a - rg.hrl) + (c - rg.hrl) = 2 * (b - rg.hrl) := by omega
-  have f1 : r.basic * min a rg.brl + r.basic * min c rg.brl
-      = 2 * (r.basic * min b rg.brl) := by rw [← Nat.mul_add, e1, Nat.mul_left_comm]
-  have f2 : r.higher * (min a rg.hrl - rg.brl) + r.higher * (min c rg.hrl - rg.brl)
-      = 2 * (r.higher * (min b rg.hrl - rg.brl)) := by
-    rw [← Nat.mul_add, e2, Nat.mul_left_comm]
-  have f3 : r.additional * (a - rg.hrl) + r.additional * (c - rg.hrl)
-      = 2 * (r.additional * (b - rg.hrl)) := by rw [← Nat.mul_add, e3, Nat.mul_left_comm]
+  have hBH : rg.brl ≤ rg.hrl := by unfold Regime.brl Regime.hrl; omega
+  have f1 := mul_even3 r.basic (show min a rg.brl + min c rg.brl = 2 * min b rg.brl by omega)
+  have f2 := mul_even3 r.higher (show (min a rg.hrl - rg.brl) + (min c rg.hrl - rg.brl)
+      = 2 * (min b rg.hrl - rg.brl) by omega)
+  have f3 := mul_even3 r.additional (show (a - rg.hrl) + (c - rg.hrl) = 2 * (b - rg.hrl) by omega)
   unfold bandTax
   omega
 
@@ -83,71 +80,50 @@ theorem sub_even3 {a b c l : Nat} (h1 : a ≤ b) (h2 : a + c = 2 * b) (h : c ≤
     (a - l) + (c - l) = 2 * (b - l) := by
   omega
 
-theorem nsTax_even3 (rg : Regime) {a b c : Nat} (h : Even3NS rg a b c) :
+theorem nsTax_even3 {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) {a b c : Nat}
+    (h : Even3NS rg a b c) :
     nsTax rg a + nsTax rg c = 2 * nsTax rg b := by
   unfold nsTax
   split
   · obtain ⟨⟨h1, h2, _, _⟩, k1, k2, k3, k4, k5⟩ := h
-    have t1 := sub_even3 h1 h2 k1
-    have t2 := sub_even3 h1 h2 k2
-    have t3 := sub_even3 h1 h2 k3
-    have t4 := sub_even3 h1 h2 k4
-    have t5 := sub_even3 h1 h2 k5
-    unfold scotTax scotStarterRate scotBasicRate scotIntermediateRate scotHigherRate
-      scotAdvancedRate scotTopRate
-    generalize a - scotStarterLimit = A1 at *; generalize b - scotStarterLimit = B1 at *
-    generalize c - scotStarterLimit = C1 at *
-    generalize a - (scotBasicLimit + rg.relief) = A2 at *
-    generalize b - (scotBasicLimit + rg.relief) = B2 at *
-    generalize c - (scotBasicLimit + rg.relief) = C2 at *
-    generalize a - (scotIntermediateLimit + rg.relief) = A3 at *
-    generalize b - (scotIntermediateLimit + rg.relief) = B3 at *
-    generalize c - (scotIntermediateLimit + rg.relief) = C3 at *
-    generalize a - (scotHigherLimit + rg.relief) = A4 at *
-    generalize b - (scotHigherLimit + rg.relief) = B4 at *
-    generalize c - (scotHigherLimit + rg.relief) = C4 at *
-    generalize a - (scotAdvancedLimit + rg.relief) = A5 at *
-    generalize b - (scotAdvancedLimit + rg.relief) = B5 at *
-    generalize c - (scotAdvancedLimit + rg.relief) = C5 at *
+    have t0 := mul_even3 rg.params.scStarterRate h2
+    have t1 := mul_even3 (rg.params.scBasicRate - rg.params.scStarterRate) (sub_even3 h1 h2 k1)
+    have t2 := mul_even3 (rg.params.scIntermediateRate - rg.params.scBasicRate) (sub_even3 h1 h2 k2)
+    have t3 := mul_even3 (rg.params.scHigherRate - rg.params.scIntermediateRate) (sub_even3 h1 h2 k3)
+    have t4 := mul_even3 (rg.params.scAdvancedRate - rg.params.scHigherRate) (sub_even3 h1 h2 k4)
+    have t5 := mul_even3 (rg.params.scTopRate - rg.params.scAdvancedRate) (sub_even3 h1 h2 k5)
+    unfold scotTax
+    dsimp only
     omega
-  · exact bandTax_even3 nonSavingsRates rg h.1
-
-theorem bandTax_le (r : Rates) (rg : Regime) {a b : Nat} (h : a ≤ b) :
-    bandTax r rg a ≤ bandTax r rg b := by
-  unfold bandTax
-  have h1 : min a rg.brl ≤ min b rg.brl := by omega
-  have h2 : min a rg.hrl - rg.brl ≤ min b rg.hrl - rg.brl := by omega
-  have h3 : a - rg.hrl ≤ b - rg.hrl := by omega
-  exact Nat.add_le_add (Nat.add_le_add (Nat.mul_le_mul_left _ h1) (Nat.mul_le_mul_left _ h2))
-    (Nat.mul_le_mul_left _ h3)
+  · exact bandTax_even3 rg.params.nsRates hBH h.1
 
 /-! ## Step 4 tax at a point `(x, w)` -/
 
 /-- Bottom of the savings taxed at 20 / 40 / 45 %: above the non-savings income `x`,
 the starting rate for savings and the savings allowance `A`, capped at `w`. -/
-def loSav (A x w : Nat) : Nat := min w (max x startingRateLimitSavings + A)
+def loSav (rg : Regime) (A x w : Nat) : Nat := min w (max x rg.params.srls + A)
 
 /-- Bottom of the dividends taxed at 10.75 / 35.75 / 39.35 %: above the dividend
 allowance, capped at `T`. -/
-def loDiv (T w : Nat) : Nat := w + min (T - w) dividendAllowance
+def loDiv (rg : Regime) (T w : Nat) : Nat := w + min (T - w) rg.params.divAllowance
 
 /-- Step 4 tax, in 1/10 000 pence, when `x` non-savings income and `w - x` savings
 are left after the allowance, out of `T` in all, with savings allowance `A`. -/
 def G (rg : Regime) (A T x w : Nat) : Nat :=
   nsTax rg x
-    + (bandTax savingsRates rg w - bandTax savingsRates rg (loSav A x w))
-    + (bandTax dividendRates rg T - bandTax dividendRates rg (loDiv T w))
+    + (bandTax rg.params.savRates rg w - bandTax rg.params.savRates rg (loSav rg A x w))
+    + (bandTax rg.params.divRates rg T - bandTax rg.params.divRates rg (loDiv rg T w))
 
 theorem taxOnStep3_eq_G (rg : Regime) {x w T : Nat} (hxw : x ≤ w) (hwT : w ≤ T) :
     taxOnStep3 rg x (w - x) (T - w) = G rg (savingsAllowanceFor rg T) T x w := by
   have h1 : x + (w - x) = w := by omega
   have h2 : x + (w - x) + (T - w) = T := by omega
-  have h3 : x + startingRateSavings x (w - x) + savingsNilRate rg x (w - x) (T - w)
-      = loSav (savingsAllowanceFor rg T) x w := by
+  have h3 : x + startingRateSavings rg x (w - x) + savingsNilRate rg x (w - x) (T - w)
+      = loSav rg (savingsAllowanceFor rg T) x w := by
     unfold savingsNilRate startingRateSavings loSav
     rw [h2]
     omega
-  have h4 : x + (w - x) + dividendNilRate (T - w) = loDiv T w := by
+  have h4 : x + (w - x) + dividendNilRate rg (T - w) = loDiv rg T w := by
     unfold dividendNilRate loDiv
     omega
   unfold taxOnStep3 sliceTax G
@@ -163,105 +139,105 @@ theorem even3ns_x {rg : Regime} {x : Nat} (h0 : 0 < x) (h : ¬ NsLine rg x) :
     Even3NS rg (x - 1) x (x + 1) := by
   unfold NsLine at h; unfold Even3NS Even3; omega
 
-theorem even3_loSav_x {rg : Regime} {A x w : Nat} (h0 : 0 < x) (h1 : x ≠ startingRateLimitSavings)
+theorem even3_loSav_x {rg : Regime} {A x w : Nat} (h0 : 0 < x) (h1 : x ≠ rg.params.srls)
     (h2 : x + A ≠ rg.brl) (h3 : x + A ≠ rg.hrl) (h4 : x + A ≠ w) :
-    Even3 rg (loSav A (x - 1) w) (loSav A x w) (loSav A (x + 1) w) := by
+    Even3 rg (loSav rg A (x - 1) w) (loSav rg A x w) (loSav rg A (x + 1) w) := by
   unfold Even3 loSav; omega
 
 theorem even3_loSav_w_const {rg : Regime} {A c w : Nat} (h0 : 0 < w) (h1 : w ≠ rg.brl)
-    (h2 : w ≠ rg.hrl) (h3 : w ≠ startingRateLimitSavings + A) (h4 : w ≠ c + A) :
-    Even3 rg (loSav A c (w - 1)) (loSav A c w) (loSav A c (w + 1)) := by
+    (h2 : w ≠ rg.hrl) (h3 : w ≠ rg.params.srls + A) (h4 : w ≠ c + A) :
+    Even3 rg (loSav rg A c (w - 1)) (loSav rg A c w) (loSav rg A c (w + 1)) := by
   unfold Even3 loSav; omega
 
 theorem even3_loSav_w_diag {rg : Regime} {A e w : Nat} (he : e + 1 ≤ w) (h1 : w ≠ rg.brl)
-    (h2 : w ≠ rg.hrl) (h3 : w ≠ startingRateLimitSavings + A)
-    (h4 : w ≠ startingRateLimitSavings + e) (h5 : w + A ≠ rg.brl + e)
+    (h2 : w ≠ rg.hrl) (h3 : w ≠ rg.params.srls + A)
+    (h4 : w ≠ rg.params.srls + e) (h5 : w + A ≠ rg.brl + e)
     (h6 : w + A ≠ rg.hrl + e) :
-    Even3 rg (loSav A (w - 1 - e) (w - 1)) (loSav A (w - e) w) (loSav A (w + 1 - e) (w + 1)) := by
+    Even3 rg (loSav rg A (w - 1 - e) (w - 1)) (loSav rg A (w - e) w) (loSav rg A (w + 1 - e) (w + 1)) := by
   unfold Even3 loSav; omega
 
 theorem even3_loDiv {rg : Regime} {T w : Nat} (h0 : 0 < w) (hwT : w + 1 ≤ T)
-    (h1 : w + dividendAllowance ≠ T) (h2 : w + dividendAllowance ≠ rg.brl)
-    (h3 : w + dividendAllowance ≠ rg.hrl) :
-    Even3 rg (loDiv T (w - 1)) (loDiv T w) (loDiv T (w + 1)) := by
+    (h1 : w + rg.params.divAllowance ≠ T) (h2 : w + rg.params.divAllowance ≠ rg.brl)
+    (h3 : w + rg.params.divAllowance ≠ rg.hrl) :
+    Even3 rg (loDiv rg T (w - 1)) (loDiv rg T w) (loDiv rg T (w + 1)) := by
   unfold Even3 loDiv; omega
 
-theorem loSav_le (A x w : Nat) : loSav A x w ≤ w := by unfold loSav; omega
+theorem loSav_le (rg : Regime) (A x w : Nat) : loSav rg A x w ≤ w := by unfold loSav; omega
 
-theorem loDiv_le {T w : Nat} (h : w ≤ T) : loDiv T w ≤ T := by unfold loDiv; omega
+theorem loDiv_le {rg : Regime} {T w : Nat} (h : w ≤ T) : loDiv rg T w ≤ T := by unfold loDiv; omega
 
 /-- Bends of `G` along `x` (with `w` fixed). -/
 def BendX (rg : Regime) (A w x : Nat) : Prop :=
-  x = startingRateLimitSavings ∨ NsLine rg x ∨
+  x = rg.params.srls ∨ NsLine rg x ∨
     x + A = rg.brl ∨ x + A = rg.hrl ∨ x + A = w
 
 /-- Bends of `G` along `w` with `x = c` fixed. -/
 def BendWConst (rg : Regime) (A T c w : Nat) : Prop :=
-  w = rg.brl ∨ w = rg.hrl ∨ w = startingRateLimitSavings + A ∨ w = c + A ∨
-    w + dividendAllowance = T ∨ w + dividendAllowance = rg.brl ∨
-    w + dividendAllowance = rg.hrl
+  w = rg.brl ∨ w = rg.hrl ∨ w = rg.params.srls + A ∨ w = c + A ∨
+    w + rg.params.divAllowance = T ∨ w + rg.params.divAllowance = rg.brl ∨
+    w + rg.params.divAllowance = rg.hrl
 
 /-- Bends of `G` along `w` with `w - x = e` fixed. -/
 def BendWDiag (rg : Regime) (A T e w : Nat) : Prop :=
   NsLine rg (w - e) ∨ w = rg.brl ∨ w = rg.hrl ∨
-    w = startingRateLimitSavings + e ∨ w = startingRateLimitSavings + A ∨
+    w = rg.params.srls + e ∨ w = rg.params.srls + A ∨
     w + A = rg.brl + e ∨ w + A = rg.hrl + e ∨
-    w + dividendAllowance = T ∨ w + dividendAllowance = rg.brl ∨
-    w + dividendAllowance = rg.hrl
+    w + rg.params.divAllowance = T ∨ w + rg.params.divAllowance = rg.brl ∨
+    w + rg.params.divAllowance = rg.hrl
 
-theorem G_affine_x {rg : Regime} {A T x w : Nat} (h0 : 0 < x) (_hxw : x + 1 ≤ w) (hwT : w ≤ T)
+theorem G_affine_x {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) {A T x w : Nat} (h0 : 0 < x) (_hxw : x + 1 ≤ w) (hwT : w ≤ T)
     (hB : ¬ BendX rg A w x) :
     G rg A T (x - 1) w + G rg A T (x + 1) w = 2 * G rg A T x w := by
   unfold BendX at hB
-  have e1 := nsTax_even3 rg (even3ns_x h0 (fun h => hB (Or.inr (Or.inl h))))
-  have e2 := bandTax_even3 savingsRates rg
+  have e1 := nsTax_even3 hBH (even3ns_x h0 (fun h => hB (Or.inr (Or.inl h))))
+  have e2 := bandTax_even3 rg.params.savRates hBH
     (even3_loSav_x (A := A) (w := w) h0 (by omega) (by omega) (by omega) (by omega))
-  have := bandTax_le savingsRates rg (loSav_le A (x - 1) w)
-  have := bandTax_le savingsRates rg (loSav_le A x w)
-  have := bandTax_le savingsRates rg (loSav_le A (x + 1) w)
-  have := bandTax_le dividendRates rg (loDiv_le hwT)
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A (x - 1) w)
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A x w)
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A (x + 1) w)
+  have := bandTax_le rg.params.divRates rg (loDiv_le (rg := rg) hwT)
   unfold G
   omega
 
-theorem G_affine_w_const {rg : Regime} {A T c w : Nat} (hc : c + 1 ≤ w) (hwT : w + 1 ≤ T)
+theorem G_affine_w_const {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) {A T c w : Nat} (hc : c + 1 ≤ w) (hwT : w + 1 ≤ T)
     (hB : ¬ BendWConst rg A T c w) :
     G rg A T c (w - 1) + G rg A T c (w + 1) = 2 * G rg A T c w := by
   unfold BendWConst at hB
-  have e1 := bandTax_even3 savingsRates rg (even3_x (x := w) (by omega) (by omega) (by omega))
-  have e2 := bandTax_even3 savingsRates rg
+  have e1 := bandTax_even3 rg.params.savRates hBH (even3_x (x := w) (by omega) (by omega) (by omega))
+  have e2 := bandTax_even3 rg.params.savRates hBH
     (even3_loSav_w_const (A := A) (c := c) (w := w) (by omega) (by omega) (by omega) (by omega)
       (by omega))
-  have e3 := bandTax_even3 dividendRates rg
+  have e3 := bandTax_even3 rg.params.divRates hBH
     (even3_loDiv (T := T) (w := w) (by omega) hwT (by omega) (by omega) (by omega))
-  have := bandTax_le savingsRates rg (loSav_le A c (w - 1))
-  have := bandTax_le savingsRates rg (loSav_le A c w)
-  have := bandTax_le savingsRates rg (loSav_le A c (w + 1))
-  have := bandTax_le dividendRates rg (loDiv_le (T := T) (w := w - 1) (by omega))
-  have := bandTax_le dividendRates rg (loDiv_le (T := T) (w := w) (by omega))
-  have := bandTax_le dividendRates rg (loDiv_le (T := T) (w := w + 1) (by omega))
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A c (w - 1))
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A c w)
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A c (w + 1))
+  have := bandTax_le rg.params.divRates rg (loDiv_le (rg := rg) (T := T) (w := w - 1) (by omega))
+  have := bandTax_le rg.params.divRates rg (loDiv_le (rg := rg) (T := T) (w := w) (by omega))
+  have := bandTax_le rg.params.divRates rg (loDiv_le (rg := rg) (T := T) (w := w + 1) (by omega))
   unfold G
   omega
 
-theorem G_affine_w_diag {rg : Regime} {A T e w : Nat} (he : e + 1 ≤ w) (hwT : w + 1 ≤ T)
+theorem G_affine_w_diag {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) {A T e w : Nat} (he : e + 1 ≤ w) (hwT : w + 1 ≤ T)
     (hB : ¬ BendWDiag rg A T e w) :
     G rg A T (w - 1 - e) (w - 1) + G rg A T (w + 1 - e) (w + 1) = 2 * G rg A T (w - e) w := by
   unfold BendWDiag at hB
   have h1 : Even3NS rg (w - 1 - e) (w - e) (w + 1 - e) := by
     have hn : ¬ NsLine rg (w - e) := fun h => hB (Or.inl h)
     unfold NsLine at hn; unfold Even3NS Even3; omega
-  have e1 := nsTax_even3 rg h1
-  have e2 := bandTax_even3 savingsRates rg (even3_x (x := w) (by omega) (by omega) (by omega))
-  have e3 := bandTax_even3 savingsRates rg
+  have e1 := nsTax_even3 hBH h1
+  have e2 := bandTax_even3 rg.params.savRates hBH (even3_x (x := w) (by omega) (by omega) (by omega))
+  have e3 := bandTax_even3 rg.params.savRates hBH
     (even3_loSav_w_diag (A := A) (e := e) (w := w) he (by omega) (by omega) (by omega)
       (by omega) (by omega) (by omega))
-  have e4 := bandTax_even3 dividendRates rg
+  have e4 := bandTax_even3 rg.params.divRates hBH
     (even3_loDiv (T := T) (w := w) (by omega) hwT (by omega) (by omega) (by omega))
-  have := bandTax_le savingsRates rg (loSav_le A (w - 1 - e) (w - 1))
-  have := bandTax_le savingsRates rg (loSav_le A (w - e) w)
-  have := bandTax_le savingsRates rg (loSav_le A (w + 1 - e) (w + 1))
-  have := bandTax_le dividendRates rg (loDiv_le (T := T) (w := w - 1) (by omega))
-  have := bandTax_le dividendRates rg (loDiv_le (T := T) (w := w) (by omega))
-  have := bandTax_le dividendRates rg (loDiv_le (T := T) (w := w + 1) (by omega))
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A (w - 1 - e) (w - 1))
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A (w - e) w)
+  have := bandTax_le rg.params.savRates rg (loSav_le rg A (w + 1 - e) (w + 1))
+  have := bandTax_le rg.params.divRates rg (loDiv_le (rg := rg) (T := T) (w := w - 1) (by omega))
+  have := bandTax_le rg.params.divRates rg (loDiv_le (rg := rg) (T := T) (w := w) (by omega))
+  have := bandTax_le rg.params.divRates rg (loDiv_le (rg := rg) (T := T) (w := w + 1) (by omega))
   unfold G
   omega
 
@@ -311,14 +287,14 @@ def Feas (N S D T x w : Nat) : Prop :=
 
 /-- A constant-`x` line of the search (`Income.xLines`). -/
 def XLine (rg : Regime) (N A x : Nat) : Prop :=
-  x = 0 ∨ x = N ∨ x = startingRateLimitSavings ∨ x + A = rg.brl ∨ x + A = rg.hrl ∨
+  x = 0 ∨ x = N ∨ x = rg.params.srls ∨ x + A = rg.brl ∨ x + A = rg.hrl ∨
     NsLine rg x
 
 /-- A constant-`w` line of the search (`Income.wLines`). -/
 def WLine (rg : Regime) (D T A w : Nat) : Prop :=
-  w = T ∨ w + D = T ∨ w = startingRateLimitSavings ∨ w = startingRateLimitSavings + A ∨
-    w = rg.brl ∨ w = rg.hrl ∨ w + dividendAllowance = T ∨
-    w + dividendAllowance = rg.brl ∨ w + dividendAllowance = rg.hrl
+  w = T ∨ w + D = T ∨ w = rg.params.srls ∨ w = rg.params.srls + A ∨
+    w = rg.brl ∨ w = rg.hrl ∨ w + rg.params.divAllowance = T ∨
+    w + rg.params.divAllowance = rg.brl ∨ w + rg.params.divAllowance = rg.hrl
 
 /-- A constant-`(w - x)` line of the search (`Income.diagLines`). -/
 def DLine (S A e : Nat) : Prop := e = 0 ∨ e = S ∨ e = A
@@ -349,7 +325,7 @@ theorem cand_diag {rg : Regime} {N S D T A e w' : Nat} (he : DLine S A e)
     Cand rg N S D T A (w' - e) w' := by
   unfold BendWDiag at hwB
   by_cases hd : w' = e ∨ w' = N + e ∨ NsLine rg (w' - e) ∨
-      w' = startingRateLimitSavings + e ∨ w' + A = rg.brl + e ∨ w' + A = rg.hrl + e
+      w' = rg.params.srls + e ∨ w' + A = rg.brl + e ∨ w' + A = rg.hrl + e
   · refine Or.inr (Or.inl ⟨?_, e, he, by omega⟩)
     unfold XLine
     rcases hd with h | h | h | h | h | h
@@ -370,13 +346,13 @@ theorem cand_diag {rg : Regime} {N S D T A e w' : Nat} (he : DLine S A e)
 -- `G` is opaque here: `omega` only needs its values as atoms.
 attribute [local irreducible] G in
 /-- Every legal share has a crossing of two lines with no more tax. -/
-theorem exists_cand {rg : Regime} {N S D T A x w : Nat} (h : Feas N S D T x w) :
+theorem exists_cand {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) {N S D T A x w : Nat} (h : Feas N S D T x w) :
     ∃ x' w', Feas N S D T x' w' ∧ Cand rg N S D T A x' w' ∧ G rg A T x' w' ≤ G rg A T x w := by
   obtain ⟨hxN, hxw, hwS, hTD, hwT⟩ := h
   -- Step 1: along `x`, with `w` fixed.
   obtain ⟨y, hy1, hy2, hyB, hyle⟩ :=
     exists_min_at_bend (fun x => G rg A T x w) (BendX rg A w) (lo := w - S) (hi := min N w)
-      (fun x h1 h2 hB => G_affine_x (by omega) (by omega) hwT hB) (z := x) (by omega) (by omega)
+      (fun x h1 h2 hB => G_affine_x hBH (by omega) (by omega) hwT hB) (z := x) (by omega) (by omega)
   -- `y` is on a constant-`x` line, or on a constant-`(w - x)` line.
   have hform : XLine rg N A y ∨ ∃ e, DLine S A e ∧ e ≤ S ∧ y + e = w := by
     unfold BendX at hyB
@@ -400,7 +376,7 @@ theorem exists_cand {rg : Regime} {N S D T A x w : Nat} (h : Feas N S D T x w) :
     obtain ⟨w', hw1, hw2, hwB, hwle⟩ :=
       exists_min_at_bend (fun w => G rg A T y w) (BendWConst rg A T y)
         (lo := max (T - D) y) (hi := min T (y + S))
-        (fun w h1 h2 hB => G_affine_w_const (by omega) (by omega) hB) (z := w)
+        (fun w h1 h2 hB => G_affine_w_const hBH (by omega) (by omega) hB) (z := w)
         (by omega) (by omega)
     refine ⟨y, w', ⟨by omega, by omega, by omega, by omega, by omega⟩, ?_,
       Nat.le_trans hwle hyle⟩
@@ -409,7 +385,7 @@ theorem exists_cand {rg : Regime} {N S D T A x w : Nat} (h : Feas N S D T x w) :
     obtain ⟨w', hw1, hw2, hwB, hwle⟩ :=
       exists_min_at_bend (fun w => G rg A T (w - e) w) (BendWDiag rg A T e)
         (lo := max e (T - D)) (hi := min T (N + e))
-        (fun w h1 h2 hB => G_affine_w_diag (by omega) (by omega) hB) (z := w)
+        (fun w h1 h2 hB => G_affine_w_diag hBH (by omega) (by omega) hB) (z := w)
         (by omega) (by omega)
     have hyw : w - e = y := by omega
     simp only [hyw] at hwle
@@ -557,11 +533,11 @@ theorem foldl_best (rg : Regime) (i : Income) (l : List (Int × Int)) (b : Alloc
 
 /-- **The search finds the least tax.** `taxExact rg i` is the least Step 4 tax over
 every legal way of deducting the allowance (ITA 2007 s25(2)). -/
-theorem isLeastTax_taxExact (rg : Regime) (i : Income) : IsLeastTax rg i (taxExact rg i) := by
+theorem isLeastTax_taxExact {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) (i : Income) : IsLeastTax rg i (taxExact rg i) := by
   refine ⟨⟨_, bestAlloc_feasible rg i, rfl⟩, fun a ha => ?_⟩
   obtain ⟨hF, hG⟩ := taxWith_eq_G ha
   obtain ⟨x', w', hF', hc, hle⟩ :=
-    exists_cand (rg := rg) (A := savingsAllowanceFor rg (i.total - i.allowanceUsed rg)) hF
+    exists_cand hBH (rg := rg) (A := savingsAllowanceFor rg (i.total - i.allowanceUsed rg)) hF
   have hbest :=
     (foldl_best rg i (i.candidates rg) (i.inOrder rg)).2 _ (mem_candidates hc) (feasibleAt_of hF')
   rw [taxWith_allocAt hF', ← bestAlloc_eq] at hbest
@@ -571,8 +547,8 @@ theorem isLeastTax_taxExact (rg : Regime) (i : Income) : IsLeastTax rg i (taxExa
 
 /-- **Monotonicity of the computed liability.** `liability` never goes down when
 any kind of income (non-savings, savings or dividends) goes up. -/
-theorem liability_mono {rg : Regime} {i i' : Income} (h : i.Le i') :
+theorem liability_mono {rg : Regime} (hP : rg.params.Valid) {i i' : Income} (h : i.Le i') :
     liability rg i ≤ liability rg i' :=
-  liability_mono_of_optimal rg (isLeastTax_taxExact rg) h
+  liability_mono_of_optimal hP (isLeastTax_taxExact hP.brlHrl) h
 
 end UkTax

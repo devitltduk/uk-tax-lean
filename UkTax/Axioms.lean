@@ -25,6 +25,7 @@ import UkTax.CompanyCar
 import UkTax.Misc
 import UkTax.Ved
 import UkTax.StudentSupport
+import UkTax.CliffMap
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -543,3 +544,58 @@ today, so any change to it is seen.
 /-- info: 'UkTax.adg_no_cliff' does not depend on any axioms -/
 #guard_msgs in
 #print axioms UkTax.adg_no_cliff
+
+/-! Parametric guarantees: the figures as a parameter set (`UkTax/TaxParams.lean`) and the
+cliff map (`UkTax/CliffMap.lean`). -/
+
+/-- info: 'UkTax.valid_y2026' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.valid_y2026
+
+/-- info: 'UkTax.TaxParams.maxStep_y2026' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.TaxParams.maxStep_y2026
+
+/-- info: 'UkTax.G_succ_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.G_succ_le
+
+/-- info: 'UkTax.Regime.minGain_y2026' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.Regime.minGain_y2026
+
+/-- info: 'UkTax.paStep_y2026' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.paStep_y2026
+
+/-- info: 'UkTax.hicbcStep_y2026' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.hicbcStep_y2026
+
+/-- info: 'UkTax.net_succ_ge' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.net_succ_ge
+
+/-- info: 'UkTax.Regime.maxStep_y2026' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.Regime.maxStep_y2026
+
+/-- info: 'UkTax.cliffMap_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.cliffMap_complete
+
+/-- info: 'UkTax.firstAbove_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.firstAbove_eq
+
+/-- info: 'UkTax.Regime.topRate_y2026' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.Regime.topRate_y2026
+
+/-- info: 'UkTax.bandTax_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.bandTax_eq
+
+/-- info: 'UkTax.sliceTax_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.sliceTax_mono

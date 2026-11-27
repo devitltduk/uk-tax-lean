@@ -1,4 +1,5 @@
 import UkTax.Params
+import UkTax.TaxParams
 import UkTax.Calc
 import UkTax.Profits
 import UkTax.Nics
@@ -27,4 +28,5 @@ import UkTax.CompanyCar
 import UkTax.Misc
 import UkTax.Ved
 import UkTax.StudentSupport
+import UkTax.CliffMap
 import UkTax.Axioms

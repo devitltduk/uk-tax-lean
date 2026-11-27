@@ -67,16 +67,17 @@ def mifGrossYear (wholePounds : Bool) (hours : Nat) : Nat :=
 /-- The net individual threshold for the year, 1/10 000 pence: the gross threshold
 less the income tax (personal allowance, the person's own rates, no other relief)
 and Class 4 on it as the person's only income. -/
-def mifNetYear (scottish wholePounds : Bool) (hours : Nat) : Int :=
+def mifNetYear (P : TaxParams) (scottish wholePounds : Bool) (hours : Nat) : Int :=
   let g := mifGrossYear wholePounds hours
-  10_000 * (g : Int) - (taxExact { scottish } ⟨g, 0, 0⟩ : Int) - (class4Exact .annual 0 g : Int)
+  10_000 * (g : Int) - (taxExact { scottish, params := P } ⟨g, 0, 0⟩ : Int)
+    - (class4Exact P .annual 0 g : Int)
 
 /-- Self-employed earnings for the year (reg 57), 1/10 000 pence: UC profit `u`
 (receipts less expenses, pence, may be negative) less the income tax on the
 taxable profit `π` above pay `g` and Class 4 on it; nil if not positive. -/
 def seEarned (p : EarningsPeriod) (rg : Regime) (g π : Nat) (u : Int) : Int :=
   max 0 (10_000 * u - ((finalTaxExact rg ⟨g + π, 0, 0⟩ : Int) - finalTaxExact rg ⟨g, 0, 0⟩)
-    - (class4Exact p (g + rg.netPay) π : Int))
+    - (class4Exact rg.params p (g + rg.netPay) π : Int))
 
 /-- The claimant's earned income (1/10 000 pence a year): employed earnings
 (`earned`, pay less tax on the pay alone, Class 1 and net pay pension
@@ -96,25 +97,28 @@ theorem mifCouple_eq (F P Tc e : Int) : mifCouple F P Tc e = max e (min F (Tc - 
   split <;> omega
 
 /-- UC with the floor `f`: the award on `max e f`. -/
-def ucAwardFloor (c : Claims) (f e : Int) : Int := ucAward c (max e f)
+def ucAwardFloor (P : TaxParams) (c : Claims) (f e : Int) : Int := ucAward P c (max e f)
 
 /-! ## Proved properties -/
 
 /-- **Below the floor UC does not move.** Any two earned incomes at or below the
 floor give the same UC: a penny more profit there is kept in full. -/
-theorem uc_flat_below_floor (c : Claims) {f e e' : Int} (h : e ≤ f) (h' : e' ≤ f) :
-    ucAwardFloor c f e = ucAwardFloor c f e' := by
+theorem uc_flat_below_floor (P : TaxParams) (c : Claims) {f e e' : Int} (h : e ≤ f) (h' : e' ≤ f) :
+    ucAwardFloor P c f e = ucAwardFloor P c f e' := by
   unfold ucAwardFloor
   rw [show max e f = f by omega, show max e' f = f by omega]
 
 /-- **The floor keeps the taper honest.** With the floor, earned income plus UC
-never falls as earned income rises (above it, the 55 % taper; below it, UC is
-fixed). -/
-theorem earned_plus_uc_mono_floor (c : Claims) (f : Int) {e e' : Int} (h : e ≤ e') :
-    100 * e + ucAwardFloor c f e ≤ 100 * e' + ucAwardFloor c f e' := by
+never falls as earned income rises (above it, the taper, at most 100 %; below it,
+UC is fixed). -/
+theorem earned_plus_uc_mono_floor (P : TaxParams) (hT : P.ucTaper ≤ 100) (c : Claims) (f : Int)
+    {e e' : Int} (h : e ≤ e') :
+    100 * e + ucAwardFloor P c f e ≤ 100 * e' + ucAwardFloor P c f e' := by
   unfold ucAwardFloor
   have hx : max e f ≤ max e' f := by omega
-  have := earned_plus_uc_gain c hx
+  have := earned_plus_uc_gain P c hx
+  have : (0 : Int) ≤ (100 - (P.ucTaper : Int)) * (max e' f - max e f) :=
+    Int.mul_nonneg (by omega) (by omega)
   have : max e' f - max e f ≤ e' - e := by omega
   omega
 

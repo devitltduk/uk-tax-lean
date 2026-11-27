@@ -92,11 +92,14 @@ def ReliefsIn.chargeable (r : ReliefsIn) : Nat := r.pensionInput - (r.allowance 
 non-savings rates, but for a Scottish taxpayer the Scottish basic rate up to the
 Scottish basic rate limit, so the starter rate's band is charged at 20 %. -/
 def aaTax (rg : Regime) (x : Nat) : Nat :=
-  nsTax rg x + (if rg.scottish then (scotBasicRate - scotStarterRate) * min x scotStarterLimit else 0)
+  nsTax rg x + (if rg.scottish then
+    (rg.params.scBasicRate - rg.params.scStarterRate) * min x rg.params.scStarterLimit else 0)
 
 /-- The charge's rate on the penny above `y`. -/
 def aaRateAt (rg : Regime) (y : Nat) : Nat :=
-  if rg.scottish && decide (y < scotStarterLimit) then scotBasicRate else nsRateAt rg y
+  nsRateAt rg y + (if rg.scottish then
+    (if y < rg.params.scStarterLimit then rg.params.scBasicRate - rg.params.scStarterRate else 0)
+    else 0)
 
 /-- The annual allowance charge, 1/10 000 pence: the tax on the chargeable amount as
 the top slice above reduced net income. -/
@@ -111,53 +114,79 @@ def ReliefsIn.tax (r : ReliefsIn) (rg : Regime) : Nat :=
 
 /-! ## Proved properties -/
 
-/-- The non-savings rate never exceeds 48 %. -/
-theorem nsRateAt_le (rg : Regime) (y : Nat) : nsRateAt rg y ≤ 4_800 := by
-  unfold nsRateAt
-  split
-  · have := scotRateAt_cases rg y; omega
-  · have := rateAt_ns_cases rg y; omega
+/-- The top non-savings rate: 48 % for a Scottish taxpayer, 45 % otherwise, for
+2026-27. -/
+def Regime.topRate (rg : Regime) : Nat := rg.params.nsCap rg.scottish 2
 
-theorem aaTax_succ (rg : Regime) (y : Nat) : aaTax rg (y + 1) = aaTax rg y + aaRateAt rg y := by
+theorem aaTax_succ {rg : Regime} (hBH : rg.params.brl ≤ rg.params.hrl) (y : Nat) :
+    aaTax rg (y + 1) = aaTax rg y + aaRateAt rg y := by
   unfold aaTax aaRateAt
-  rw [nsTax_succ]
+  rw [nsTax_succ hBH]
   cases hs : rg.scottish
   · simp
-  · simp only [↓reduceIte, Bool.true_and]
-    by_cases hy : y < scotStarterLimit
-    · have hr : nsRateAt rg y = scotStarterRate := by
-        unfold nsRateAt scotRateAt; simp [hs, hy]
-      have hm1 : min (y + 1) scotStarterLimit = y + 1 := by omega
-      have hm0 : min y scotStarterLimit = y := by omega
-      simp only [hy, decide_true, ↓reduceIte, hr, hm1, hm0]
-      unfold scotBasicRate scotStarterRate
+  · simp only [↓reduceIte]
+    by_cases hy : y < rg.params.scStarterLimit
+    · have hm1 : min (y + 1) rg.params.scStarterLimit = min y rg.params.scStarterLimit + 1 := by omega
+      simp only [hy, ↓reduceIte, hm1, Nat.mul_add, Nat.mul_one]
       omega
-    · have hm : min (y + 1) scotStarterLimit = min y scotStarterLimit := by omega
-      simp only [hy, decide_false, Bool.false_eq_true, ↓reduceIte, hm]
+    · have hm : min (y + 1) rg.params.scStarterLimit = min y rg.params.scStarterLimit := by omega
+      simp only [hy, ↓reduceIte, hm]
       omega
 
-theorem aaRateAt_le (rg : Regime) (y : Nat) : aaRateAt rg y ≤ 4_800 := by
-  unfold aaRateAt
-  split
-  · unfold scotBasicRate; omega
-  · exact nsRateAt_le rg y
+theorem Regime.topRate_y2026 {rg : Regime} (h : rg.params = .y2026) :
+    rg.topRate = if rg.scottish then 4_800 else 4_500 := by
+  unfold Regime.topRate; rw [h]; cases rg.scottish <;> decide
+
+/-- Below the starter limit the charge's Scottish rate is the basic rate plus any
+rises whose (raised) limits are lower; never above the top rate. -/
+theorem scotRate_add_le (P : TaxParams) (hP : P.Valid) (relief y : Nat) :
+    P.scotRate relief y
+      + (if y < P.scStarterLimit then P.scBasicRate - P.scStarterRate else 0) ≤ P.scTopRate := by
+  unfold TaxParams.scotRate
+  have := hP.scStarterBasic; have := hP.scBasicIntermediate; have := hP.scIntermediateHigher
+  have := hP.scHigherAdvanced; have := hP.scAdvancedTop
+  have := ite_le_self (P.scBasicLimit + relief ≤ y) (P.scIntermediateRate - P.scBasicRate)
+  have := ite_le_self (P.scIntermediateLimit + relief ≤ y) (P.scHigherRate - P.scIntermediateRate)
+  have := ite_le_self (P.scHigherLimit + relief ≤ y) (P.scAdvancedRate - P.scHigherRate)
+  have := ite_le_self (P.scAdvancedLimit + relief ≤ y) (P.scTopRate - P.scAdvancedRate)
+  by_cases hy : y < P.scStarterLimit
+  · have h' : ¬ P.scStarterLimit ≤ y := by omega
+    simp only [hy, h', ↓reduceIte]
+    omega
+  · have h' : P.scStarterLimit ≤ y := by omega
+    simp only [hy, h', ↓reduceIte]
+    omega
+
+theorem aaRateAt_le {rg : Regime} (hP : rg.params.Valid) (y : Nat) : aaRateAt rg y ≤ rg.topRate := by
+  unfold aaRateAt Regime.topRate TaxParams.nsCap nsRateAt
+  cases hs : rg.scottish
+  · simp only [Bool.false_eq_true, ↓reduceIte, Nat.add_zero]
+    rw [rateAt_eq]
+    have hb := bandOf_le rg y
+    have := hP.nsOrdered.1; have := hP.nsOrdered.2
+    rcases band_cases hb with h | h | h <;> rw [h] <;> simp <;> omega
+  · simp only [↓reduceIte]
+    exact scotRate_add_le _ hP _ _
 
 /-- The charge's tax over a slice of `c` pence is at most 48 % of it, and never
 negative. -/
-theorem aaTax_slice (rg : Regime) (x c : Nat) : aaTax rg x ≤ aaTax rg (x + c) ∧ aaTax rg (x + c) ≤ aaTax rg x + 4_800 * c := by
+theorem aaTax_slice {rg : Regime} (hP : rg.params.Valid) (x c : Nat) :
+    aaTax rg x ≤ aaTax rg (x + c) ∧ aaTax rg (x + c) ≤ aaTax rg x + rg.topRate * c := by
   induction c with
   | zero => simp
   | succ c ih =>
-    have h := aaTax_succ rg (x + c)
-    have := aaRateAt_le rg (x + c)
+    have h := aaTax_succ hP.brlHrl (x + c)
+    have := aaRateAt_le hP (x + c)
     rw [show x + (c + 1) = x + c + 1 by omega, h, Nat.mul_succ]
     omega
 
-/-- **The annual allowance charge is at most 48 % of the excess** (45 % outside
-Scotland). -/
-theorem aaCharge_le (rg : Regime) (i : Income) (c : Nat) : aaCharge rg i c ≤ 4_800 * c := by
+/-- **The annual allowance charge is at most the top rate on the excess** (48 % in
+Scotland, 45 % outside it, for 2026-27; `topRate_y2026`), for any figures meeting
+`TaxParams.Valid`. -/
+theorem aaCharge_le {rg : Regime} (hP : rg.params.Valid) (i : Income) (c : Nat) :
+    aaCharge rg i c ≤ rg.topRate * c := by
   unfold aaCharge
-  have := aaTax_slice rg (i.total - i.allowanceUsed rg) c
+  have := aaTax_slice hP (i.total - i.allowanceUsed rg) c
   dsimp only
   omega
 

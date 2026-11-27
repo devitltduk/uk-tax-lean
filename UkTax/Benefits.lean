@@ -190,7 +190,7 @@ def micro : Int := 1_000_000
 /-- Earned income for Universal Credit, in 1/10 000 pence: pay less income tax
 and employee NICs. -/
 def earned (p : EarningsPeriod) (rg : Regime) (s d g : Nat) : Int :=
-  10_000 * (g : Int) - (finalTaxExact rg ⟨g, s, d⟩ : Int) - (nicExact p (g + rg.netPay) : Int)
+  10_000 * (g : Int) - (finalTaxExact rg ⟨g, s, d⟩ : Int) - (nicExact rg.params p (g + rg.netPay) : Int)
 
 /-- Child element, monthly pence (reg 24(1), 36): the first child at the higher
 rate where the claimant is responsible for a child born before 6 April 2017. No
@@ -298,13 +298,13 @@ excess of the award and the other welfare benefits over the relevant amount, les
 the childcare element (reg 81), so at most `relevant amount + childcare element −
 other benefits`, not below nil. Months are taken as equal; rounding to the penny
 each assessment period (reg 6) is not modelled. -/
-def ucAward (c : Claims) (e : Int) : Int :=
+def ucAward (P : TaxParams) (c : Claims) (e : Int) : Int :=
   if c.uc && c.capital ≤ ucCapitalUpper then
     let eh := e + 10_000 * (c.partnerEarned : Int)
     let cc := 12 * c.childcareMicro e
     let award := max 0 (12 * (c.maxMicro - micro * (c.tariff + c.unearnedMonthly : Nat))
       - micro * (c.carersAllowanceYear : Int) + cc
-      - (ucTaperPercent : Int) * max 0 (eh - 10_000 * 12 * (c.workAllowance : Int)))
+      - (P.ucTaper : Int) * max 0 (eh - 10_000 * 12 * (c.workAllowance : Int)))
     if c.capApplies eh then
       max 0 (min award (micro * (c.capAmount : Int) + cc - micro * (c.capOtherBenefits : Int)))
     else award
@@ -312,23 +312,23 @@ def ucAward (c : Claims) (e : Int) : Int :=
 
 /-- One parent's part of the childcare tests: minimum earnings and the £100,000
 limit. -/
-def parentTest (pay ani : Nat) : Bool :=
-  childcareMinimumEarnings ≤ pay && ani ≤ childcareIncomeLimit
+def parentTest (P : TaxParams) (pay ani : Nat) : Bool :=
+  P.ccMinEarnings ≤ pay && ani ≤ P.ccLimit
 
 /-- The partner's part, fixed while the parent's pay varies: passes for a lone
 parent, fails for a UC couple's partner (no pay) unless given. -/
-def Claims.partnerOk (c : Claims) : Bool :=
+def Claims.partnerOk (P : TaxParams) (c : Claims) : Bool :=
   match c.partner with
-  | some (pay, ani) => parentTest pay ani
+  | some (pay, ani) => parentTest P pay ani
   | none => !c.couple
 
 /-- Eligible for Tax-Free Childcare and the working-parent funded hours. -/
-def childcareEligible (c : Claims) (pay ani : Nat) : Bool :=
-  parentTest pay ani && c.partnerOk
+def childcareEligible (P : TaxParams) (c : Claims) (pay ani : Nat) : Bool :=
+  parentTest P pay ani && c.partnerOk P
 
 /-- Tax-Free Childcare top-up for the year, in 1/1 000 000 pence. -/
-def tfcTopUp (c : Claims) (pay ani : Nat) : Int :=
-  if childcareEligible c pay ani then
+def tfcTopUp (P : TaxParams) (c : Claims) (pay ani : Nat) : Int :=
+  if childcareEligible P c pay ani then
     ((c.childcareCosts.map fun cost => min (1_000_000 * tfcCapPerChild) (1_000_000 * cost / 5)).sum
       : Nat)
   else 0
@@ -343,16 +343,16 @@ def workingValue (c : Claims) : Nat :=
 
 /-- Funded hours, as their yearly value, in 1/1 000 000 pence: the universal hours
 always, the working-parent hours when eligible. -/
-def fundedHours (c : Claims) (pay ani : Nat) : Int :=
-  micro * universalValue c + if childcareEligible c pay ani then micro * workingValue c else 0
+def fundedHours (P : TaxParams) (c : Claims) (pay ani : Nat) : Int :=
+  micro * universalValue c + if childcareEligible P c pay ani then micro * workingValue c else 0
 
 /-- Net income with benefits, in 1/1 000 000 pence: `net` (gross less income tax,
 NICs and HICBC, plus Child Benefit), plus the better of Universal Credit and
 Tax-Free Childcare, plus the funded hours. -/
 def netAll (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (s d g : Nat) : Int :=
   100 * net p cb rg s d g
-    + max (ucAward c (earned p rg s d g)) (tfcTopUp c g (g + s + d - rg.step2 - rg.relief))
-    + fundedHours c g (g + s + d - rg.step2 - rg.relief)
+    + max (ucAward rg.params c (earned p rg s d g)) (tfcTopUp rg.params c g (g + s + d - rg.step2 - rg.relief))
+    + fundedHours rg.params c g (g + s + d - rg.step2 - rg.relief)
 
 /-! ## Proved properties -/
 
@@ -387,27 +387,44 @@ theorem capApplies_anti (c : Claims) {e e' : Int} (h : e ≤ e') (h' : c.capAppl
   simp only [Bool.and_eq_true, decide_eq_true_eq] at *
   exact ⟨h'.1, by omega⟩
 
-/-- With the taper at 55 %, earned income plus UC keeps at least 45 % of any rise in
-earned income: the childcare element and the lifting of the benefit cap only add. -/
-theorem earned_plus_uc_gain (c : Claims) {e e' : Int} (h : e ≤ e') :
-    100 * e + ucAward c e + 45 * (e' - e) ≤ 100 * e' + ucAward c e' := by
+/-- With the taper at `P.ucTaper` %, earned income plus UC keeps at least the rest
+of any rise in earned income (45 % for 2026-27): the childcare element and the
+lifting of the benefit cap only add. For any taper up to 100 %. -/
+theorem earned_plus_uc_gain (P : TaxParams) (c : Claims) {e e' : Int}
+    (h : e ≤ e') :
+    100 * e + ucAward P c e + (100 - (P.ucTaper : Int)) * (e' - e) ≤ 100 * e' + ucAward P c e' := by
   have hcc := childcareMicro_mono c h
   have hcap := capApplies_anti c (e := e + 10_000 * (c.partnerEarned : Int))
     (e' := e' + 10_000 * (c.partnerEarned : Int)) (by omega)
-  unfold ucAward ucTaperPercent
+  have hτ : (0 : Int) ≤ (P.ucTaper : Int) := Int.natCast_nonneg _
+  have hX : max 0 (e + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int))
+      ≤ max 0 (e' + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int)) := by
+    omega
+  have hX2 : max 0 (e' + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int))
+      - max 0 (e + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int))
+      ≤ e' - e := by omega
+  have m0 := Int.mul_nonneg hτ (show (0 : Int) ≤ e' - e by omega)
+  have m1 := Int.mul_le_mul_of_nonneg_left hX hτ
+  have m2 := Int.mul_le_mul_of_nonneg_left hX2 hτ
+  rw [Int.mul_sub] at m2
+  rw [Int.sub_mul]
+  unfold ucAward
   split
   · dsimp only
+    generalize (P.ucTaper : Int) * max 0 (e + 10_000 * (c.partnerEarned : Int)
+      - 10_000 * 12 * (c.workAllowance : Int)) = TX at *
+    generalize (P.ucTaper : Int) * max 0 (e' + 10_000 * (c.partnerEarned : Int)
+      - 10_000 * 12 * (c.workAllowance : Int)) = TX' at *
+    generalize (P.ucTaper : Int) * (e' - e) = TE at *
     generalize c.childcareMicro e = X at *
     generalize c.childcareMicro e' = X' at *
     generalize c.capApplies (e + 10_000 * (c.partnerEarned : Int)) = a at *
     generalize c.capApplies (e' + 10_000 * (c.partnerEarned : Int)) = a' at *
     generalize c.maxMicro = M
-    generalize (c.workAllowance : Int) = W
     generalize micro * (c.capAmount : Int) = K
     generalize micro * (c.capOtherBenefits : Int) = O
     generalize micro * ((c.tariff + c.unearnedMonthly : Nat) : Int) = T
     generalize micro * (c.carersAllowanceYear : Int) = A
-    generalize (c.partnerEarned : Int) = P
     cases a <;> cases a'
     · simp only [Bool.false_eq_true, ↓reduceIte]; omega
     · simp at hcap
@@ -416,17 +433,20 @@ theorem earned_plus_uc_gain (c : Claims) {e e' : Int} (h : e ≤ e') :
   · omega
 
 /-- Earned income and Universal Credit together never fall as earned income rises:
-the taper takes 55 %, not more. -/
-theorem earned_plus_uc_mono (c : Claims) {e e' : Int} (h : e ≤ e') :
-    100 * e + ucAward c e ≤ 100 * e' + ucAward c e' := by
-  have := earned_plus_uc_gain c h
+the taper takes at most 100 %. -/
+theorem earned_plus_uc_mono (P : TaxParams) (hT : P.ucTaper ≤ 100) (c : Claims) {e e' : Int}
+    (h : e ≤ e') :
+    100 * e + ucAward P c e ≤ 100 * e' + ucAward P c e' := by
+  have := earned_plus_uc_gain P c h
+  have : (0 : Int) ≤ (100 - (P.ucTaper : Int)) * (e' - e) :=
+    Int.mul_nonneg (by omega) (by omega)
   omega
 
 /-- Eligibility is only lost where adjusted net income goes over £100,000. -/
-theorem childcareEligible_succ {c : Claims} {pay ani : Nat}
-    (h : childcareEligible c pay ani = true) :
-    childcareEligible c (pay + 1) (ani + 1) = true ∨ ani = childcareIncomeLimit := by
-  by_cases hx : ani = childcareIncomeLimit
+theorem childcareEligible_succ {P : TaxParams} {c : Claims} {pay ani : Nat}
+    (h : childcareEligible P c pay ani = true) :
+    childcareEligible P c (pay + 1) (ani + 1) = true ∨ ani = P.ccLimit := by
+  by_cases hx : ani = P.ccLimit
   · exact Or.inr hx
   · left
     unfold childcareEligible parentTest at *
@@ -436,151 +456,159 @@ theorem childcareEligible_succ {c : Claims} {pay ani : Nat}
 /-- **The universal hours are never lost.** Over £100,000 of adjusted net income
 the funded hours are worth exactly the universal hours: only the working-parent
 hours go. -/
-theorem fundedHours_over_limit (c : Claims) {pay ani : Nat} (h : childcareIncomeLimit < ani) :
-    fundedHours c pay ani = micro * universalValue c := by
-  have : childcareEligible c pay ani = false := by
+theorem fundedHours_over_limit (P : TaxParams) (c : Claims) {pay ani : Nat} (h : P.ccLimit < ani) :
+    fundedHours P c pay ani = micro * universalValue c := by
+  have : childcareEligible P c pay ani = false := by
     unfold childcareEligible parentTest
-    have : ¬ ani ≤ childcareIncomeLimit := by omega
+    have : ¬ ani ≤ P.ccLimit := by omega
     simp [this]
   unfold fundedHours; rw [this]; simp
 
 /-- **The £100,000 drop in funded hours.** For a parent eligible at exactly £100,000
 of adjusted net income, the penny that takes it over loses exactly the working-parent
 hours. -/
-theorem fundedHours_drop_at_limit (c : Claims) {pay : Nat}
-    (h : childcareEligible c pay childcareIncomeLimit = true) :
-    fundedHours c pay childcareIncomeLimit
-      = fundedHours c (pay + 1) (childcareIncomeLimit + 1) + micro * workingValue c := by
-  rw [fundedHours_over_limit c (pay := pay + 1) (ani := childcareIncomeLimit + 1) (by omega)]
+theorem fundedHours_drop_at_limit (P : TaxParams) (c : Claims) {pay : Nat}
+    (h : childcareEligible P c pay P.ccLimit = true) :
+    fundedHours P c pay P.ccLimit
+      = fundedHours P c (pay + 1) (P.ccLimit + 1) + micro * workingValue c := by
+  rw [fundedHours_over_limit P c (pay := pay + 1) (ani := P.ccLimit + 1) (by omega)]
   unfold fundedHours; rw [h]; simp only [↓reduceIte]
 
+/-- The steps of `netAll` hypotheses: a penny more pay changes neither allowance, the
+Marriage Allowance reduction nor the charge. -/
+structure NoStep (cb : Nat) (rg : Regime) (s d g : Nat) : Prop where
+  pa : personalAllowanceFor rg.params (g + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor rg.params (g + s + d - rg.step2 - rg.relief)
+  psa : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩
+  ma : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩
+  cb : hicbc rg.params (g + 1 + s + d - rg.step2 - rg.relief) cb
+      = hicbc rg.params (g + s + d - rg.step2 - rg.relief) cb
+
 /-- **Marginal rate between steps, with benefits.** Away from the steps, a penny more
-pay raises net income with benefits by at least 45 % of `rg.minGain`: earned income
-rises by at least `rg.minGain` (`taxExact_succ_le`, `nicExact_succ_le`) and UC takes
-at most 55 % of that. That is 0.1053p (105,300 millionths of a penny), so an
-effective marginal rate of at most 1 − 0.45 × 0.234 = 89.47 %; for a Scottish
-taxpayer 0.0963p, at most 1 − 0.45 × 0.214 = 90.37 %. -/
-theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims} {s d g : Nat}
-    (hPA : personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
-      = personalAllowanceFor (g + s + d - rg.step2 - rg.relief))
-    (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
-    (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
-    (hC : hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb)
-    (hLim : g + s + d - rg.step2 - rg.relief ≠ childcareIncomeLimit) :
-    netAll p cb rg c s d g + 45 * (rg.minGain : Int) ≤ netAll p cb rg c s d (g + 1) := by
+pay raises net income with benefits by at least `(100 - taper) %` of `rg.minGain`:
+earned income rises by at least `rg.minGain` (`taxExact_succ_le`, `nicExact_succ_le`)
+and UC takes at most the taper of that. For 2026-27 that is 45 % of 0.234p, 0.1053p
+(105,300 millionths of a penny), so an effective marginal rate of at most
+1 − 0.45 × 0.234 = 89.47 %; for a Scottish taxpayer 0.0963p, at most
+1 − 0.45 × 0.214 = 90.37 %. For any figures meeting `TaxParams.Valid`. -/
+theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} (hP : rg.params.Valid)
+    {c : Claims} {s d g : Nat} (hN : NoStep cb rg s d g)
+    (hLim : g + s + d - rg.step2 - rg.relief = rg.params.ccLimit →
+      g + 1 + s + d - rg.step2 - rg.relief ≠ (g + s + d - rg.step2 - rg.relief) + 1) :
+    netAll p cb rg c s d g + (100 - (rg.params.ucTaper : Int)) * (rg.minGain : Int)
+      ≤ netAll p cb rg c s d (g + 1) := by
+  obtain ⟨hPA, hPSA, hMA, hC⟩ := hN
   have hani : g + 1 + s + d - rg.step2 - rg.relief = (g + s + d - rg.step2 - rg.relief) + 1 ∨
       (g + 1 + s + d - rg.step2 - rg.relief = 0 ∧ g + s + d - rg.step2 - rg.relief = 0) := by omega
-  have htax := finalTaxExact_succ_le hPA hPSA hMA
-  have hnic := nicExact_succ_le p (g + rg.netPay)
+  have htax := finalTaxExact_succ_le hP hPA hPSA hMA
+  have hnic := nicExact_succ_le rg.params p (g + rg.netPay)
   rw [show g + rg.netPay + 1 = g + 1 + rg.netPay by omega] at hnic
-  have hmg := rg.minGain_eq
+  have hmg := Regime.minGain_eq hP
   have hearn : earned p rg s d g + rg.minGain ≤ earned p rg s d (g + 1) := by
     unfold earned
     generalize finalTaxExact rg ⟨g, s, d⟩ = A at *
     generalize finalTaxExact rg ⟨g + 1, s, d⟩ = A' at *
-    generalize nicExact p (g + rg.netPay) = B at *
-    generalize nicExact p (g + 1 + rg.netPay) = B' at *
+    generalize nicExact rg.params p (g + rg.netPay) = B at *
+    generalize nicExact rg.params p (g + 1 + rg.netPay) = B' at *
     omega
   have hle : earned p rg s d g ≤ earned p rg s d (g + 1) := by
     generalize earned p rg s d g = E at *
     generalize earned p rg s d (g + 1) = E' at *
     omega
-  have huc := earned_plus_uc_gain c hle
-  have hEl : childcareEligible c g (g + s + d - rg.step2 - rg.relief) = true →
-      childcareEligible c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) = true := by
+  have huc := earned_plus_uc_gain rg.params c hle
+  have hk : (100 - (rg.params.ucTaper : Int)) * (rg.minGain : Int)
+      ≤ (100 - (rg.params.ucTaper : Int)) * (earned p rg s d (g + 1) - earned p rg s d g) :=
+    Int.mul_le_mul_of_nonneg_left (by omega) (by have := hP.ucTaperLe; omega)
+  have hEl : childcareEligible rg.params c g (g + s + d - rg.step2 - rg.relief) = true →
+      childcareEligible rg.params c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) = true := by
     intro h1
     rcases hani with ha | ⟨ha, hb⟩
     · rw [ha]
       rcases childcareEligible_succ (c := c) h1 with h2 | h2
       · exact h2
-      · exact absurd h2 hLim
+      · exact absurd ha (hLim h2)
     · rw [ha]; rw [hb] at h1
       unfold childcareEligible parentTest at *
       simp only [Bool.and_eq_true, decide_eq_true_eq] at *
       exact ⟨⟨by omega, by omega⟩, h1.2⟩
-  have htfc : tfcTopUp c g (g + s + d - rg.step2 - rg.relief)
-      ≤ tfcTopUp c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) := by
+  have htfc : tfcTopUp rg.params c g (g + s + d - rg.step2 - rg.relief)
+      ≤ tfcTopUp rg.params c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) := by
     unfold tfcTopUp
-    by_cases h1 : childcareEligible c g (g + s + d - rg.step2 - rg.relief) = true
+    by_cases h1 : childcareEligible rg.params c g (g + s + d - rg.step2 - rg.relief) = true
     · rw [h1, hEl h1]; simp
-    · rw [show childcareEligible c g (g + s + d - rg.step2 - rg.relief) = false by simpa using h1]
+    · rw [show childcareEligible rg.params c g (g + s + d - rg.step2 - rg.relief) = false by
+        simpa using h1]
       simp only [Bool.false_eq_true, ↓reduceIte]
       split <;> omega
-  have hfh : fundedHours c g (g + s + d - rg.step2 - rg.relief)
-      ≤ fundedHours c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) := by
+  have hfh : fundedHours rg.params c g (g + s + d - rg.step2 - rg.relief)
+      ≤ fundedHours rg.params c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) := by
     unfold fundedHours micro
-    by_cases h1 : childcareEligible c g (g + s + d - rg.step2 - rg.relief) = true
+    by_cases h1 : childcareEligible rg.params c g (g + s + d - rg.step2 - rg.relief) = true
     · rw [h1, hEl h1]; simp
-    · rw [show childcareEligible c g (g + s + d - rg.step2 - rg.relief) = false by simpa using h1]
+    · rw [show childcareEligible rg.params c g (g + s + d - rg.step2 - rg.relief) = false by
+        simpa using h1]
       simp only [Bool.false_eq_true, ↓reduceIte]
       split <;> omega
   have hsplit : ∀ g' : Nat, 100 * net p cb rg s d g'
       = 100 * earned p rg s d g' + 1_000_000 * ((s + d + cb : Nat) : Int)
-        - 1_000_000 * (hicbc (g' + s + d - rg.step2 - rg.relief) cb : Int) := by
+        - 1_000_000 * (hicbc rg.params (g' + s + d - rg.step2 - rg.relief) cb : Int) := by
     intro g'; unfold net earned
-    generalize finalTaxExact _ _ = A; generalize nicExact p _ = B; generalize hicbc _ cb = C
+    generalize finalTaxExact _ _ = A; generalize nicExact _ p _ = B; generalize hicbc _ _ cb = C
     omega
+  have hk2 : (100 - (rg.params.ucTaper : Int)) * (rg.minGain : Int) ≤ 100 * (rg.minGain : Int) :=
+    Int.mul_le_mul_of_nonneg_right (by omega) (Int.natCast_nonneg _)
   clear hPA hPSA hEl htax hnic
   unfold netAll
   rw [hsplit, hsplit, hC]
-  have : max (ucAward c (earned p rg s d g)) (tfcTopUp c g (g + s + d - rg.step2 - rg.relief))
-      + 100 * earned p rg s d g + 45 * (rg.minGain : Int)
-      ≤ max (ucAward c (earned p rg s d (g + 1)))
-          (tfcTopUp c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief))
+  generalize (100 - (rg.params.ucTaper : Int)) * (rg.minGain : Int) = K at *
+  generalize (100 - (rg.params.ucTaper : Int))
+    * (earned p rg s d (g + 1) - earned p rg s d g) = K' at *
+  have : max (ucAward rg.params c (earned p rg s d g))
+        (tfcTopUp rg.params c g (g + s + d - rg.step2 - rg.relief))
+      + 100 * earned p rg s d g + K
+      ≤ max (ucAward rg.params c (earned p rg s d (g + 1)))
+          (tfcTopUp rg.params c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief))
         + 100 * earned p rg s d (g + 1) := by
     omega
-  generalize hicbc (g + s + d - rg.step2 - rg.relief) cb = C at *
+  generalize hicbc rg.params (g + s + d - rg.step2 - rg.relief) cb = C at *
   omega
 
-/-- Between steps, and away from £100,000, net income with benefits does not fall. -/
-theorem netAll_between_steps {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims}
-    {s d g : Nat}
-    (hPA : personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
-      = personalAllowanceFor (g + s + d - rg.step2 - rg.relief))
-    (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
-    (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
-    (hC : hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb)
-    (hLim : g + s + d - rg.step2 - rg.relief ≠ childcareIncomeLimit)
+/-- Between steps, and away from the childcare limit, net income with benefits does
+not fall. -/
+theorem netAll_between_steps {p : EarningsPeriod} {cb : Nat} {rg : Regime} (hP : rg.params.Valid)
+    {c : Claims} {s d g : Nat} (hN : NoStep cb rg s d g)
+    (hLim : g + s + d - rg.step2 - rg.relief = rg.params.ccLimit →
+      g + 1 + s + d - rg.step2 - rg.relief ≠ (g + s + d - rg.step2 - rg.relief) + 1)
     (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) : False := by
-  have := netAll_succ_ge (p := p) (c := c) hPA hPSA hMA hC hLim
+  have := netAll_succ_ge (p := p) (c := c) hP hN hLim
+  have : (0 : Int) ≤ (100 - (rg.params.ucTaper : Int)) * (rg.minGain : Int) :=
+    Int.mul_nonneg (by have := hP.ucTaperLe; omega) (Int.natCast_nonneg _)
   omega
 
 /-- **Where net income with benefits can fall.** For every pay, savings,
-dividends, Child Benefit, pay period, reliefs, Scottish or not, and set of claims:
-if a penny more pay lowers net income including Universal Credit, Tax-Free
-Childcare and funded hours, that penny is one of the steps of
-`net_drop_only_at_steps`, or the one where adjusted net income goes over
-£100,000. -/
-theorem netAll_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims)
-    (s d g : Nat) (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) :
-    PaStep (g + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.step2 - rg.relief)) ∨
+dividends, Child Benefit, pay period, reliefs, Scottish or not, set of claims, and
+every parameter set meeting `TaxParams.Valid`: if a penny more pay lowers net
+income including Universal Credit, Tax-Free Childcare and funded hours, that penny
+is one of the steps of `net_drop_only_at_steps`, or the one where adjusted net
+income goes over the childcare limit (£100,000 for 2026-27). -/
+theorem netAll_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) {rg : Regime}
+    (hP : rg.params.Valid) (c : Claims) (s d g : Nat)
+    (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) :
+    PaStep rg.params (g + s + d - rg.step2 - rg.relief) ∨
+      (0 < cb ∧ HicbcStep rg.params (g + s + d - rg.step2 - rg.relief)) ∨
       Income.step3 rg ⟨g, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g, s, d⟩ = rg.hrl ∨
-      MaStep rg s d g ∨ g + s + d - rg.step2 - rg.relief = childcareIncomeLimit := by
-  by_cases hLim : g + s + d - rg.step2 - rg.relief = childcareIncomeLimit
+      MaStep rg s d g ∨ g + s + d - rg.step2 - rg.relief = rg.params.ccLimit := by
+  by_cases hLim : g + s + d - rg.step2 - rg.relief = rg.params.ccLimit
   · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr hLim))))
   by_cases hM : MaStep rg s d g
   · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hM))))
   have hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩ :=
     Classical.not_not.mp hM
-  have ht : g + 1 + s + d = (g + s + d) + 1 := by omega
-  have hA : (personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
-        = personalAllowanceFor (g + s + d - rg.step2 - rg.relief) ∧
-      hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb) ∨
-      PaStep (g + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.step2 - rg.relief)) := by
-    rw [ht]
-    rcases ani_succ rg (g + s + d) with ha | ⟨ha, hb⟩
-    · rw [ha]
-      rcases personalAllowanceFor_succ (g + s + d - rg.step2 - rg.relief) with hPA | hPA
-      · rcases hicbc_succ (g + s + d - rg.step2 - rg.relief) cb with hc | hc
-        · exact Or.inl ⟨hPA, hc⟩
-        · by_cases hcb : cb = 0
-          · left; subst hcb; unfold hicbc; simp [hPA]
-          · exact Or.inr (Or.inr ⟨by omega, hc⟩)
-      · exact Or.inr (Or.inl hPA)
-    · left; rw [ha, hb]; exact ⟨rfl, rfl⟩
+  have hA := allowances_succ rg cb (g + s + d)
+  rw [show g + s + d + 1 = g + 1 + s + d by omega] at hA
   rcases hA with ⟨hPA, hC⟩ | hA
   · rcases psa_succ hPA with hPSA | hT | hT
-    · exact (netAll_between_steps hPA hPSA hMA hC hLim h).elim
+    · exact (netAll_between_steps hP ⟨hPA, hPSA, hMA, hC⟩ (fun h' => absurd h' hLim) h).elim
     · exact Or.inr (Or.inr (Or.inl hT))
     · exact Or.inr (Or.inr (Or.inr (Or.inl hT)))
   · rcases hA with hA | hA

@@ -1,4 +1,4 @@
-import UkTax.Params
+import UkTax.TaxParams
 
 /-!
 # The income tax calculation (ITA 2007 s23), 2026-27
@@ -79,13 +79,15 @@ structure Regime where
   liability", which is what the search over allocations finds; they also lower
   net income and so adjusted net income. -/
   step2 : Nat := 0
+  /-- The rates and thresholds (`UkTax/TaxParams.lean`); 2026-27 unless given. -/
+  params : TaxParams := {}
   deriving Repr, DecidableEq
 
 /-- The basic rate limit, raised by the relief. -/
-def Regime.brl (rg : Regime) : Nat := basicRateLimit + rg.relief
+def Regime.brl (rg : Regime) : Nat := rg.params.brl + rg.relief
 
 /-- The higher rate limit, raised by the relief. -/
-def Regime.hrl (rg : Regime) : Nat := higherRateLimit + rg.relief
+def Regime.hrl (rg : Regime) : Nat := rg.params.hrl + rg.relief
 
 /-- A taxpayer's income for the year, in pence. -/
 structure Income where
@@ -106,27 +108,28 @@ Step 3 income if all of it were non-savings income: each rate's increase over
 the one below, charged on what is above that rate's lower limit. The starter
 limit is not raised by the relief; the others are. -/
 def scotTax (rg : Regime) (x : Nat) : Nat :=
-  scotStarterRate * x
-    + (scotBasicRate - scotStarterRate) * (x - scotStarterLimit)
-    + (scotIntermediateRate - scotBasicRate) * (x - (scotBasicLimit + rg.relief))
-    + (scotHigherRate - scotIntermediateRate) * (x - (scotIntermediateLimit + rg.relief))
-    + (scotAdvancedRate - scotHigherRate) * (x - (scotHigherLimit + rg.relief))
-    + (scotTopRate - scotAdvancedRate) * (x - (scotAdvancedLimit + rg.relief))
+  let P := rg.params
+  P.scStarterRate * x
+    + (P.scBasicRate - P.scStarterRate) * (x - P.scStarterLimit)
+    + (P.scIntermediateRate - P.scBasicRate) * (x - (P.scBasicLimit + rg.relief))
+    + (P.scHigherRate - P.scIntermediateRate) * (x - (P.scIntermediateLimit + rg.relief))
+    + (P.scAdvancedRate - P.scHigherRate) * (x - (P.scHigherLimit + rg.relief))
+    + (P.scTopRate - P.scAdvancedRate) * (x - (P.scAdvancedLimit + rg.relief))
 
 /-- Tax, in 1/10 000 pence, on the lowest `x` pence of Step 3 income at the
 non-savings rates: the Scottish rates for a Scottish taxpayer (ITA 2007 s11A),
 otherwise the main rates (s10). -/
 def nsTax (rg : Regime) (x : Nat) : Nat :=
-  if rg.scottish then scotTax rg x else bandTax nonSavingsRates rg x
+  if rg.scottish then scotTax rg x else bandTax rg.params.nsRates rg x
 
 /-- Where a non-savings rate can change, as positions in Step 3 income: the basic
 and higher rate limits and the Scottish limits, whichever applies. The search
 tries all of them; a line where the rate does not in fact change only adds
 candidates. -/
 def nsLimits (rg : Regime) : List Nat :=
-  [rg.brl, rg.hrl, scotStarterLimit, scotBasicLimit + rg.relief,
-    scotIntermediateLimit + rg.relief, scotHigherLimit + rg.relief,
-    scotAdvancedLimit + rg.relief]
+  [rg.brl, rg.hrl, rg.params.scStarterLimit, rg.params.scBasicLimit + rg.relief,
+    rg.params.scIntermediateLimit + rg.relief, rg.params.scHigherLimit + rg.relief,
+    rg.params.scAdvancedLimit + rg.relief]
 
 /-- Tax, in 1/10 000 pence, on the slice of Step 3 income between positions `lo`
 and `hi` (counting from the bottom of the basic rate band) at rates `r`. -/
@@ -135,38 +138,38 @@ def sliceTax (r : Rates) (rg : Regime) (lo hi : Nat) : Nat :=
 
 /-- Personal allowance for a given adjusted net income (ITA 2007 s35): reduced by
 half the excess over £100,000, then rounded up to a whole pound. -/
-def personalAllowanceFor (adjustedNetIncome : Nat) : Nat :=
+def personalAllowanceFor (P : TaxParams) (adjustedNetIncome : Nat) : Nat :=
   -- twice the reduced allowance, in pence; exact even when the excess is odd
-  let twice := 2 * personalAllowance - (adjustedNetIncome - paIncomeLimit)
+  let twice := 2 * P.pa - (adjustedNetIncome - P.paLimit)
   100 * ((twice + 199) / 200)
 
 /-- Personal savings allowance (ITA 2007 s12B), given total Step 3 income. Income
 charged at a nil rate still counts as higher-rate or additional-rate income
 (s12B(8)), so this depends only on where Step 3 income ends. -/
 def savingsAllowanceFor (rg : Regime) (step3Income : Nat) : Nat :=
-  if step3Income > rg.hrl then savingsAllowanceAdditional
-  else if step3Income > rg.brl then savingsAllowanceHigher
-  else savingsAllowanceBasic
+  if step3Income > rg.hrl then rg.params.psaAdditional
+  else if step3Income > rg.brl then rg.params.psaHigher
+  else rg.params.psaBasic
 
 /-- Savings income charged at the starting rate for savings (s12): the part of it
 that falls in the lowest £5,000 of Step 3 income. -/
-def startingRateSavings (n s : Nat) : Nat :=
-  min s (startingRateLimitSavings - n)
+def startingRateSavings (rg : Regime) (n s : Nat) : Nat :=
+  min s (rg.params.srls - n)
 
 /-- Savings income charged at the savings nil rate (s12A). -/
 def savingsNilRate (rg : Regime) (n s d : Nat) : Nat :=
-  min (s - startingRateSavings n s) (savingsAllowanceFor rg (n + s + d))
+  min (s - startingRateSavings rg n s) (savingsAllowanceFor rg (n + s + d))
 
 /-- Dividend income charged at the dividend nil rate (s13A). -/
-def dividendNilRate (d : Nat) : Nat :=
-  min d dividendAllowance
+def dividendNilRate (rg : Regime) (d : Nat) : Nat :=
+  min d rg.params.divAllowance
 
 /-- Step 4: tax, in 1/10 000 pence, on Step 3 income made of `n` non-savings, `s`
 savings and `d` dividend income (savings above non-savings, dividends on top). -/
 def taxOnStep3 (rg : Regime) (n s d : Nat) : Nat :=
   nsTax rg n
-    + sliceTax savingsRates rg (n + startingRateSavings n s + savingsNilRate rg n s d) (n + s)
-    + sliceTax dividendRates rg (n + s + dividendNilRate d) (n + s + d)
+    + sliceTax rg.params.savRates rg (n + startingRateSavings rg n s + savingsNilRate rg n s d) (n + s)
+    + sliceTax rg.params.divRates rg (n + s + dividendNilRate rg d) (n + s + d)
 
 /-- Total income (= net income: no reliefs at Step 2 are modelled). -/
 def Income.total (i : Income) : Nat := i.nonSavings + i.savings + i.dividends
@@ -179,7 +182,7 @@ def Income.ani (rg : Regime) (i : Income) : Nat := i.total - rg.step2 - rg.relie
 2007 s35, tapered), less the Marriage Allowance given up (s55B(6)), plus the blind
 person's allowance (s38, not tapered). -/
 def Income.personalAllowance (rg : Regime) (i : Income) : Nat :=
-  (personalAllowanceFor (i.ani rg) - (if rg.maTransfer then maTransferable else 0))
+  (personalAllowanceFor rg.params (i.ani rg) - (if rg.maTransfer then maTransferable else 0))
     + (if rg.blind then blindPersonsAllowance else 0) + rg.step2
 
 /-- How much of the personal allowance is set against each kind of income. -/
@@ -244,15 +247,15 @@ def Income.xLines (rg : Regime) (i : Income) : List Int :=
   let A : Int := savingsAllowanceFor rg (i.total - i.allowanceUsed rg)
   let B : Int := rg.brl
   let H : Int := rg.hrl
-  ([0, i.nonSavings, startingRateLimitSavings, B - A, H - A] : List Int)
+  ([0, i.nonSavings, rg.params.srls, B - A, H - A] : List Int)
     ++ (nsLimits rg).map (fun l : Nat => (l : Int))
 
 /-- The constant-`w` lines. -/
 def Income.wLines (rg : Regime) (i : Income) : List Int :=
   let T : Int := i.total - i.allowanceUsed rg
   let A : Int := savingsAllowanceFor rg (i.total - i.allowanceUsed rg)
-  let L : Int := startingRateLimitSavings
-  let DA : Int := dividendAllowance
+  let L : Int := rg.params.srls
+  let DA : Int := rg.params.divAllowance
   let B : Int := rg.brl
   let H : Int := rg.hrl
   [T, T - i.dividends, L, L + A, B, H, T - DA, B - DA, H - DA]
@@ -302,7 +305,7 @@ def liability (rg : Regime) (i : Income) : Nat := taxExact rg i / 10_000
 Marriage Allowance recipient is still liable only at the rates s55B(2)(b) allows:
 the basic rate limit, or for a Scottish taxpayer the top of the intermediate rate. -/
 def Regime.maLimit (rg : Regime) : Nat :=
-  if rg.scottish then scotIntermediateLimit + rg.relief else rg.brl
+  if rg.scottish then rg.params.scIntermediateLimit + rg.relief else rg.brl
 
 /-- s55B(2)(b), (ba) for Step 3 income of `n` non-savings, `s` savings and `d`
 dividends: no non-savings income above `maLimit`; no savings charged at a rate
@@ -311,7 +314,7 @@ are allowed wherever they sit); and, if there are dividends, none would be above
 the basic rate limit with the dividend nil rate omitted. -/
 def maRateTest (rg : Regime) (n s d : Nat) : Bool :=
   n ≤ rg.maLimit
-    && (n + s ≤ rg.brl || n + s ≤ n + startingRateSavings n s + savingsNilRate rg n s d)
+    && (n + s ≤ rg.brl || n + s ≤ n + startingRateSavings rg n s + savingsNilRate rg n s d)
     && (d == 0 || n + s + d ≤ rg.brl)
 
 /-- Whether a Marriage Allowance recipient passes the rate test, with the

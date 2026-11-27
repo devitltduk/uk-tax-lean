@@ -135,7 +135,7 @@ pay alone, primary Class 1 and half the pension contributions (SI 1996/2745
 reg 10(4)). -/
 def caEarnings (p : EarningsPeriod) (rg : Regime) (g : Nat) : Int :=
   10_000 * ((g + rg.netPay : Nat) : Int) - (finalTaxExact rg ⟨g, 0, 0⟩ : Int)
-    - (nicExact p (g + rg.netPay) : Int) - 5_000 * (rg.netPay : Int)
+    - (nicExact rg.params p (g + rg.netPay) : Int) - 5_000 * (rg.netPay : Int)
 
 /-- The year's net earnings at which a week's exceed £204: 52 × £204.01. -/
 def caThreshold : Int := 10_000 * benefitWeeks * (caEarningsLimit + 1)
@@ -203,23 +203,26 @@ example : benefitWeeks * caRate = 449_540 := rfl
 income (no NICs on it): as `net`, with income tax on `g + C`. -/
 def netCa (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d C g : Nat) : Int :=
   10_000 * ((g + C + s + d : Nat) : Int) + 10_000 * (cb : Int) - (finalTaxExact rg ⟨g + C, s, d⟩ : Int)
-    - (nicExact p (g + rg.netPay) : Int) - 10_000 * (hicbc (g + C + s + d - rg.step2 - rg.relief) cb : Int)
+    - (nicExact rg.params p (g + rg.netPay) : Int)
+    - 10_000 * (hicbc rg.params (g + C + s + d - rg.step2 - rg.relief) cb : Int)
 
 /-- Net income of a carer with pay `g`: `netCa` with the year's Carer's Allowance. -/
 def netCarer (p : EarningsPeriod) (cb : Nat) (rg : Regime) (ent : Bool) (ov s d g : Nat) : Int :=
   netCa p cb rg s d (caYear ent ov (caEarnings p rg g)) g
 
-theorem netCa_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {s d C g : Nat}
-    (hPA : personalAllowanceFor (g + C + 1 + s + d - rg.step2 - rg.relief)
-      = personalAllowanceFor (g + C + s + d - rg.step2 - rg.relief))
+theorem netCa_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} (hP : rg.params.Valid)
+    {s d C g : Nat}
+    (hPA : personalAllowanceFor rg.params (g + C + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor rg.params (g + C + s + d - rg.step2 - rg.relief))
     (hPSA : Income.psa rg ⟨g + C + 1, s, d⟩ = Income.psa rg ⟨g + C, s, d⟩)
     (hMA : Income.maReduction rg ⟨g + C + 1, s, d⟩ = Income.maReduction rg ⟨g + C, s, d⟩)
-    (hC : hicbc (g + C + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + C + s + d - rg.step2 - rg.relief) cb) :
+    (hC : hicbc rg.params (g + C + 1 + s + d - rg.step2 - rg.relief) cb
+      = hicbc rg.params (g + C + s + d - rg.step2 - rg.relief) cb) :
     netCa p cb rg s d C g + rg.minGain ≤ netCa p cb rg s d C (g + 1) := by
-  have h1 := finalTaxExact_succ_le hPA hPSA hMA
-  have h2 := nicExact_succ_le p (g + rg.netPay)
+  have h1 := finalTaxExact_succ_le hP hPA hPSA hMA
+  have h2 := nicExact_succ_le rg.params p (g + rg.netPay)
   rw [show g + rg.netPay + 1 = g + 1 + rg.netPay by omega] at h2
-  have h3 := rg.minGain_eq
+  have h3 := Regime.minGain_eq hP
   have e : g + 1 + C = g + C + 1 := by omega
   unfold netCa
   rw [e, hC]
@@ -227,9 +230,11 @@ theorem netCa_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {s d C g : N
 
 /-- With the carer's taxable income fixed, net income falls only at the steps of
 `net_drop_only_at_steps`, taken at total income `g + C`. -/
-theorem netCa_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d C g : Nat)
+theorem netCa_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) {rg : Regime}
+    (hP : rg.params.Valid) (s d C g : Nat)
     (h : netCa p cb rg s d C (g + 1) < netCa p cb rg s d C g) :
-    PaStep (g + C + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.step2 - rg.relief)) ∨
+    PaStep rg.params (g + C + s + d - rg.step2 - rg.relief) ∨
+      (0 < cb ∧ HicbcStep rg.params (g + C + s + d - rg.step2 - rg.relief)) ∨
       Income.step3 rg ⟨g + C, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g + C, s, d⟩ = rg.hrl ∨
       MaStep rg s d (g + C) := by
   by_cases hMA : MaStep rg s d (g + C)
@@ -237,25 +242,11 @@ theorem netCa_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (
   unfold MaStep at hMA
   have hMA : Income.maReduction rg ⟨g + C + 1, s, d⟩ = Income.maReduction rg ⟨g + C, s, d⟩ :=
     Classical.not_not.mp hMA
-  have ht : g + C + 1 + s + d = (g + C + s + d) + 1 := by omega
-  have hA : (personalAllowanceFor (g + C + 1 + s + d - rg.step2 - rg.relief)
-        = personalAllowanceFor (g + C + s + d - rg.step2 - rg.relief) ∧
-      hicbc (g + C + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + C + s + d - rg.step2 - rg.relief) cb) ∨
-      PaStep (g + C + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.step2 - rg.relief)) := by
-    rw [ht]
-    rcases ani_succ rg (g + C + s + d) with ha | ⟨ha, hb⟩
-    · rw [ha]
-      rcases personalAllowanceFor_succ (g + C + s + d - rg.step2 - rg.relief) with hPA | hPA
-      · rcases hicbc_succ (g + C + s + d - rg.step2 - rg.relief) cb with hc | hc
-        · exact Or.inl ⟨hPA, hc⟩
-        · by_cases hcb : cb = 0
-          · left; subst hcb; unfold hicbc; simp [hPA]
-          · exact Or.inr (Or.inr ⟨by omega, hc⟩)
-      · exact Or.inr (Or.inl hPA)
-    · left; rw [ha, hb]; exact ⟨rfl, rfl⟩
+  have hA := allowances_succ rg cb (g + C + s + d)
+  rw [show g + C + s + d + 1 = g + C + 1 + s + d by omega] at hA
   rcases hA with ⟨hPA, hC⟩ | hA
   · rcases psa_succ hPA with hPSA | hT | hT
-    · have := netCa_succ_ge (p := p) hPA hPSA hMA hC
+    · have := netCa_succ_ge (p := p) hP hPA hPSA hMA hC
       omega
     · exact Or.inr (Or.inr (Or.inl hT))
     · exact Or.inr (Or.inr (Or.inr (Or.inl hT)))
@@ -269,12 +260,13 @@ penny more pay lowers net income with Carer's Allowance, then either net earning
 cross the £204 a week limit at that penny (the allowance is lost or, where the
 penny lowers net earnings, regained), or the allowance is unchanged at `C` and the
 penny is a step of `net_drop_only_at_steps` at total income `g + C`. -/
-theorem netCarer_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (ent : Bool)
-    (ov s d g : Nat) (h : netCarer p cb rg ent ov s d (g + 1) < netCarer p cb rg ent ov s d g) :
+theorem netCarer_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) {rg : Regime}
+    (hP : rg.params.Valid) (ent : Bool) (ov s d g : Nat) (h : netCarer p cb rg ent ov s d (g + 1) < netCarer p cb rg ent ov s d g) :
     ((caEarnings p rg g < caThreshold ∧ caThreshold ≤ caEarnings p rg (g + 1)) ∨
       (caEarnings p rg (g + 1) < caThreshold ∧ caThreshold ≤ caEarnings p rg g)) ∨
     ∃ C, C = caYear ent ov (caEarnings p rg g) ∧
-      (PaStep (g + C + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.step2 - rg.relief)) ∨
+      (PaStep rg.params (g + C + s + d - rg.step2 - rg.relief) ∨
+        (0 < cb ∧ HicbcStep rg.params (g + C + s + d - rg.step2 - rg.relief)) ∨
         Income.step3 rg ⟨g + C, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g + C, s, d⟩ = rg.hrl ∨
         MaStep rg s d (g + C)) := by
   by_cases hc : caYear ent ov (caEarnings p rg (g + 1)) = caYear ent ov (caEarnings p rg g)
@@ -282,7 +274,7 @@ theorem netCarer_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime
     refine ⟨_, rfl, ?_⟩
     unfold netCarer at h
     rw [hc] at h
-    exact netCa_drop_only_at_steps p cb rg s d _ g h
+    exact netCa_drop_only_at_steps p cb hP s d _ g h
   · left
     exact caYear_change ent ov hc
 
