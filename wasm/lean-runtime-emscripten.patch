@@ -1,0 +1,35 @@
+Applied to the Lean 4 source (at the version in lean-toolchain) before its
+runtime is built for WebAssembly by wasm/build.sh.
+
+1. Build without -pthread. Threads in the browser need SharedArrayBuffer, which
+   needs cross-origin isolation headers that a plain static server (python -m
+   http.server) does not send. The runtime is built with MULTI_THREAD=OFF.
+2. Lean's Emscripten stub for lean_uv_os_get_group has lost its parameter
+   (the declaration in system.h takes `uint64_t gid`), so it does not compile.
+   Upstream's wasm CI job is switched off, so this has not been caught there.
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -166,8 +166,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+
+   # From https://emscripten.org/docs/compiling/WebAssembly.html#backends:
+   # > The simple and safe thing is to pass all -s flags at both compile and link time.
+-  set(EMSCRIPTEN_SETTINGS "-s ALLOW_MEMORY_GROWTH=1 -fwasm-exceptions -pthread -flto")
+-  string(APPEND LEANC_EXTRA_CC_FLAGS " -pthread")
++  set(EMSCRIPTEN_SETTINGS "-s ALLOW_MEMORY_GROWTH=1 -fwasm-exceptions -flto")
+   string(APPEND LEAN_EXTRA_CXX_FLAGS " -D LEAN_EMSCRIPTEN ${EMSCRIPTEN_SETTINGS}")
+   string(APPEND LEAN_EXTRA_LINKER_FLAGS " ${EMSCRIPTEN_SETTINGS}")
+ endif()
+diff --git a/src/runtime/uv/system.cpp b/src/runtime/uv/system.cpp
+--- a/src/runtime/uv/system.cpp
++++ b/src/runtime/uv/system.cpp
+@@ -630,7 +630,7 @@ extern "C" LEAN_EXPORT lean_obj_res lean_uv_os_get_passwd() {
+ }
+
+ // Std.Internal.UV.System.osGetGroup : IO (Option GroupInfo)
+-extern "C" LEAN_EXPORT lean_obj_res lean_uv_os_get_group() {
++extern "C" LEAN_EXPORT lean_obj_res lean_uv_os_get_group(uint64_t gid) {
+     lean_always_assert(
+         false && ("Please build a version of Lean4 with libuv to invoke this.")
+     );
