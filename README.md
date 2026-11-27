@@ -192,9 +192,29 @@ income, since no reliefs are modelled.
   the childcare element (reg 81).
 
 Pay is taken as equal each month, so the yearly award is twelve times the monthly
-one; rounding each month (reg 6), the grace period of the cap, self-employment
-and the minimum income floor are not modelled. Pay only: no savings, dividends or
-other income of the claimant beyond the unearned income given.
+one; rounding each month (reg 6) and the grace period of the cap are not
+modelled. Pay and one trade only: no savings, dividends or other income of the
+claimant beyond the unearned income given.
+
+**Self-employment and the minimum income floor** (`UkTax/UcSelfEmployed.lean`):
+
+- self-employed earnings ([reg 57](https://www.legislation.gov.uk/uksi/2013/376/regulation/57)):
+  receipts less expenses (no trading allowance), less the income tax and Class 4
+  paid in respect of the trade (the tax on pay and profit less the tax on the pay
+  alone; Class 2 is treated as paid), nil for a loss, which is never set against
+  pay;
+- the minimum income floor ([reg 62](https://www.legislation.gov.uk/uksi/2013/376/regulation/62)):
+  for a claimant in gainful self-employment who would otherwise have all
+  work-related requirements, outside a start-up period, earned income is at least
+  the individual threshold: the expected hours (35 unless less, reg 88) at the
+  National Living Wage (£12.71), × 52 / 12 a month (£1,927.68 for 35 hours,
+  £1,927 with the fraction of a pound disregarded under reg 6(1A)(a), the
+  default), less notional income tax and Class 4: £20,379.96 a year. Reg 62(4)(b)
+  leaves that deduction to the Secretary of State; the model, like PolicyEngine,
+  takes the tax and Class 4 on the threshold as the only income. For a couple
+  (reg 62(3)) the floor is cut back so that it and the partner's earned income do
+  not pass the couple threshold; `mifCouple_eq` proves that reg 62(3) comes to
+  `max(earned income, min(threshold, couple threshold − partner's earned income))`.
 
 ### Non-means-tested benefits (`UkTax/Disability.lean`)
 
@@ -409,11 +429,9 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26; each is in
 
 Welsh rates other than 2026-27's (in scope only because they equal the rUK
 rates), National Insurance category letters other than A, Class 4 loss relief, the
-Employment Allowance, freeport and veterans' employer reliefs, Universal Credit
-beyond the minimal model (housing, childcare, disability and carer elements,
-capital, unearned income, the benefit cap, the minimum income floor, under-25
-rates, the first-child rate for children born before 6 April 2017, monthly
-rounding, couples where both work), Tax-Free Childcare and the funded hours for
+Employment Allowance, freeport and veterans' employer reliefs, Universal Credit's
+monthly rounding, the benefit cap's grace period, unused losses and surplus
+earnings (regs 57A, 54A), Tax-Free Childcare and the funded hours for
 disabled children, the childcare tests' routes for a partner who is disabled or a
 carer, the lower minimum earnings for parents under 21 or apprentices, the 15
 hours for disadvantaged 2-year-olds (which depend on benefits), a child changing
@@ -497,6 +515,11 @@ relief-at-source contributions.
   allowance taxed as income, a penny more pay lowers net income only where net
   earnings cross the limit, or, with the allowance unchanged, at a step of
   `net_drop_only_at_steps` at total income including it.
+- `mifCouple_eq`, `uc_flat_below_floor`, `earned_plus_uc_mono_floor`
+  (`UkTax/UcSelfEmployed.lean`): the couple rule of the minimum income floor is a
+  plain lower bound on earned income; below the floor UC does not move as profit
+  rises (each penny is kept in full); with the floor, earned income plus UC never
+  falls as earned income rises.
 - `ucAward_withCa`, `carer_uc_net`, `carer_uc_cliff` (`UkTax/CarerUc.lean`): while
   UC is in payment, each penny of Carer's Allowance takes a penny off it, so for a
   carer on UC the allowance changes net income only by the income tax and HICBC
@@ -622,7 +645,9 @@ non-dependant band, Wales's £256 allowance and a Scottish non-dependant. For CG
 gains within and across the band, BADR taking the band first, the exempt amount,
 Gift Aid extending the band, and a Scottish higher-rate taxpayer with gains inside
 the UK band. For Carer's Allowance with UC: the allowance deducted from UC, and
-1p either side of the limit. For SDLT: each kind, both cliffs and the top band.
+1p either side of the limit. For UC and self-employment: the floor (in whole
+pounds and with the pence kept), a profit above it with tax and Class 4 deducted, a
+loss beside pay, and a couple's floor cut back to the couple threshold. For SDLT: each kind, both cliffs and the top band.
 
 ### Where earning more lowers net income
 
@@ -760,6 +785,16 @@ limits and the cap's earnings exception. Latest local run: 1,029 of 1,029 agree
 within 2 float32 steps plus 0.95p (the partner's earned income passed in whole
 pence, and the NIC gap). Social renters have no spare bedroom: PolicyEngine has no
 under-occupancy deduction (findings #16).
+
+### Universal Credit for the self-employed against PolicyEngine
+
+`uv run python compare_uc_se.py` compares a claimant with a trade (profit or loss)
+and perhaps pay, single or with an employed partner, 0 to 3 children, with edge
+cases around the floor. Whether the floor applies and the expected hours are
+DWP's determinations, read from PolicyEngine and passed to the model with the
+threshold's pence kept, as PolicyEngine keeps them. Latest local run: 1,011 of
+1,011 agree within 2 float32 steps plus 0.95p (1,010 with the floor, 797 below it,
+341 couples, 29 with a loss beside pay; expected hours 30 or 35).
 
 ### National Insurance against PolicyEngine
 

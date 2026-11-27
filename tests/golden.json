@@ -2531,5 +2531,115 @@
     "source": "TCGA 1992 ss 1H(3), 1I(1)-(2), 1J(1), (6), 1K(2)",
     "working": "pay £45,000 is above the Scottish higher rate threshold (£12,570 + £31,092 = £43,662), but s1J(6) applies s1I as if the taxpayer were not Scottish: Step 3 income £45,000 - £12,570 = £32,430, unused UK basic rate band £37,700 - £32,430 = £5,270. Gains £10,000 - £3,000 = £7,000: £5,270 at 18 % = £948.60, £1,730 at 24 % = £415.20; £1,363.80",
     "cgt_exact_ten_thousandths_pence": 1363800000
+  },
+  {
+    "name": "UC, self-employed below the minimum income floor (whole pounds)",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 1500000,
+      "trading_expenses_pence": 500000,
+      "uc": {
+        "couple": false,
+        "children": 1,
+        "minimum_income_floor": {
+          "expected_hours": 35
+        }
+      }
+    },
+    "source": "SI 2013/376 regs 22, 36, 57(2), 62(2), 88(1), 90(2)(b), 6(1A)(a); NMW Regs 2015 reg 4 (SI 2026/357 reg 2(2)); ITTOIA 2005 s783AF; SSCBA 1992 s15",
+    "working": "UC profit £15,000 - £5,000 = £10,000 (no tax: £10,000 is under the personal allowance; no Class 4 under £12,570). Floor: 35 x £12.71 x 52 / 12 = £1,927.68, £1,927 a month in whole pounds, £23,124 a year; less tax 20 % x (£23,124 - £12,570) = £2,110.80 and Class 4 6 % x £10,554 = £633.24: £20,379.96. Earned income £10,000 is below it, so £20,379.96. UC: 12 x (£424.90 + £303.94) = £8,746.08 less 55 % x (£20,379.96 - £8,520) = £6,522.978: £2,223.102",
+    "uc_earned_income_ten_thousandths_pence": 10000000000,
+    "uc_minimum_income_floor_ten_thousandths_pence": 20379960000,
+    "uc_millionths_pence": 222310200000
+  },
+  {
+    "name": "UC, self-employed below the minimum income floor (pence kept)",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 1500000,
+      "trading_expenses_pence": 500000,
+      "uc": {
+        "couple": false,
+        "children": 1,
+        "minimum_income_floor": {
+          "expected_hours": 35,
+          "whole_pounds": false
+        }
+      }
+    },
+    "source": "SI 2013/376 regs 22, 36, 57(2), 62(2), 88(1), 90(2)(b), 6(1A)(a); NMW Regs 2015 reg 4 (SI 2026/357 reg 2(2)); ITTOIA 2005 s783AF; SSCBA 1992 s15",
+    "working": "floor £23,132.20 a year (35 x £12.71 x 52); less tax 20 % x £10,562.20 = £2,112.44 and Class 4 6 % x £10,562.20 = £633.732: £20,386.028. UC £8,746.08 - 55 % x (£20,386.028 - £8,520) = £8,746.08 - £6,526.3154 = £2,219.7646",
+    "uc_minimum_income_floor_ten_thousandths_pence": 20386028000,
+    "uc_millionths_pence": 221976460000
+  },
+  {
+    "name": "UC, self-employed above the floor: tax and Class 4 on the trade deducted",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 4000000,
+      "trading_expenses_pence": 1000000,
+      "uc": {
+        "couple": false,
+        "children": 3,
+        "minimum_income_floor": {
+          "expected_hours": 35
+        }
+      }
+    },
+    "source": "SI 2013/376 regs 22, 36, 57(2) step 3, 62(2)",
+    "working": "profit £30,000: tax 20 % x £17,430 = £3,486, Class 4 6 % x £17,430 = £1,045.80; self-employed earnings £25,468.20, above the floor £20,379.96. UC 12 x (£424.90 + 3 x £303.94) = £16,040.64 less 55 % x (£25,468.20 - £8,520) = £9,321.51: £6,719.13",
+    "uc_earned_income_ten_thousandths_pence": 25468200000,
+    "uc_millionths_pence": 671913000000
+  },
+  {
+    "name": "UC, a trading loss is not set against pay",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 1200000,
+      "employment_pence": 1200000,
+      "trading_receipts_pence": 200000,
+      "trading_expenses_pence": 500000,
+      "uc": {
+        "couple": false,
+        "children": 1
+      }
+    },
+    "source": "SI 2013/376 reg 57(2) step 3",
+    "working": "UC profit £2,000 - £5,000 = -£3,000: self-employed earnings nil (step 3), not -£3,000. Earned income is the pay, £12,000 (no tax or NICs). UC £8,746.08 - 55 % x (£12,000 - £8,520) = £8,746.08 - £1,914 = £6,832.08",
+    "uc_earned_income_ten_thousandths_pence": 12000000000,
+    "uc_millionths_pence": 683208000000
+  },
+  {
+    "name": "UC couple, minimum income floor cut back to the couple threshold",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 600000,
+      "trading_expenses_pence": 0,
+      "uc": {
+        "couple": true,
+        "children": 2,
+        "partner_earned_pence": 1200000,
+        "minimum_income_floor": {
+          "expected_hours": 35,
+          "partner_expected_hours": 16
+        }
+      }
+    },
+    "source": "SI 2013/376 regs 62(3), 90(2), 90(3)(a), 6(1A)(a); ADM H4080 example 2",
+    "working": "claimant's UC profit £6,000 (taxable £5,000 after the trading allowance; no tax), floor £20,379.96. Partner: 16 x £12.71 x 52 / 12 = £881.21, £881 a month, £10,572 a year, no tax or NICs. Couple threshold £30,951.96. £6,000 < £20,379.96 and £6,000 + £12,000 < £30,951.96, so the floor applies, less £20,379.96 + £12,000 - £30,951.96 = £1,428: £18,951.96. UC 12 x (£666.97 + 2 x £303.94) = £15,298.20 less 55 % x (£18,951.96 + £12,000 - £8,520) = £12,337.578: £2,960.622",
+    "uc_millionths_pence": 296062200000
   }
 ]
