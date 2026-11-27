@@ -37,7 +37,8 @@ for the child, over 38 weeks:
   15 more working-parent hours when eligible;
 * a child from 9 months to 2, or a 2-year-old, gets 30 working-parent hours when
   eligible, and none otherwise (the 15 hours for disadvantaged 2-year-olds,
-  which depend on benefits, are not modelled).
+  which depend on benefits, are added in `UkTax/Targeted.lean`, outside
+  `netAll`).
 
 So going over £100,000 loses only the working-parent hours; the universal hours
 stay (`fundedHours_over_limit`, `fundedHours_drop_at_limit`). Reaching the minimum
@@ -79,6 +80,10 @@ hour in pence to value the hours at instead of the DfE rate. -/
 structure FundedChild where
   band : AgeBand
   price : Option Nat := none
+  /-- A 2-year-old eligible for the targeted hours in their own right (SI 2014/2147
+  reg 1(2), "eligible child": an EHC plan, Disability Living Allowance, looked
+  after or adopted from care). -/
+  targetedOwn : Bool := false
 
 /-- The price each funded hour is valued at, pence. -/
 def FundedChild.hourly (ch : FundedChild) : Nat := ch.price.getD ch.band.rate

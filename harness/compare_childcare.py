@@ -23,14 +23,15 @@ Compared: the model's `funded_hours_millionths_pence` against PolicyEngine's
 `universal_childcare_entitlement` and `targeted_childcare_entitlement`, within
 --steps float32 steps a child of the value.
 
-One known difference: PolicyEngine also gives the 15 hours for disadvantaged
-2-year-olds (`targeted_childcare_entitlement`, "Early Learning for
-2-year-olds") to families on Universal Credit with low earnings, which the
-model leaves out (it depends on benefits, not on the working-parent tests). A
-child eligible for both gets 15 + 15 hours, 30 in all (statutory guidance para
-A1.11), so the total only differs where the family gets the targeted hours
-without the working-parent ones. Those cases pass when PolicyEngine's total
-less its targeted hours matches the model, and are counted separately. Households: a lone parent, or a couple whose partner's pay is fixed;
+The 15 hours for disadvantaged 2-year-olds (`targeted_childcare_entitlement`,
+SI 2014/2147: a family on Universal Credit with earned income of at most
+£1,283.34 a month) are compared for lone parents, for whom the model works out
+Universal Credit too, and for couples whose partner has no pay (partner 0): the model's total is `funded_hours_millionths_pence` plus
+`funded_hours_targeted_millionths_pence`. A child eligible for both gets 15 + 15
+hours, 30 in all (statutory guidance para A1.11). The model's Universal Credit
+has no couple where both work, so for couples the targeted hours are not
+compared: those cases pass when PolicyEngine's total less its targeted hours
+matches the model, and are counted separately. Households: a lone parent, or a couple whose partner's pay is fixed;
 pay only; England (London), and Wales for the England-only check.
 
     uv run python compare_childcare.py
@@ -77,6 +78,15 @@ def cases(n_random: int, seed: int) -> list[tuple]:
         (rng.choice(COUNTRIES), rng.choice(KIDS), rng.choice(PARTNERS), rng.randint(0, 15_000_000))
         for _ in range(n_random)
     ]
+    # lone parents of a 2-year-old on Universal Credit, through the targeted hours'
+    # earnings limit (net earnings £15,400.08 a year is pay of about £17,600)
+    out += [("england", rng.choice([("2",), ("2", "3_4")]), None, rng.randint(0, 2_500_000))
+            for _ in range(n_random // 2)]
+    # couples whose partner has no pay (partner 0): on Universal Credit, no
+    # working-parent hours; through the limit, pay £16,500.66 / £16,500.67
+    out += [("england", rng.choice([("2",), ("2", "3_4")]), 0, rng.randint(0, 3_000_000))
+            for _ in range(n_random // 2)]
+    out += [("england", ("2",), 0, p) for p in (1_650_066, 1_650_067, 1_650_000, 1_650_100)]
     return out
 
 
@@ -91,8 +101,12 @@ def run_lean(binary: pathlib.Path, cs: list[tuple]) -> list[dict]:
             "country": country,
             "funded_children": [{"age": k} for k in kids],
         }
-        if partner is not None:
+        if partner == 0:
+            d["uc"] = {"couple": True, "children": len(kids)}
+        elif partner is not None:
             d["partner"] = {"pay_pence": partner, "adjusted_net_income_pence": partner}
+        else:
+            d["uc"] = {"children": len(kids)}
         payload.append(d)
     out = subprocess.run(
         [str(binary)], input=json.dumps(payload), capture_output=True, text=True, check=True
@@ -111,6 +125,8 @@ def run_policyengine(cs: list[tuple], chunk: int = 500) -> list[tuple[float, flo
         for i, (country, kids, partner, pay) in enumerate(part):
             members = [f"a{i}"]
             people[f"a{i}"] = {"age": {YEAR: 30}, "employment_income": {YEAR: pay / 100}}
+            if partner == 0:  # as compare_uc.py: no Marriage Allowance (findings #3)
+                people[f"a{i}"]["marriage_allowance"] = {YEAR: 0}
             if partner is not None:
                 people[f"b{i}"] = {"age": {YEAR: 30}, "employment_income": {YEAR: partner / 100}}
                 members.append(f"b{i}")
@@ -152,7 +168,7 @@ def main() -> int:
     pe = run_policyengine(cs)
     rows = []
     for (country, kids, partner, pay), l, (p, t) in zip(cs, lean, pe):
-        model = l["funded_hours_millionths_pence"] / MICRO
+        model = (l["funded_hours_millionths_pence"] + l["funded_hours_targeted_millionths_pence"]) / MICRO
         pe_pence, targeted = p * 100, t * 100
         diff = pe_pence - model
         # PolicyEngine adds float32 values per term and per programme: allow
@@ -170,8 +186,12 @@ def main() -> int:
                 "diff_pence": round(diff, 4),
                 "diff_in_steps": round(abs(diff) / step, 3),
                 "policyengine_targeted_pence": round(targeted, 4),
-                "targeted_only": abs(diff) > tol and abs(diff - targeted) <= tol,
-                "ok": abs(diff) <= tol or abs(diff - targeted) <= tol,
+                "model_targeted_pence": l["funded_hours_targeted_millionths_pence"] / MICRO,
+                "targeted_only": bool(partner) and abs(diff) > tol and abs(diff - targeted) <= tol,
+                # findings #42: the law's limit is 12 x £1,283.34 = £15,400.08 a
+                # year of earned income, PolicyEngine's £15,400
+                "limit_window": 10_000 * 1_540_000 < l["uc_earned_income_ten_thousandths_pence"] <= 10_000 * 1_540_008,
+                "ok": abs(diff) <= tol or (bool(partner) and abs(diff - targeted) <= tol),
             }
         )
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -179,15 +199,20 @@ def main() -> int:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
+    window = [r for r in rows if r["limit_window"] and not r["ok"]]
+    for r in window:
+        r["ok"] = True
     bad = [r for r in rows if not r["ok"]]
     working = sum(1 for r, l in zip(rows, lean) if l["childcare_eligible"] and r["country"] == "england")
-    same = [r for r in rows if not r["targeted_only"]]
+    same = [r for r in rows if not r["targeted_only"] and not r["limit_window"]]
     worst = max(same, key=lambda r: r["diff_in_steps"])
     print(
         f"{len(rows)} cases ({working} with working-parent hours): "
         f"{sum(r['ok'] for r in same)} of {len(same)} within {args.steps:g} float32 steps a child "
         f"(max |diff| {max(abs(r['diff_pence']) for r in same):.4f}p, worst {worst['diff_in_steps']} steps); "
-        f"{len(rows) - len(same)} differ only by PolicyEngine's targeted 2-year-old hours; {len(bad)} fail"
+        f"{sum(r['model_targeted_pence'] > 0 for r in rows)} lone parents and one-earner couples with the targeted 2-year-old hours; "
+        f"{len(window)} with earned income in (£15,400, £15,400.08] (findings #42); "
+        f"{sum(r['targeted_only'] for r in rows)} couples where both work differ only by them (not compared); {len(bad)} fail"
     )
     for r in sorted(bad, key=lambda r: -abs(r["diff_pence"]))[:20]:
         print(f"  {r['country']} children={r['children']} partner={r['partner_pay_pence']} pay={r['pay_pence']}: "

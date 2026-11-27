@@ -20,6 +20,7 @@ import UkTax.LandTax
 import UkTax.Reliefs
 import UkTax.StudentLoans
 import UkTax.Devolved
+import UkTax.Targeted
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -442,3 +443,15 @@ today, so any change to it is seen.
 /-- info: 'UkTax.pawhpAmount_le' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.pawhpAmount_le
+
+/-- info: 'UkTax.targeted_cliff' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.targeted_cliff
+
+/-- info: 'UkTax.targetedValue_two' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.targetedValue_two
+
+/-- info: 'UkTax.targetedExtra_working' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.targetedExtra_working

@@ -53,6 +53,7 @@ CHECKED = (
     "uc_millionths_pence",
     "tfc_millionths_pence",
     "funded_hours_millionths_pence",
+    "funded_hours_targeted_millionths_pence",
     "childcare_eligible",
     "net_income_millionths_pence",
     "child_benefit_pence",

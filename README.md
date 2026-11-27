@@ -516,6 +516,17 @@ Payment.
 | Scottish Carer Supplement, Carer Additional Person Payment | £11.70 a week, and £10.40 for each additional person cared for, while Carer Support Payment is payable | SSI 2023/302 regs 14A, 14B, 16(1A), (1B) |
 | Pension Age Winter Heating Payment | the Winter Fuel Payment's rule with £316.70, £211.15, £158.35 and £105.55; charged like it | SSI 2024/351 regs 2A, 9, 10; ITEPA 2003 s681I |
 
+### Early learning for disadvantaged 2-year-olds (`UkTax/Targeted.lean`)
+
+A 2-year-old in England gets 15 hours a week for 38 weeks when the family is on
+Universal Credit with earned income of at most £1,283.34 a month (a couple's
+combined; £15,400.08 over twelve equal months), or on another qualifying benefit
+(`targeted_other_benefit`), or the child has an EHC plan, DLA or is or was looked
+after (`"targeted_criteria": true` on the child) (SI 2014/2147 regs 1, 3, 4). With
+the working-parent hours the child has 30 in all, the first 15 targeted (DfE
+statutory guidance para A1.11), so `funded_hours_targeted_millionths_pence` is
+what they add to `funded_hours_millionths_pence`.
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -617,7 +628,8 @@ monthly rounding, the benefit cap's grace period, unused losses and surplus
 earnings (regs 57A, 54A), Tax-Free Childcare and the funded hours for
 disabled children, the childcare tests' routes for a partner who is disabled or a
 carer, the lower minimum earnings for parents under 21 or apprentices, the 15
-hours for disadvantaged 2-year-olds (which depend on benefits), a child changing
+hours for disadvantaged 2-year-olds in net income and the cliff map (modelled
+separately, `UkTax/Targeted.lean`), a child changing
 age band during the year (the model takes one band for the year), Wales's,
 Scotland's and Northern Ireland's own childcare schemes, income-related ESA, reliefs and deductions not listed above (losses and loss
 relief, capital allowances, property finance costs, employment expenses; Gift
@@ -783,6 +795,10 @@ relief-at-source contributions.
   above £204 takes away Carer Support Payment, the supplement and the additional
   person payments together (£5,103.80 a year, and £540.80 for each additional
   person); the heating payment is at most £316.70.
+- `targeted_cliff`, `targetedValue_two`, `targetedExtra_working`
+  (`UkTax/Targeted.lean`): a penny of earned income a year past £15,400.08 takes
+  away a 2-year-old's targeted hours, £5,073 at the DfE rate, for a family without
+  the working-parent hours; with them the targeted hours add nothing.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1229,10 +1245,13 @@ either side of the minimum earnings) with children aged 1, 2, 3, 1 and 3, or 2
 and 3, in England and in Wales, from £0 to £150,000 of pay. PolicyEngine values
 the hours the same way (its `gov.dfe.childcare_funding_rate` holds the same Table 6
 rates, 38 weeks), so it checks the eligibility and the hours. Latest local run:
-6,090 cases (1,413 with working-parent hours); 6,068 agree within 2 float32 steps
-a child (largest difference 0.12p). The other 22 differ only by PolicyEngine's 15
-hours for disadvantaged 2-year-olds (£5,073 at £8.90), which it gives a family
-on Universal Credit with low earnings and which the model leaves out.
+3,094 cases with `--random 1000` (907 with working-parent hours); 3,088 agree
+within 2 float32 steps a child (largest difference 0.12p), 503 of them with the
+15 hours for disadvantaged 2-year-olds (£5,073 at £8.90), for lone parents and
+one-earner couples on Universal Credit, which both sides work out. 6 couples where
+both work differ only by those hours, which the model's Universal Credit cannot
+give them (no couple where both work), and 1 sits in the 8p window of findings
+#42.
 
 PolicyEngine works term by term: a child counts from the term after it reaches
 the minimum age, at the rate for its age that term, and stops when it starts

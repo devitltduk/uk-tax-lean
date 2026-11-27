@@ -92,7 +92,11 @@ Optional fields:
   `[{"age": "under_2"}, {"age": "3_4", "price_pence_per_hour": 750}]`, ages
   `"under_2"` (9 months to 2), `"2"` and `"3_4"` (until school); the hours are
   valued at DfE's 2026-27 national average rate for the age unless a local price
-  per hour is given.
+  per hour is given. A 2-year-old also gets the targeted 15 hours when the family
+  is on Universal Credit with low earnings (worked out here), or
+  `targeted_other_benefit` is set, or the child has `"targeted_criteria": true`
+  (output `funded_hours_targeted_millionths_pence`: what they add to
+  `funded_hours_millionths_pence`).
 
 * `child_benefit_children`: Child Benefit for a whole 2026-27 (53 weeks) for that
   many children, in place of `child_benefit_pence` (output `child_benefit_pence`);
@@ -306,6 +310,9 @@ structure Case where
   /-- Scottish Child Payment: children under 16, and a qualifying benefit other
   than the Universal Credit worked out here (P9b). -/
   scp : Option (Nat × Bool) := none
+  /-- The parent has a qualifying benefit for the targeted 2-year-old hours other
+  than the Universal Credit worked out here (P9c). -/
+  targetedOther : Bool := false
   /-- Carer Support Payment: weekly overlapping benefits and additional cared for
   people (P9b). -/
   csp : Option (Nat × Nat) := none
@@ -420,7 +427,10 @@ def parseCase (j : Json) : Except String Case := do
           | .ok v => pure (some v)
           | .error _ => throw "funded_children: price_pence_per_hour must be a whole number of pence"
         | .error _ => pure none
-      pure ({ band, price } : FundedChild)
+      let targetedOwn := (k.getObjValAs? Bool "targeted_criteria").toOption.getD false
+      if targetedOwn && band != .two then
+        throw "funded_children: targeted_criteria is for 2-year-olds (SI 2014/2147 reg 3)"
+      pure ({ band, price, targetedOwn } : FundedChild)
     | .error _ =>
       if (j.getObjVal? "funded_children").toOption.isSome then
         throw "funded_children must be an array"
@@ -779,7 +789,8 @@ def parseCase (j : Json) : Except String Case := do
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
     ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
-    studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp }
+    studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp,
+    targetedOther := (j.getObjValAs? Bool "targeted_other_benefit").toOption.getD false }
   return res
 
 def result (c : Case) : Json :=
@@ -839,6 +850,13 @@ def result (c : Case) : Json :=
     ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment ani)),
     ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment ani)),
     ("childcare_eligible", toJson (childcareEligible c.claims c.employment ani)),
+    ("funded_hours_targeted_millionths_pence",
+      let award : Int := match floor with
+        | some f => ucAwardFloor claims f ucEarned
+        | none => ucAward claims ucEarned
+      let e := ucEarned + (if c.claims.couple then 10_000 * (c.claims.partnerEarned : Int) else 0)
+      toJson (micro * (targetedExtra c.claims (targetedFamily (c.claims.uc && decide (0 < award)) e c.targetedOther)
+        (childcareEligible c.claims c.employment ani) : Nat))),
     -- `netAll` takes all non-savings income as pay
     ("net_income_millionths_pence",
       if c.employment = i.nonSavings && (c.carer.isNone || !c.claims.uc) then

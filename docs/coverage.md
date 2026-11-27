@@ -36,7 +36,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
 | P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
 | P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a; SDLT **done**, P8b; LBTT, LTT, leases and non-residents **done**, P8c; reliefs **done**, area 6) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
-| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
+| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits; P9c **done**: the targeted 2-year-old hours, the other childcare schemes scoped) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
 ## Taxes on income
 
@@ -110,9 +110,10 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 |---|---|---|---|
 | Tax-Free Childcare | `tax_free_childcare` | Childcare Payments Act 2014; SI 2015/448 | **done** (non-disabled children) |
 | Funded hours, England: universal 15 at 3-4, working-parent hours from 9 months | `universal_childcare_entitlement`, `extended_childcare_entitlement` | Childcare Act 2006 s7; SI 2014/2147 reg 4; Childcare Act 2016 s1; SI 2022/1134 | **done** (one age band a year) |
-| Funded hours for disadvantaged 2-year-olds | `targeted_childcare_entitlement` | Childcare Act 2006 s7; SI 2014/2147 regs 3-4 | planned (P9) |
-| Wales childcare offer | `wales_childcare_offer` | Childcare Funding (Wales) Act 2019 | planned (P9) |
-| Scotland funded early learning and childcare | `funded_early_learning_childcare` | Children and Young People (Scotland) Act 2014 Part 6 | planned (P9) |
+| Funded hours for disadvantaged 2-year-olds | `targeted_childcare_entitlement` | Childcare Act 2006 s7; SI 2014/2147 regs 1, 3, 4 | **done** (P9c: the UC route with the £1,283.34 monthly earned income limit, other benefits and the child's own routes as inputs, 30 hours in all with the working-parent hours; findings #42) |
+| Wales childcare offer | `wales_childcare_offer` | Welsh Government guidance (the Childcare Offer for Wales); the Childcare Funding (Wales) Act 2019 only provides for applications and HMRC's checks | out of scope: an administrative scheme, its conditions, hours and provider rate set in guidance, not legislation |
+| Scotland funded early learning and childcare | `scottish_funded_early_learning_childcare_eligible` | Children and Young People (Scotland) Act 2014 Part 6 (1,140 hours) | out of scope: PolicyEngine gives eligibility only, from an input start date, with no value; the hours are in kind (PolicyEngine also has no route for eligible 2-year-olds) |
+| Free school meals | `free_school_meals` | Education Act 1996 s512ZB | out of scope: PolicyEngine takes the value as an input |
 | DfE student support (maintenance loans, Childcare Grant, Parents' Learning Allowance, Adult Dependants' Grant, Travel Grant, DSA, 16-19 bursary, Care to Learn) | `maintenance_loan`, `childcare_grant`, `parents_learning_allowance`, `adult_dependants_grant`, `travel_grant`, `disabled_students_allowance`, `bursary_fund_16_to_19`, `care_to_learn` | SI 2011/1986 (Education (Student Support) Regulations 2011); DfE guidance | planned (P9) |
 
 ## Devolved benefits
