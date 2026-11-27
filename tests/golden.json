@@ -4709,5 +4709,305 @@
       }
     },
     "hicbc_pence": 35000
+  },
+  {
+    "name": "Childcare Grant, two children, dependants' income £15,000, full cap (SLC example)",
+    "source": "SI 2011/1986 regs 45(5), 47(2)-(2C), (5); sums from SI 2025/162 Sch 2, unchanged by SI 2026/130 (2026-27 academic year); SLC SFE Grants for Dependants AY 2026/27",
+    "working": "52 x £342.24 = £17,796.48 (85% of £402.64 = £342.244, capped at £342.24); £15,000 - £11,118 = £3,882; £17,796.48 - £3,882 = £13,914.48 (SLC, SFE Grants for Dependants AY 2026/27, Miriam example)",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "dependants_income_pence": 1500000,
+        "childcare_grant": {
+          "children": 2,
+          "weekly_charges_pence": 40264
+        }
+      }
+    },
+    "childcare_grant_73000ths_pence": 101575704000,
+    "childcare_grant_pence": 1391448
+  },
+  {
+    "name": "Childcare Grant, one child, £100 a week of charges, income under the threshold",
+    "source": "SI 2011/1986 regs 45(5), 47(2)-(2C), (5); sums from SI 2025/162 Sch 2, unchanged by SI 2026/130 (2026-27 academic year)",
+    "working": "85% of £100 = £85 a week, under the £199.62 cap; income £5,000 not over £9,727 so reg 47(2AA): 52 x £85 = £4,420",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "dependants_income_pence": 500000,
+        "childcare_grant": {
+          "children": 1,
+          "weekly_charges_pence": 10000
+        }
+      }
+    },
+    "childcare_grant_73000ths_pence": 32266000000,
+    "childcare_grant_pence": 442000
+  },
+  {
+    "name": "Childcare Grant, one child, full cap, at the (2C) limit £20,107.23",
+    "source": "SI 2011/1986 regs 45(5), 47(2)-(2C), (5); sums from SI 2025/162 Sch 2, unchanged by SI 2026/130 (2026-27 academic year)",
+    "working": "A = 52 x £199.62 = £10,380.24; £20,107.23 - £9,727 = £10,380.23; £10,380.24 - £10,380.23 = £0.01 (not over the (2C) limit)",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "dependants_income_pence": 2010723,
+        "childcare_grant": {
+          "children": 1,
+          "weekly_charges_pence": 30000
+        }
+      }
+    },
+    "childcare_grant_73000ths_pence": 73000,
+    "childcare_grant_pence": 1
+  },
+  {
+    "name": "Childcare Grant, one child, full cap, a penny over the (2C) limit",
+    "source": "SI 2011/1986 regs 45(5), 47(2)-(2C), (5); sums from SI 2025/162 Sch 2, unchanged by SI 2026/130 (2026-27 academic year)",
+    "working": "income exceeds £20,107.23: nil (reg 47(2C)(i))",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "dependants_income_pence": 2010724,
+        "childcare_grant": {
+          "children": 1,
+          "weekly_charges_pence": 30000
+        }
+      }
+    },
+    "childcare_grant_73000ths_pence": 0,
+    "childcare_grant_pence": 0
+  },
+  {
+    "name": "Childcare Grant, one child, £15,000, 122 days (SLC example)",
+    "source": "SI 2011/1986 regs 45(5), 47(2)-(2C), (5); sums from SI 2025/162 Sch 2, unchanged by SI 2026/130 (2026-27 academic year); SLC SFE Grants for Dependants AY 2026/27",
+    "working": "£10,380.24 - (£15,000 - £9,727) = £5,107.24; x 122/365 = £1,707.0774... (SLC: £1,707.08): 122 x (10,380.24 - 5,273) x 100 x 2 = 12,461,665,600 73,000ths of a penny",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "dependants_income_pence": 1500000,
+        "childcare_grant": {
+          "children": 1,
+          "weekly_charges_pence": 30000,
+          "days": 122
+        }
+      }
+    },
+    "childcare_grant_73000ths_pence": 12461665600,
+    "childcare_grant_pence": 170707
+  },
+  {
+    "name": "Childcare Grant, two children, halved (partner also a student)",
+    "source": "SI 2011/1986 regs 45(5), 47(2)-(2C), (5); sums from SI 2025/162 Sch 2, unchanged by SI 2026/130 (2026-27 academic year)",
+    "working": "income £8,000 not over £11,118: A = 52 x £342.24 = £17,796.48, halved by reg 47(5): £8,898.24",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "dependants_income_pence": 800000,
+        "childcare_grant": {
+          "children": 2,
+          "weekly_charges_pence": 50000,
+          "halved": true
+        }
+      }
+    },
+    "childcare_grant_73000ths_pence": 64957152000,
+    "childcare_grant_pence": 889824
+  },
+  {
+    "name": "Childcare Grant, one child, low charges tapered to nil before the limit",
+    "source": "SI 2011/1986 regs 45(5), 47(2)-(2C), (5); sums from SI 2025/162 Sch 2, unchanged by SI 2026/130 (2026-27 academic year)",
+    "working": "85% of £50 = £42.50 a week, A = £2,210; £12,000 - £9,727 = £2,273 > £2,210: nil",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "dependants_income_pence": 1200000,
+        "childcare_grant": {
+          "children": 1,
+          "weekly_charges_pence": 5000
+        }
+      }
+    },
+    "childcare_grant_73000ths_pence": 0,
+    "childcare_grant_pence": 0
+  },
+  {
+    "name": "Free school meals, lone parent on UC, pay £7,400.04",
+    "source": "Education Act 1996 s512ZB(4), (4A), (4D); SI 2018/148 regs 2-4; Children's Wellbeing and Schools Act 2026 s32 (from 17 August 2026)",
+    "working": "earned income £7,400.04 a year = twelve months of £616.67, not over the SI 2018/148 limit: both pupils eligible all year, 2 x (£172.90 + £332.50) = £1,010.80",
+    "input": {
+      "non_savings_pence": 740004,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 740004,
+      "uc": {
+        "children": 2
+      },
+      "school_meals": {
+        "pupils": [
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          },
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          }
+        ]
+      }
+    },
+    "free_school_meals_pence": 101080,
+    "free_school_meals_uc_earnings_test_met": true
+  },
+  {
+    "name": "Free school meals, lone parent on UC, pay £7,400.05",
+    "source": "Education Act 1996 s512ZB(4), (4A), (4D); SI 2018/148 regs 2-4; Children's Wellbeing and Schools Act 2026 s32 (from 17 August 2026)",
+    "working": "a penny over twelve times £616.67: no lunches 6 April-16 August; from 17 August s512ZB(4D) needs only UC: 2 x £332.50 = £665",
+    "input": {
+      "non_savings_pence": 740005,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 740005,
+      "uc": {
+        "children": 2
+      },
+      "school_meals": {
+        "pupils": [
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          },
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          }
+        ]
+      }
+    },
+    "free_school_meals_pence": 66500,
+    "free_school_meals_uc_earnings_test_met": false
+  },
+  {
+    "name": "Free school meals, couple on UC, combined earnings £8,000",
+    "source": "Education Act 1996 s512ZB(4), (4A), (4D); SI 2018/148 regs 2-4; Children's Wellbeing and Schools Act 2026 s32 (from 17 August 2026)",
+    "working": "SI 2018/148 reg 4(c): the couple's combined earned income, £4,000 + £4,000 = £8,000 > £7,400.04: only the part from 17 August, 2 x £332.50 = £665",
+    "input": {
+      "non_savings_pence": 400000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 400000,
+      "uc": {
+        "couple": true,
+        "children": 2,
+        "partner_earned_pence": 400000
+      },
+      "school_meals": {
+        "pupils": [
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          },
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          }
+        ]
+      }
+    },
+    "free_school_meals_pence": 66500,
+    "free_school_meals_uc_earnings_test_met": false
+  },
+  {
+    "name": "Free school meals, no UC, an infant and an older pupil",
+    "source": "Education Act 1996 s512ZB(4), (4A), (4D); SI 2018/148 regs 2-4; Children's Wellbeing and Schools Act 2026 s32 (from 17 August 2026)",
+    "working": "s512ZB(4A): the infant all year, £172.90 + £332.50 = £505.40; the older pupil has no route",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "school_meals": {
+        "pupils": [
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250,
+            "infant": true
+          },
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          }
+        ]
+      }
+    },
+    "free_school_meals_pence": 50540,
+    "free_school_meals_uc_earnings_test_met": false
+  },
+  {
+    "name": "Free school meals, guarantee credit, pay £30,000",
+    "source": "Education Act 1996 s512ZB(4), (4A), (4D); SI 2018/148 regs 2-4; Children's Wellbeing and Schools Act 2026 s32 (from 17 August 2026)",
+    "working": "s512ZB(4)(aa)(i) with SI 2005/885: guarantee credit, no earnings test: 2 x £505.40 = £1,010.80",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "school_meals": {
+        "pupils": [
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          },
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          }
+        ],
+        "other_benefit": true
+      }
+    },
+    "free_school_meals_pence": 101080,
+    "free_school_meals_uc_earnings_test_met": false
+  },
+  {
+    "name": "Free school meals, UC award nil at pay £60,000",
+    "source": "Education Act 1996 s512ZB(4), (4A), (4D); SI 2018/148 regs 2-4; Children's Wellbeing and Schools Act 2026 s32 (from 17 August 2026)",
+    "working": "UC for a lone parent with two children is nil at £60,000 of pay, so neither the (4) nor the (4D) route: nil",
+    "input": {
+      "non_savings_pence": 6000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 6000000,
+      "uc": {
+        "children": 2
+      },
+      "school_meals": {
+        "pupils": [
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          },
+          {
+            "value_before_pence": 17290,
+            "value_after_pence": 33250
+          }
+        ]
+      }
+    },
+    "free_school_meals_pence": 0,
+    "free_school_meals_uc_earnings_test_met": false
   }
 ]

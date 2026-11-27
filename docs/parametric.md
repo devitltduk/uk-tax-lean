@@ -12,7 +12,8 @@ structure: the personal allowance still tapers £1 for every £2 above its limit
 is rounded up to a whole pound, the HICBC still rises 1 % per step to 100 %, there
 are still three UK bands and six Scottish ones. Figures outside the set (benefit
 amounts, the Marriage Allowance and married couple's allowance, Class 4, CGT,
-property taxes, student support and the rest of `UkTax/Params.lean`) stay 2026-27.
+property taxes, student support, free school meals and the Childcare Grant, and the rest of
+`UkTax/Params.lean`) stay 2026-27.
 
 ## What is in the set
 
@@ -139,6 +140,14 @@ the 2026-27 rates, the step positions as literals), or **new**.
 | `Regime.maxStep_y2026` | Cliffs.lean | new | 2026-27 (a fact about the default set) |  |
 | `cliffMap_complete` | CliffMap.lean | new | `Valid` | households in `CliffScope` |
 | `firstAbove_eq` | CliffMap.lean | new | any figures | binary search correctness |
+| `netAllFsm_drop_only_at_steps` | SchoolMeals.lean | new | `Valid` | the free-lunch steps: the UC award reaching nil, or earned income passing the SI 2018/148 limit (that limit is 2026-27, outside the set) |
+| `cliffMapFsm_complete` | SchoolMeals.lean | new | `Valid` | households in `CliffScope` |
+| `dropsFsm_complete` | SchoolMeals.lean | new | `Valid` | what `uktax` reports with free lunches |
+| `fsmH_succ` | SchoolMeals.lean | new | `Valid` | the counter behind the free-lunch search |
+| `ucAward_region_anti` | SchoolMeals.lean | new | any figures | taper any `P.ucTaper` |
+| `fsm_loss_where` | SchoolMeals.lean | new | any figures |  |
+| `Meals.value_mono` | SchoolMeals.lean | new | any figures | no figure of the set involved |
+| `mem_jumps` | SchoolMeals.lean | new | any figures | bisection correctness |
 | `Regime.topRate_y2026` | Reliefs.lean | new | 2026-27 (a fact about the default set) |  |
 | `aaCharge_le_y2026` | Reliefs.lean | new | 2026-27 (a fact about the default set) | `aaCharge_le` with `topRate_y2026`: 45 % outside Scotland, 48 % in it |
 | `bandTax_eq` | Proofs.lean | new | rates in order, BRL ≤ HRL |  |
@@ -156,7 +165,8 @@ are checks at one point (`lbtt_ads_cliff`, `ltt_higher_cliff`, `ftb_cliff`,
 `higher_cliff`, `oxford_cliffs`, `pla_cliff`, `adg_no_cliff`, `ml80c_cliff`,
 `csp_cliff`, `caYear_cliff`, `ma_threshold_cliff`, `targeted_cliff`,
 `targetedValue_two`, `car_50g_step`, `lisa_age_cliff`, `ved_supplement_cliff`,
-`sl_unearned_cliff`, `wfp_charge_cliff`): they give the size of a jump at a named
+`sl_unearned_cliff`, `wfp_charge_cliff`, `fsm_threshold`, `fsm_cliff_example`,
+`childcareGrant_no_cliff`, `childcareGrant_slc`): they give the size of a jump at a named
 edge, not that there is no other. `class4Exact_full_class1`
 depends on a relation between specific figures (employee Class 1 at 8 % above
 Class 4 at 6 % on the same band) and is stated for `TaxParams.y2026`.
@@ -180,6 +190,7 @@ Class 4 at 6 % on the same band) and is stated for `TaxParams.y2026`.
 | Reliefs.lean | `allowance_bounds`, `financeReduction_le` |
 | Sdlt.lean | `bandsTax_succ`, `sdlt_succ`, `ftb_cliff`, `higher_cliff` |
 | StudentLoans.lean | `threshold_le`, `sl_unearned_cliff`, `sl_unearned_cliff_size`, `sl_succ_earned`, `wfpAmount_le`, `wfp_charge_cliff`, `wfp_charge_benefit` |
-| StudentSupport.lean | `ml80a_anti`, `ml80b_anti`, `ml80a_d_bounds`, `ml80c_cliff`, `pla_cliff`, `adg_no_cliff` |
+| SchoolMeals.lean | `fsm_threshold`, `fsm_cliff_example` |
+| StudentSupport.lean | `ml80a_anti`, `ml80b_anti`, `ml80a_d_bounds`, `ml80c_cliff`, `pla_cliff`, `adg_no_cliff`, `childcareGrant_anti`, `childcareGrant_bounds`, `childcareGrant_no_cliff`, `childcareGrant_slc` |
 | Targeted.lean | `targeted_cliff`, `targetedValue_two`, `targetedExtra_working` |
 | Ved.lean | `ved_supplement_cliff`, `vedFirst_top`, `vedFirst_mono_lt`, `vedFirst_mono`, `vedFirstDiesel_top`, `vedFirstDiesel_mono_lt`, `vedFirstCar_mono` |

@@ -98,6 +98,50 @@ def plaHalfPence (x : Nat) : Nat :=
     let v := 2 * plaBasic - (x - plaThreshold)
     if 2 ≤ v && v < 2 * plaMinimum then 2 * plaMinimum else v
 
+/-- What the Childcare Grant needs (regs 45, 47): two or more dependent children (the
+higher cap and threshold), the weekly prescribed childcare charges (pence, the
+same each week), the days in the academic year for which the student applies and
+qualifies (at most 365), and whether reg 47(5) halves it (the partner is also a
+student, or holds a statutory award, and is supported for the dependants). The
+exclusions of reg 45(3), (3B), (4) (the UC childcare costs element, Tax-Free
+Childcare, healthcare bursary support, charges paid to the partner) and the
+nanny rule of reg 45(7A) are the caller's: an excluded student has no grant. -/
+structure CgClaim where
+  two : Bool := false
+  weeklyCharges : Nat
+  days : Nat := 365
+  halved : Bool := false
+  deriving Repr
+
+/-- Reg 45(5): the basic amount for each week, in hundredths of a penny: 85 % of
+the charges, at most the cap. -/
+def cgWeekly100 (two : Bool) (w : Nat) : Nat :=
+  min (cgPercent * w) (100 * (if two then cgMaxTwo else cgMaxOne))
+
+/-- The Childcare Grant for the academic year, in 1/73,000 of a penny (1/100 of a
+penny over the 365 days of the year, halved): above the threshold, reg 47(2A) or
+(2B), `A` less the income over the threshold, not below nil; at or below it,
+(2AA) or (2BA), `A`; either way for the days qualifying, `× E/F`; nil over the
+(2C) limit; halved under (5). `A` is 52 weeks of the basic amount and `x` the
+income of reg 47 (the partner's and adult dependants' residual income and the
+children's net income, prior financial year), pence.
+
+Read as printed, (2A) and (2B) scale only the reduction by `E/F`
+(`A − [(B + C) − D] × [E/F]`), so for part of a year the grant would jump up a
+penny above the threshold, from `A × E/F` to nearly `A`. SLC's guidance for
+2026-27 scales the whole amount ("(£5,107.24 / 365) x 122 = £1,707.08", where
+£5,107.24 is `A` less the excess), as (2AA) does, and so does this
+(docs/findings.md #47). Over a whole year the two agree. -/
+def childcareGrant73k (cg : CgClaim) (x : Nat) : Nat :=
+  let a := 52 * cgWeekly100 cg.two cg.weeklyCharges
+  let e := min cg.days cgYearDays
+  let d := if cg.two then cgThresholdTwo else cgThresholdOne
+  let v :=
+    if (if cg.two then cgNilAboveTwo else cgNilAboveOne) < x then 0
+    else if d < x then e * (a - 100 * (x - d))
+    else e * a
+  if cg.halved then v else 2 * v
+
 /-! ## Proved properties -/
 
 /-- **More income never raises the loan** (reg 80A), in every category, in any year. -/
@@ -148,5 +192,64 @@ theorem pla_cliff : plaHalfPence 1_895_798 = 10_000 ∧ plaHalfPence 1_895_799 =
 (at most a penny, in half pence, either side of £15,835.98). -/
 theorem adg_no_cliff : adgHalfPence 1_583_598 = 2 ∧ adgHalfPence 1_583_599 = 0 := by
   simp only [adgHalfPence, adgNilAbove, adgBasic, adgThreshold]; decide
+
+
+/-! ### The Childcare Grant -/
+
+/-- **More income never raises the grant**, for any charges, days, one child or
+more, halved or not: the reg 47 taper and the (2C) limit only take away. -/
+theorem childcareGrant_anti (two halved : Bool) (w e x : Nat) :
+    childcareGrant73k ⟨two, w, e, halved⟩ (x + 1) ≤ childcareGrant73k ⟨two, w, e, halved⟩ x := by
+  cases two <;> cases halved <;>
+    simp only [childcareGrant73k, cgWeekly100, cgPercent, cgMaxOne, cgMaxTwo, cgThresholdOne,
+      cgThresholdTwo, cgNilAboveOne, cgNilAboveTwo, cgYearDays, Bool.false_eq_true, ite_false,
+      ite_true] <;> (repeat' split) <;>
+    first
+      | omega
+      | (apply Nat.mul_le_mul_left; omega)
+      | (apply Nat.mul_le_mul_left; apply Nat.mul_le_mul_left; omega)
+
+/-- **Bounds.** Over a whole year the grant is never more than 52 weeks of the
+weekly basic amount, and at or below the threshold it is exactly that: for one
+child at most £10,380.24 (52 × £199.62), for two or more £17,796.48 (52 ×
+£342.24), each before any halving. -/
+theorem childcareGrant_bounds (two : Bool) (w x : Nat) :
+    childcareGrant73k ⟨two, w, 365, false⟩ x ≤ 730 * (52 * cgWeekly100 two w) ∧
+      (x ≤ (if two then cgThresholdTwo else cgThresholdOne) →
+        childcareGrant73k ⟨two, w, 365, false⟩ x = 730 * (52 * cgWeekly100 two w)) ∧
+      52 * cgWeekly100 two w ≤ (if two then 177_964_800 else 103_802_400) := by
+  cases two <;>
+    simp only [childcareGrant73k, cgWeekly100, cgPercent, cgMaxOne, cgMaxTwo, cgThresholdOne,
+    cgThresholdTwo, cgNilAboveOne, cgNilAboveTwo, cgYearDays, Nat.min_self, Bool.false_eq_true, ite_false,
+    ite_true] <;> (repeat' split) <;> omega
+
+/-- **No cliff.** At the full cap (charges of at least £234.85 a week for one
+child) the taper has brought the grant for a whole year down to 1p at £20,107.23,
+the (2C) limit, and it is nil a penny higher; for two or more children (charges of
+at least £402.64 a week) the same at £28,914.47. With lower charges the taper
+reaches nil before the limit. 1p is 73,000 units. -/
+theorem childcareGrant_no_cliff :
+    childcareGrant73k ⟨false, 23_485, 365, false⟩ 2_010_723 = 73_000 ∧
+      childcareGrant73k ⟨false, 23_485, 365, false⟩ 2_010_724 = 0 ∧
+      childcareGrant73k ⟨true, 40_264, 365, false⟩ 2_891_447 = 73_000 ∧
+      childcareGrant73k ⟨true, 40_264, 365, false⟩ 2_891_448 = 0 := by
+  simp only [childcareGrant73k, cgWeekly100, cgPercent, cgMaxOne, cgMaxTwo, cgThresholdOne,
+    cgThresholdTwo, cgNilAboveOne, cgNilAboveTwo, cgYearDays, Nat.min_self, Bool.false_eq_true, ite_false,
+    ite_true]
+  decide
+
+/-- **SLC's worked examples** (SFE Grants for Dependants AY 2026/27, the Miriam
+example): dependants' income £15,000 at the full caps gives £13,914.48 a year for
+two children and £5,107.24 for one; for 243 and 122 days, £9,263.61 and
+£1,707.08 to the penny (here exactly £9,263.6127... and £1,707.0774...). -/
+theorem childcareGrant_slc :
+    childcareGrant73k ⟨true, 40_264, 365, false⟩ 1_500_000 = 73_000 * 1_391_448 ∧
+      childcareGrant73k ⟨false, 23_485, 365, false⟩ 1_500_000 = 73_000 * 510_724 ∧
+      childcareGrant73k ⟨true, 40_264, 243, false⟩ 1_500_000 = 67_624_372_800 ∧
+      childcareGrant73k ⟨false, 23_485, 122, false⟩ 1_500_000 = 12_461_665_600 := by
+  simp only [childcareGrant73k, cgWeekly100, cgPercent, cgMaxOne, cgMaxTwo, cgThresholdOne,
+    cgThresholdTwo, cgNilAboveOne, cgNilAboveTwo, cgYearDays, Nat.min_self, Bool.false_eq_true, ite_false,
+    ite_true]
+  decide
 
 end UkTax
