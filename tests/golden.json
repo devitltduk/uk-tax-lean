@@ -2964,5 +2964,129 @@
     "council_tax_reduction_wa_364m_pence": 29451572000000,
     "council_tax_reduction_wa_applicable_weekly_pence": 20540,
     "council_tax_reduction_wa_bands_e_h_su_pence": 0
+  },
+  {
+    "name": "English local CTR, Merton, lone parent with two children and pay (child amounts, £25 and £17.10 disregards)",
+    "input": {
+      "non_savings_pence": 1500000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1500000,
+      "country": "england",
+      "council_tax_reduction_local": {
+        "authority": "merton",
+        "council_tax_pence": 180000,
+        "lone_parent": true,
+        "couple": false,
+        "children": 2,
+        "additional_disregard": true,
+        "capital_pence": 0,
+        "other_weekly_pence": 0,
+        "limited_children": 0
+      }
+    },
+    "source": "Merton Local Council Tax Support Scheme Rules 2026 para 29, Sch 3 paras 1, 3, Sch 7 paras 5, 17, Sch 8 para 66",
+    "working": "applicable £95.55 + 2 x £87.88 = £271.31; pay £15,000 less tax £486 and Class 1 £194.40 = £14,319.60, £275.3769 a week, less £25 and £17.10 = £233.2769, below it (Child Benefit disregarded): the whole £1,800",
+    "council_tax_reduction_local_lcu_pence": 6552000000000000,
+    "council_tax_reduction_local_applicable_weekly_pence": 27131
+  },
+  {
+    "name": "English local CTR, Merton, single with pay (£5 disregard, taper by the day)",
+    "input": {
+      "non_savings_pence": 1200000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1200000,
+      "country": "england",
+      "council_tax_reduction_local": {
+        "authority": "merton",
+        "council_tax_pence": 180000,
+        "lone_parent": false,
+        "couple": false,
+        "children": 0,
+        "additional_disregard": false,
+        "capital_pence": 0,
+        "other_weekly_pence": 0,
+        "limited_children": 0
+      }
+    },
+    "source": "Merton scheme paras 17(f), 29; Sch 3 para 1; Sch 7 para 11",
+    "working": "pay £12,000 (no tax or NICs), £230.7692 a week less £5 = £225.7692; excess over £95.55 = £130.2192; 20 % x 365/7 weeks = £1,358.00055; £1,800 less that = £441.99945",
+    "council_tax_reduction_local_lcu_pence": 1608878000000000,
+    "council_tax_reduction_local_applicable_weekly_pence": 9555
+  },
+  {
+    "name": "English local CTR, Newham, 70 % maximum",
+    "input": {
+      "non_savings_pence": 1500000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1500000,
+      "country": "england",
+      "council_tax_reduction_local": {
+        "authority": "newham",
+        "council_tax_pence": 180000,
+        "lone_parent": true,
+        "couple": false,
+        "children": 2,
+        "additional_disregard": true,
+        "capital_pence": 0,
+        "other_weekly_pence": 0,
+        "limited_children": 0
+      }
+    },
+    "source": "Newham Council Tax Reduction Scheme 2026 para 29(1)",
+    "working": "as the Merton lone parent (income below the £271.31 applicable amount), but Newham's maximum for a person who is not a pensioner is 70 % of the bill: £1,260",
+    "council_tax_reduction_local_lcu_pence": 4586400000000000,
+    "council_tax_reduction_local_applicable_weekly_pence": 27131
+  },
+  {
+    "name": "English local CTR, Kingston upon Thames, two-child limit and printed allowances",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "england",
+      "council_tax_reduction_local": {
+        "authority": "kingston_upon_thames",
+        "council_tax_pence": 150000,
+        "lone_parent": true,
+        "couple": false,
+        "children": 3,
+        "additional_disregard": false,
+        "capital_pence": 0,
+        "other_weekly_pence": 27000,
+        "limited_children": 1
+      }
+    },
+    "source": "Kingston upon Thames Council Tax Reduction Scheme 2026-27 para 26(1)(b)(i), Sch 3 paras 1, 3",
+    "working": "lone parent, three children, the third born after 1 April 2017 (no amount): applicable £90.50 + 2 x £83.24 = £256.98; other income £270 a week, excess £13.02; 20 % x 365/7 = £135.7800; £1,500 less that = £1,364.22",
+    "council_tax_reduction_local_lcu_pence": 4965760800000000,
+    "council_tax_reduction_local_applicable_weekly_pence": 25698
+  },
+  {
+    "name": "English local CTR, Oxford, income band 2 (75 %)",
+    "input": {
+      "non_savings_pence": 3200000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3200000,
+      "country": "england",
+      "council_tax_reduction_local": {
+        "authority": "oxford",
+        "council_tax_pence": 200000,
+        "lone_parent": true,
+        "couple": false,
+        "children": 2,
+        "additional_disregard": false,
+        "capital_pence": 0,
+        "other_weekly_pence": 0,
+        "limited_children": 0
+      }
+    },
+    "source": "Oxford City Council Council Tax Reduction Scheme 2026 to 2027 paras 9, 37, 43, Appendix 4",
+    "working": "pay £32,000 less tax £3,886 and Class 1 £1,554.40 = £26,559.60, £510.7615 a week (all earnings counted, Child Benefit ignored): between £480.01 and £530.00, so 75 % of the £2,000 bill = £1,500",
+    "council_tax_reduction_local_lcu_pence": 5460000000000000
   }
 ]

@@ -15,6 +15,7 @@ import UkTax.UcSelfEmployed
 
 import UkTax.HousingBenefitWa
 import UkTax.CtrWorkingAge
+import UkTax.CtrEnglandLocal
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -333,3 +334,23 @@ today, so any change to it is seen.
 /-- info: 'UkTax.scot_capital_cliff' does not depend on any axioms -/
 #guard_msgs in
 #print axioms UkTax.scot_capital_cliff
+
+/-- info: 'UkTax.newham_at_most_70' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.newham_at_most_70
+
+/-- info: 'UkTax.localYear_taper' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.localYear_taper
+
+/-- info: 'UkTax.oxford_cliff_480' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.oxford_cliff_480
+
+/-- info: 'UkTax.oxfordPct_anti' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.oxfordPct_anti
+
+/-- info: 'UkTax.oxford_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.oxford_mono

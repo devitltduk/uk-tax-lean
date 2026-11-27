@@ -752,6 +752,57 @@ students. Rates in tenths of a percent. -/
 def ctrScotSarLower : Nat := 28_200
 def ctrScotSarUpper : Nat := 38_300
 
+/-! ## English local Council Tax Reduction schemes for working-age applicants, 2026-27
+
+The five English working-age schemes PolicyEngine models, each the council's own
+scheme under LGFA 1992 s13A(2) and Sch 1A, read from the council's 2026-27 scheme
+text (checked 2026-11-27):
+
+* Kingston upon Thames, Council Tax Reduction Scheme 2026-27
+  <https://www.kingston.gov.uk/sites/default/files/2026-07/Council%20Tax%20Reduction%20Scheme%202026-27.pdf>:
+  para 29(1) 100 % of A/B; para 17 amount B 2 6/7 % (20 % a week); Sch 3 para 1
+  £90.50 single 25 or over or lone parent, £71.70 single 18 to 24, £142.25 couple;
+  para 3 £83.24 a child or young person, para 26(1)(b)(i) none for a third or later
+  child born after 1 April 2017; para 30A non-dependants £17.31 (£5.64 not in
+  remunerative work or under £279.00 a week, £11.50 under £485.00, £14.43 under
+  £605.00); £16,000 capital, £1 a week per £250 or part above £6,000.
+* Merton, Local Council Tax Support Scheme Rules 2026
+  <https://www.merton.gov.uk/sites/default/files/2026-03/Council%20Tax%20Reduction%20Scheme%20L%20B%20Merton%202026-27.pdf>:
+  100 %, 2 6/7 %; Sch 3 £95.55, £75.65, £95.55, £150.15, £87.88 a child; para 30
+  £15.95 (£5.20, £10.60, £13.30 at £279, £485, £605); £16,000.
+* Newham, Council Tax Reduction Scheme 2026
+  <https://www.newham.gov.uk/downloads/file/10753/council-tax-reduction-scheme-2026>:
+  para 29(1) 70 % of A/B for a person who is not a pensioner; para 17 amount B 3 4/7
+  % (25 % a week); Sch 3 the Housing Benefit amounts; para 30B £22.61 (£7.54, £14.96,
+  £18.84 at £183, £316, £394); para 22A no reduction above £6,000 of capital.
+* Westminster, Council Tax Support scheme for 2026/27
+  <https://www.westminster.gov.uk/sites/default/files/media/documents/council-tax-support-scheme-for-2026-27.pdf>
+  (the council's summary; the default scheme is its basis): 100 %, 20 %; £95.55,
+  £75.65, £95.55, £150.15, £87.88 a child; £15.95 (£5.20, £10.60, £13.30 at £279,
+  £485, £605); £16,000.
+* Oxford, Council Tax Reduction Scheme 2026 to 2027
+  <https://www.oxford.gov.uk/council-tax-reduction/council-tax-reduction-scheme-2026-27>:
+  income bands (para 9, Appendix 3): 100 % up to £480.00 a week, 75 % to £530.00,
+  50 % to £580.00, 25 % to £660.00, nil above; para 43 non-dependants as Merton;
+  £16,000; Appendix 3 ignores £48.15 of each UC carer element and £84.46 of each
+  disabled child element; Appendix 4 counts all earnings of a working-age applicant.
+
+All four default-scheme councils keep the Housing Benefit earnings disregards (Sch
+7: £5, £10, £20, £25 and the £17.10 step) and disregard Child Benefit (Kingston,
+Merton Sch 8 para 66, Newham para 65); the family premium is nil for claims after
+1 May 2016. -/
+def kingstonPersonal : List Nat := [9_050, 7_170, 9_050, 14_225]
+def kingstonChild : Nat := 8_324
+def kingstonNonDeps : List Nat := [564, 1_150, 1_443, 1_731]
+def mertonNonDeps : List Nat := [520, 1_060, 1_330, 1_595]
+def newhamNonDeps : List Nat := [754, 1_496, 1_884, 2_261]
+def newhamNonDepBands : List Nat := [18_300, 31_600, 39_400]
+def localNonDepBands : List Nat := [27_900, 48_500, 60_500]
+def newhamCapitalLimit : Nat := 600_000
+def oxfordBands : List Nat := [48_000, 53_000, 58_000, 66_000]
+def oxfordCarerDisregard : Nat := 4_815
+def oxfordDisabledChildDisregard : Nat := 8_446
+
 /-! ## Capital Gains Tax, 2026-27
 
 TCGA 1992 as amended by Finance Act 2025 ss 7-8 and Finance Act 2023 s8. -/
