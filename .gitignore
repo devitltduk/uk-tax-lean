@@ -7,3 +7,5 @@ __pycache__/
 /harness/.uv-python/
 /.wasm-build/
 /web/dist/
+/docs/drafts/
+/.drafts-local/

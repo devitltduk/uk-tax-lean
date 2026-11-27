@@ -391,9 +391,8 @@ on £15,000 and £3,600, 19 % instead of 20 % at the Scottish starter rate, and
 income above the basic rate limit is dividends alone (£15,000 of pay, £60,000 of
 dividends, £10,000 gross) the answer depends on the reading of s192(4): on its
 wording no higher rate tax is chargeable, the limits stay and PolicyEngine gives
-£1,799.78 more; on HMRC's PTM056120 the limits rise and it gives £700.22 less. Draft issue,
-asking to close the documented gap:
-[`drafts/issues/02-relief-at-source-non-taxpayers.md`](drafts/issues/02-relief-at-source-non-taxpayers.md).
+£1,799.78 more; on HMRC's PTM056120 the limits rise and it gives £700.22 less. A draft
+issue, kept privately and not posted, asks to close the documented gap.
 
 ### 7. Marriage Allowance: the unused allowance, not the £1,260 transfer (already reported upstream)
 
@@ -416,8 +415,7 @@ allowance. PolicyEngine matches its own basis on all 666.
 This is PolicyEngine's open issue #1947 (filed 30 September 2026, with a fix
 proposed in #1963), which already covers the savings-income transferor and the
 round-up. So no new issue is drafted; the dividend and Scottish starter-rate
-cases and the count are drafted as a comment on it:
-[`drafts/comments/1947-marriage-allowance-dividends-scotland.md`](drafts/comments/1947-marriage-allowance-dividends-scotland.md).
+cases and the count are drafted as a comment on it, kept privately and not posted.
 
 ### No differences found
 
