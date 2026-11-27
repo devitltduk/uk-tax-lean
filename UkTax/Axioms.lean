@@ -24,6 +24,7 @@ import UkTax.Targeted
 import UkTax.CompanyCar
 import UkTax.Misc
 import UkTax.Ved
+import UkTax.StudentSupport
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -518,3 +519,27 @@ today, so any change to it is seen.
 /-- info: 'UkTax.vedFirst_mono' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.vedFirst_mono
+
+/-- info: 'UkTax.ml80a_anti' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ml80a_anti
+
+/-- info: 'UkTax.ml80b_anti' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ml80b_anti
+
+/-- info: 'UkTax.ml80a_d_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ml80a_d_bounds
+
+/-- info: 'UkTax.ml80c_cliff' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.ml80c_cliff
+
+/-- info: 'UkTax.pla_cliff' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.pla_cliff
+
+/-- info: 'UkTax.adg_no_cliff' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.adg_no_cliff

@@ -326,6 +326,10 @@ structure Case where
   whdIn : Option (Bool × Bool × Bool) := none
   /-- A car for Vehicle Excise Duty (P9f). -/
   vedCar : Option VedCar := none
+  /-- Student support (P9g): schedule, category, final year, care leaver,
+  residual incomes (pence), dependent children, household income given (pence),
+  dependants' income for the grants (pence). -/
+  sfe : Option (SfeSchedule × SfeCat × Bool × Bool × List Nat × Nat × Option Nat × Option Nat) := none
   /-- Carer Support Payment: weekly overlapping benefits and additional cared for
   people (P9b). -/
   csp : Option (Nat × Nat) := none
@@ -784,6 +788,33 @@ def parseCase (j : Json) : Except String Case := do
       | .ok "before_march_2001" => pure (some (VedCar.old (subB o "engine_over_1549cc")))
       | _ => throw "vehicle_excise_duty.registered must be from_april_2017, march_2001_to_march_2017 or before_march_2001"
     | none => pure none
+  let sfe ← match obj "student_support" with
+    | some o => do
+      let sched ← match (o.getObjValAs? String "schedule").toOption.getD "standard" with
+        | "standard" => pure SfeSchedule.standard
+        | "benefits" => pure SfeSchedule.benefits
+        | "over_60" => pure SfeSchedule.over60
+        | _ => throw "student_support.schedule must be standard, benefits or over_60"
+      let cat ← match (o.getObjValAs? String "category").toOption.getD "D" with
+        | "A" => pure SfeCat.a
+        | "B" => pure SfeCat.b
+        | "C" => pure SfeCat.c
+        | "D" => pure SfeCat.d
+        | _ => throw "student_support.category must be A, B, C or D"
+      let person (p : Json) : Except String Nat := do
+        pure (residualIncome (← sub p "taxable_income_pence") (← sub p "pension_contributions_pence")
+          (← sub p "term_time_earnings_pence") (subB p "student_or_award_holder"))
+      let people := match o.getObjValAs? (Array Json) "residual_incomes" with
+        | .ok a => a.toList
+        | .error _ => []
+      let rs ← people.mapM person
+      let opt (k : String) : Except String (Option Nat) :=
+        match o.getObjVal? k with
+        | .ok _ => do pure (some (← sub o k))
+        | .error _ => pure none
+      pure (some (sched, cat, subB o "final_year", subB o "care_leaver", rs, ← sub o "dependent_children",
+        ← opt "household_income_pence", ← opt "dependants_income_pence"))
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -836,7 +867,7 @@ def parseCase (j : Json) : Except String Case := do
     ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
     studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp,
     targetedOther := (j.getObjValAs? Bool "targeted_other_benefit").toOption.getD false,
-    car := car, tv := tv, isa := isa, mw := mw, whdIn := whdIn, vedCar := vedCar }
+    car := car, tv := tv, isa := isa, mw := mw, whdIn := whdIn, vedCar := vedCar, sfe := sfe }
   return res
 
 def result (c : Case) : Json :=
@@ -1067,6 +1098,16 @@ def result (c : Case) : Json :=
       | none => [])
     ++ (match c.vedCar with
       | some v => [("vehicle_excise_duty_pounds", toJson (ved v))]
+      | none => [])
+    ++ (match c.sfe with
+      | some (s, k, final, care, rs, ch, given, dep) =>
+        let hi := given.getD (householdIncome rs ch)
+        [("student_household_income_pence", toJson hi),
+         ("maintenance_loan_pounds", toJson (maintenanceLoan s k final care hi))]
+        ++ (match dep with
+          | some x => [("adult_dependants_grant_half_pence", toJson (adgHalfPence x)),
+                       ("parents_learning_allowance_half_pence", toJson (plaHalfPence x))]
+          | none => [])
       | none => [])
     ++ (match c.isa with
       | some (age, subs, lp) =>
