@@ -317,3 +317,19 @@ today, so any change to it is seen.
 /-- info: 'UkTax.ctrWaYear_bounds' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.ctrWaYear_bounds
+
+/-- info: 'UkTax.scotBandsEH_le_main' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.scotBandsEH_le_main
+
+/-- info: 'UkTax.scotBandsEH_floor' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.scotBandsEH_floor
+
+/-- info: 'UkTax.scotTotal_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.scotTotal_bounds
+
+/-- info: 'UkTax.scot_capital_cliff' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.scot_capital_cliff

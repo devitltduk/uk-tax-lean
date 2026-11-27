@@ -170,7 +170,14 @@ Optional fields:
   `uc` and a UC award above nil the UC rule applies (the UC maximum amount as the applicable amount, the UC
   income and award as income). Output `council_tax_reduction_wa_364m_pence`, the
   year's reduction in 1/364 000 000 pence, and the own-rules weekly applicable
-  amount;
+  amount. With `"country": "scotland"`, the Scottish scheme (SSI 2021/249): its own
+  applicable amount on UC too, the relevant UC payments and childcare charges;
+  optional `band` ("A" to "H") for reg 14 (bands E to H) and `second_adult`
+  (`{"council_tax_pence": n, "on_benefit": b, "students": b, "gross_weekly_pence": n}`,
+  Sch 2). Then `council_tax_reduction_wa_364m_pence` is the reg 13 main reduction,
+  and the outputs add `council_tax_reduction_wa_second_adult_364m_pence`,
+  `council_tax_reduction_wa_bands_e_h_su_pence` and the entitlement
+  `council_tax_reduction_wa_total_su_pence`, in 1/(364 000 000 × 891 261) pence;
 * `sdlt`: `{"kind": "residential" | "first_time_buyer" | "additional_dwelling" |
   "non_residential", "consideration_pence": n}`, Stamp Duty Land Tax in England or
   Northern Ireland (`UkTax/Sdlt.lean`; output `sdlt_exact_ten_thousandths_pence`);
@@ -250,7 +257,9 @@ structure Case where
   expected hours. -/
   mif : Option (Bool × Nat × Nat) := none
   hbWa : Option HbWaClaim := none
-  ctrWa : Option (Nat × HbWaClaim) := none
+  /-- Working-age CTR: the bill, the household, the band (0 = A, ..., 7 = H; 8 if not
+  given) and the second adult rebate (council tax due, rate in tenths of a percent). -/
+  ctrWa : Option (Nat × HbWaClaim × Nat × Option (Nat × Nat)) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -562,9 +571,21 @@ def parseCase (j : Json) : Except String Case := do
     | none => pure none
   let ctrWa ← match obj "council_tax_reduction_working_age" with
     | some o => do
-      if !(j.getObjValAs? String "country").toOption.any (· == "wales") then
-        throw "council_tax_reduction_working_age: only the Welsh scheme is modelled yet (country wales)"
-      pure (some (← sub o "council_tax_pence", ← parseHbWa "council_tax_reduction_working_age" o))
+      let wales := (j.getObjValAs? String "country").toOption.any (· == "wales")
+      if !wales && !scottish then
+        throw "council_tax_reduction_working_age: the national schemes of Wales and Scotland (country wales or scotland)"
+      let band ← match o.getObjValAs? String "band" with
+        | .ok b => match ["A", "B", "C", "D", "E", "F", "G", "H"].idxOf? b with
+          | some i => pure i
+          | none => throw "council_tax_reduction_working_age.band must be A to H"
+        | .error _ => pure 8
+      let sar ← match o.getObjVal? "second_adult" with
+        | .ok so => do
+          if !scottish then throw "council_tax_reduction_working_age.second_adult: Scotland only"
+          pure (some (← sub so "council_tax_pence",
+            scotSarRate (subB so "on_benefit") (subB so "students") (← sub so "gross_weekly_pence")))
+        | .error _ => pure none
+      pure (some (← sub o "council_tax_pence", ← parseHbWa "council_tax_reduction_working_age" o, band, sar))
     | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
@@ -750,18 +771,31 @@ def result (c : Case) : Json :=
         ("housing_benefit_wa_maximum_weekly_pence", toJson h.housing.maximum)]
       | none => [])
     ++ (match c.ctrWa with
-      | some (ct, h) => [
-        ("council_tax_reduction_wa_364m_pence",
-          toJson (if claims.uc && decide (0 < ucAward claims ucEarned)
-                  then ctrWalesUc ct (ctrNonDeps .wales h.housing) claims ucEarned
-                  else ctrWalesOwn ct h (hbWaEarnings c.period rg c.employment))),
-        ("council_tax_reduction_wa_withdrawal_364m_pence",
-          if claims.uc && decide (0 < ucAward claims ucEarned) then toJson (ctrWaWithdrawal (ctrNonDeps .wales h.housing) (walesUcExcess claims ucEarned))
-          else if h.passported then toJson (ctrWaWithdrawal (ctrNonDeps .wales h.housing) 0)
-          else if h.capital > hbCapitalLimit then Json.null
-          else toJson (ctrWaWithdrawal (ctrNonDeps .wales h.housing)
-            (walesOwnExcess h (hbWaEarnings c.period rg c.employment)))),
-        ("council_tax_reduction_wa_applicable_weekly_pence", toJson h.walesApplicable)]
+      | some (ct, h, band, sar) =>
+        let onUc := claims.uc && decide (0 < ucAward claims ucEarned)
+        let scot := c.nation == .scotland
+        let nd := ctrNonDeps (if scot then .scotland else .wales) h.housing
+        let E := hbWaEarnings c.period rg c.employment
+        let x : Int := if scot then
+            (if onUc then scotUcExcess claims h.disregard.weekly h.scotApplicable ucEarned else scotOwnExcess h E)
+          else (if onUc then walesUcExcess claims ucEarned else walesOwnExcess h E)
+        let passported := h.passported && !onUc
+        let xEff : Int := if passported then 0 else x
+        let capOk := onUc || !(h.capital > hbCapitalLimit)
+        let main : Int := if capOk then ctrWaYear ct nd xEff else 0
+        [("council_tax_reduction_wa_364m_pence", toJson main),
+         ("council_tax_reduction_wa_withdrawal_364m_pence",
+           if capOk then toJson (ctrWaWithdrawal nd xEff) else Json.null),
+         ("council_tax_reduction_wa_applicable_weekly_pence",
+           toJson (if scot then h.scotApplicable else h.walesApplicable))]
+        ++ (if scot then
+              let sarV : Int := if passported then 0 else (sar.map fun (g, r) => scotSar g r).getD 0
+              let bands := if passported then 0
+                else scotBandsEH band ct nd h.scotApplicable h.scotBandsThreshold xEff
+              [("council_tax_reduction_wa_second_adult_364m_pence", toJson sarV),
+               ("council_tax_reduction_wa_bands_e_h_su_pence", toJson (if capOk then bands else 0)),
+               ("council_tax_reduction_wa_total_su_pence", toJson (scotTotal capOk main sarV bands))]
+            else [])
       | none => [])
     ++ (match c.sdlt with
       | some (k, p) => [("sdlt_exact_ten_thousandths_pence", toJson (sdltExact k p))]

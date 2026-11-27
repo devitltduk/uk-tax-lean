@@ -721,6 +721,37 @@ def ctrWalesSingleU25 : Nat := 8_060
 def ctrWalesLoneParent : Nat := 10_185
 def ctrWalesCouple : Nat := 15_985
 
+/-- Council Tax Reduction for working-age applicants in Scotland (SSI 2021/249 as
+amended for 2026-27; consolidated text on legislation.gov.uk checked 2026-11-27).
+The personal allowances (Sch 1 para 1), premiums (Sch 1 Part 5), components (paras
+23, 24) and the non-dependant deductions (reg 90) are those of Housing Benefit and
+the pensioner scheme; the child premium is £109.85 for each child or young person
+(para 2, `ctrChildScotland`); there is no family premium. Tariff income (reg 63):
+£1 a week for each £250 or part above £6,000, or with Universal Credit £4.35 a
+month (the UC amount, `ucTariffPerStep`). Capital limit £16,000 (reg 66).
+
+Reg 42(4): the most a UC claimant may deduct for relevant childcare charges, £290.00
+a week for one child, £497.00 for more than one. -/
+def ctrScotUcChildcareMaxOne : Nat := 29_000
+def ctrScotUcChildcareMaxTwo : Nat := 49_700
+
+/-- Reg 14 (bands E to H): the weekly income below which the maximum is due, £321
+for a single applicant not responsible for a child or young person, £479 otherwise
+(reg 14(5), (6)). Reg 79(2), (3): the maximum is the day's council tax less that tax
+divided by C, 1.075 for band E, 1.125 F, 1.175 G, 1.225 H (the 2017 rise in the band
+proportions, LGFA 1992 s74(1) as amended by SSI 2016/368), so the share (C − 1)/C:
+3/43, 1/9, 7/47 and 9/49. -/
+def ctrScotBandsEHSingle : Nat := 32_100
+def ctrScotBandsEHOther : Nat := 47_900
+
+/-- Second adult rebate (Sch 2 para 1): 25 % of the council tax due where every
+second adult is on a qualifying income-related benefit, State Pension Credit, or UC
+with no earned income; 15 % where their gross income is below £282.00 a week, 7.5 %
+below £383.00; 100 % where the dwelling would otherwise be wholly occupied by
+students. Rates in tenths of a percent. -/
+def ctrScotSarLower : Nat := 28_200
+def ctrScotSarUpper : Nat := 38_300
+
 /-! ## Capital Gains Tax, 2026-27
 
 TCGA 1992 as amended by Finance Act 2025 ss 7-8 and Finance Act 2023 s8. -/

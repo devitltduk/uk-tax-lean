@@ -2845,5 +2845,124 @@
     "working": "applicable £101.85 + 2 x £87.88 + £20.22 (any family with a child in Wales) = £297.83 a week, £15,487.16 a year; pay £15,000 less tax £486 and Class 1 £194.40 = £14,319.60, less 52 x £25 = £13,019.60, below it: class C, the whole £1,800",
     "council_tax_reduction_wa_364m_pence": 65520000000000,
     "council_tax_reduction_wa_applicable_weekly_pence": 29783
+  },
+  {
+    "name": "Scotland working-age CTR, band E, income below £321 (reg 14)",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 150000,
+        "band": "E",
+        "other_weekly_pence": 30000
+      }
+    },
+    "source": "SSI 2021/249 regs 13, 14(5)(a)(ii)(aa), 79(2), (3)(b)(i); Sch 1 para 1",
+    "working": "single aged 30, other income £300 a week, applicable £95.55: reg 13 withdraws 365/35 x £204.45 = £2,132.12, more than the £1,500 bill, so nil; reg 14: income £300 is at most £321, so the maximum, A - A/1.075 = £1,500 x 3/43 = £104.6512 (x 364,000,000 x 891,261 = 3,395,082,600,000,000,000)",
+    "council_tax_reduction_wa_364m_pence": 0,
+    "council_tax_reduction_wa_bands_e_h_su_pence": 3395082600000000000,
+    "council_tax_reduction_wa_total_su_pence": 3395082600000000000,
+    "council_tax_reduction_wa_applicable_weekly_pence": 9555
+  },
+  {
+    "name": "Scotland working-age CTR, band E, income £4 above £321 (reg 14 taper)",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 150000,
+        "band": "E",
+        "other_weekly_pence": 32500
+      }
+    },
+    "source": "SSI 2021/249 regs 14(5)(b), (7)(b), 79(2)",
+    "working": "as above with income £325 a week: reg 13 nil; reg 14: £1,500 x 3/43 less 365/35 x £4 = £104.6512 - £41.7143 = £62.9369 (1,894,400/301 pence)",
+    "council_tax_reduction_wa_364m_pence": 0,
+    "council_tax_reduction_wa_bands_e_h_su_pence": 2041791897600000000,
+    "council_tax_reduction_wa_total_su_pence": 2041791897600000000
+  },
+  {
+    "name": "Scotland working-age CTR, lone parent with two children, tariff income and a non-dependant",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 180000,
+        "band": "C",
+        "other_weekly_pence": 25000,
+        "lone_parent": true,
+        "children": 2,
+        "capital_pence": 700100,
+        "non_dependants": [
+          {
+            "working": false,
+            "gross_weekly_pence": 0
+          }
+        ]
+      }
+    },
+    "source": "SSI 2021/249 regs 13(6)(a)(ii), 63(1)(b), 90(1)(b); Sch 1 paras 1, 2",
+    "working": "applicable £95.55 + 2 x £109.85 (no family premium) = £315.25; income £250 + tariff on £7,001 (£1,001 above £6,000: 5 steps of £250 or part) £5 = £255, below it: the maximum, £1,800 less 365/7 x £5.55 (a non-dependant not in remunerative work) = £1,510.6071 (1,057,425/7 pence); band C, so no reg 14",
+    "council_tax_reduction_wa_364m_pence": 54986100000000,
+    "council_tax_reduction_wa_applicable_weekly_pence": 31525,
+    "council_tax_reduction_wa_bands_e_h_su_pence": 0
+  },
+  {
+    "name": "Scotland working-age CTR, second adult rebate 7.5 %",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 200000,
+        "other_weekly_pence": 60000,
+        "second_adult": {
+          "council_tax_pence": 200000,
+          "gross_weekly_pence": 30000
+        }
+      }
+    },
+    "source": "SSI 2021/249 regs 13(7), (10), 91; Sch 2 para 1",
+    "working": "single, other income £600 a week: reg 13 main reduction nil; a second adult with gross income £300 a week (at least £282, below £383): 7.5 % of the £2,000 council tax due = £150",
+    "council_tax_reduction_wa_364m_pence": 0,
+    "council_tax_reduction_wa_second_adult_364m_pence": 5460000000000,
+    "council_tax_reduction_wa_total_su_pence": 4866285060000000000
+  },
+  {
+    "name": "Scotland working-age CTR on UC, lone parent with childcare",
+    "input": {
+      "non_savings_pence": 1200000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1200000,
+      "country": "scotland",
+      "uc": {
+        "children": 1,
+        "childcare_monthly_pence": 40000,
+        "childcare_children": 1
+      },
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 140000,
+        "band": "B",
+        "lone_parent": true,
+        "children": 1
+      }
+    },
+    "source": "SSI 2021/249 regs 42, 43, 49(6), 57(1)(p), (2)(d), 78(3); Sch 3 para 5; UC Regs 2013 regs 22, 24, 34",
+    "working": "UC: pay £1,000 a month (no tax or NICs on £12,000), max £424.90 + £303.94 + childcare 85 % x £400 = £340 = £1,068.84 less 55 % x (£1,000 - £710) = £909.34; CTR: earnings £12,000/52 = £230.7692 less £25 = £205.7692; relevant UC payments min(£303.94 + £340, £909.34) x 12/52 = £148.6015; childcare charges £340 x 100/85 x 12/52 = £92.3077, to the penny £92.31; income £262.0608 less applicable £95.55 + £109.85 = £205.40: £56.6608 a week; £1,400 less 365/35 x £56.6608 = £809.1091 (7,362,893/91 pence)",
+    "council_tax_reduction_wa_364m_pence": 29451572000000,
+    "council_tax_reduction_wa_applicable_weekly_pence": 20540,
+    "council_tax_reduction_wa_bands_e_h_su_pence": 0
   }
 ]
