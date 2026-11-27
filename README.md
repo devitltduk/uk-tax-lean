@@ -1510,6 +1510,16 @@ born so that they stay in one band in all three terms; for a child who changes
 band during the year PolicyEngine gives a blend (a 2-year-old born in April 2024,
 under 2 in the April term, gets £11,339.20 there, not £10,146).
 
+## Printed as English (spike)
+
+`lake env lean --run Prose.lean` prints the personal allowance (ITA 2007 s35) and
+the s6/s10 bands as plain English ([`docs/prose/s35.md`](docs/prose/s35.md)) and in statute
+layout ([`docs/prose/s35-statute.md`](docs/prose/s35-statute.md)). Both are
+printed from a small rules language in `UkTax/Rules/` that is proved equal to
+`personalAllowanceFor` and `bandTax` for every parameter set. CI regenerates the
+files and fails if they drift. [`docs/prose/README.md`](docs/prose/README.md)
+compares the output with the Act and says whether it is worth extending.
+
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
