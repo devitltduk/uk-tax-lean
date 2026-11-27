@@ -32,6 +32,8 @@ inductive StepKind where
   | savingsAllowance
   | marriageAllowance
   | childcare
+  /-- Free school lunches lost (`UkTax/SchoolMeals.lean`). -/
+  | schoolMeals
   deriving Repr, DecidableEq
 
 /-- The pay at which adjusted net income is `t`, for savings `s` and dividends `d`. -/

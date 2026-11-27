@@ -26,6 +26,7 @@ import UkTax.Misc
 import UkTax.Ved
 import UkTax.StudentSupport
 import UkTax.CliffMap
+import UkTax.SchoolMeals
 import UkTax.CheckParams
 
 /-!
@@ -565,6 +566,61 @@ today, so any change to it is seen.
 /-- info: 'UkTax.adg_no_cliff' does not depend on any axioms -/
 #guard_msgs in
 #print axioms UkTax.adg_no_cliff
+
+/-- info: 'UkTax.childcareGrant_anti' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.childcareGrant_anti
+
+/-- info: 'UkTax.childcareGrant_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.childcareGrant_bounds
+
+/-- info: 'UkTax.childcareGrant_no_cliff' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.childcareGrant_no_cliff
+
+/-- info: 'UkTax.childcareGrant_slc' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.childcareGrant_slc
+
+/-! Free school lunches (P9h): where they can be lost, the £7,400.04 line, and the
+cliff map with them. -/
+
+/-- info: 'UkTax.Meals.value_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.Meals.value_mono
+
+/-- info: 'UkTax.fsm_loss_where' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.fsm_loss_where
+
+/-- info: 'UkTax.netAllFsm_drop_only_at_steps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.netAllFsm_drop_only_at_steps
+
+/-- info: 'UkTax.fsm_threshold' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.fsm_threshold
+
+/-- info: 'UkTax.fsm_cliff_example' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.fsm_cliff_example
+
+/-- info: 'UkTax.fsmH_succ' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.fsmH_succ
+
+/-- info: 'UkTax.mem_jumps' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.mem_jumps
+
+/-- info: 'UkTax.cliffMapFsm_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.cliffMapFsm_complete
+
+/-- info: 'UkTax.dropsFsm_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.dropsFsm_complete
 
 /-! Parametric guarantees: the figures as a parameter set (`UkTax/TaxParams.lean`) and the
 cliff map (`UkTax/CliffMap.lean`). -/

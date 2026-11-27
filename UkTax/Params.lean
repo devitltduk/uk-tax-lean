@@ -1060,6 +1060,43 @@ def plaThreshold : Nat := 1_491_000
 def plaNilAbove : Nat := 1_895_798
 def plaMinimum : Nat := 5_000
 
+/-- Childcare Grant (reg 45(5)): 85 % of the prescribed childcare charges for each
+week, at most £199.62 a week for one dependent child and £342.24 for two or more.
+Reg 47(2A)-(2C): the annual amount (`A`, 52 weeks of it) less the excess of the
+residual income of the partner and adult dependants and the net income of the
+children over £9,727 (one child) or £11,118 (two or more), the excess times the
+days qualifying over the days of the academic year; nil over £20,107.23 or
+£28,914.47. The sums were last substituted by SI 2025/162 Sch 2; SI 2026/130
+changes none of regs 44 to 47 (its Schedule lists no sum there), so they carry
+into 2026-27 (checked on legislation.gov.uk, 2026-11-27). The 2026-27 academic
+year has no 29 February, so F is 365. -/
+def cgPercent : Nat := 85
+def cgMaxOne : Nat := 19_962
+def cgMaxTwo : Nat := 34_224
+def cgThresholdOne : Nat := 972_700
+def cgThresholdTwo : Nat := 1_111_800
+def cgNilAboveOne : Nat := 2_010_723
+def cgNilAboveTwo : Nat := 2_891_447
+def cgYearDays : Nat := 365
+
+/-! ## Free school lunches in England, 2026-27 (P9h)
+
+Education Act 1996 s512ZB as in force in 2026-27 (checked on legislation.gov.uk,
+2026-11-27). The Universal Credit route of s512ZB(4)(a)(ai), (b)(ai) carries an
+earnings test (the Free School Lunches and Milk, and School and Early Years
+Finance (Amendments Relating to Universal Credit) (England) Regulations 2018, SI
+2018/148, regs 2 to 4): earned income (UC Regs 2013 Part 6 Ch 2; a couple's
+combined) of no more than £616.67 in the assessment period before the request,
+or £1,233.34 over two, or £1,850 over three. From 17 August 2026 s512ZB(4D)
+(Children's Wellbeing and Schools Act 2026 s32, commenced by SI 2026/803 reg 4)
+makes a pupil whose parent, or who, is in receipt of Universal Credit eligible
+whatever the earnings. -/
+
+/-- The SI 2018/148 reg 4(b)(i) limit for one assessment period: £616.67. With
+equal months the two- and three-period tests (£1,233.34, £1,850) give the same
+answer, so the test is twelve times it a year: £7,400.04. -/
+def fsmUcMonthlyLimit : Nat := 61_667
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

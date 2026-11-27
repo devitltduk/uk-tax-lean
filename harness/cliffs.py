@@ -69,6 +69,9 @@ class Household:
     partner_pay: int | None = None  # a working partner (pay = adjusted net income), fixed
     country: str = "england"
     marriage_allowance: str | None = None  # "receive": the spouse has elected to transfer
+    # Pupils for free school lunches: (value of the lunches 6 April-16 August 2026,
+    # 17 August 2026-5 April 2027, pence; in reception to year 2).
+    meals: tuple[tuple[int, int, bool], ...] = ()
 
     @property
     def cb(self) -> int:
@@ -78,6 +81,14 @@ class Household:
 # Childcare costs for Tax-Free Childcare are an illustrative assumption: £10,000 a
 # year per child, enough to reach the £2,000 top-up cap (20 % of £10,000).
 CHILDCARE = 1_000_000
+
+# Free school lunches valued at DfE's 2026-27 universal infant meal rate, £2.66 a
+# meal ("UIFSM: conditions of grant 2026 to 2027"), an illustrative value (a meal
+# has none in law): 65 school days from 6 April to 16 August 2026 and 125 from 17
+# August 2026 to 5 April 2027, a typical English term calendar with 190 in the
+# school year, DfE's assumption.
+MEAL = 266
+PUPIL = (65 * MEAL, 125 * MEAL, False)
 
 BRL_SCOT_INTERMEDIATE = 3_109_200  # top of the Scottish intermediate rate, Step 3 income
 
@@ -109,6 +120,13 @@ HOUSEHOLDS = [
         uc=True,
         childcare_costs=(CHILDCARE, CHILDCARE),
         funded_children=("under_2", "3_4"),
+    ),
+    Household(
+        "uc_school_meals",
+        "Lone parent, 2 children at school (years 3 to 11): UC, free school lunches",
+        children=2,
+        uc=True,
+        meals=(PUPIL, PUPIL),
     ),
     Household(
         "couple_child_3",
@@ -144,6 +162,14 @@ class Model:
         todo = sorted({g for g in pays if g not in self.cache})
         if not todo:
             return
+        payload = [self.payload(g) for g in todo]
+        out = subprocess.run(
+            [str(self.binary)], input=json.dumps(payload), capture_output=True, text=True, check=True
+        ).stdout
+        for g, r in zip(todo, json.loads(out)):
+            self.cache[g] = r
+
+    def payload(self, g: int) -> dict:
         base = {
             "savings_pence": self.h.savings,
             "dividends_pence": self.h.dividends,
@@ -157,18 +183,27 @@ class Model:
             base["uc"] = {"couple": False, "children": self.h.children}
         if self.h.funded_children:
             base["funded_children"] = [{"age": a} for a in self.h.funded_children]
+        if self.h.meals:
+            base["school_meals"] = {"pupils": [
+                {"value_before_pence": b, "value_after_pence": a, "infant": i} for b, a, i in self.h.meals]}
         if self.h.partner_pay is not None:
             base["partner"] = {"pay_pence": self.h.partner_pay, "adjusted_net_income_pence": self.h.partner_pay}
-        payload = [{"non_savings_pence": g, "employment_pence": g, **base} for g in todo]
-        out = subprocess.run(
-            [str(self.binary)], input=json.dumps(payload), capture_output=True, text=True, check=True
-        ).stdout
-        for g, r in zip(todo, json.loads(out)):
-            self.cache[g] = r
+        return {"non_savings_pence": g, "employment_pence": g, **base}
 
     def net(self, g: int) -> int:
         self.fetch([g])
-        return self.cache[g]["net_income_millionths_pence"]
+        key = "net_income_with_meals_millionths_pence" if self.h.meals else "net_income_millionths_pence"
+        return self.cache[g][key]
+
+    def meal_pennies(self) -> list[int]:
+        """The pennies where free lunches are lost, from the model's cliff map (complete
+        by `cliffMapFsm_complete`)."""
+        self.fetch([0])
+        payload = {**self.payload(0), "cliff_map": {"max_pay_pence": MAX_PAY}}
+        out = subprocess.run(
+            [str(self.binary)], input=json.dumps(payload), capture_output=True, text=True, check=True
+        ).stdout
+        return [d["pay_pence"] for d in json.loads(out)["cliff_map"]["drops"] if d["kind"] == "school_meals"]
 
     def step3(self, g: int) -> int:
         self.fetch([g])
@@ -211,6 +246,9 @@ def step_pennies(m: Model) -> dict[int, str]:
         g = first_at_least(m, limit, 0, MAX_PAY)
         if g is not None and m.step3(g) == limit:
             steps[g] = "savings allowance"
+    if h.meals:
+        for g in m.meal_pennies():
+            steps[g] = "free school meals"
     if h.marriage_allowance == "receive":
         assert not other, "maOk_payOnly locates the Marriage Allowance step for pay only"
         limit = BRL_SCOT_INTERMEDIATE if h.country == "scotland" else BRL
@@ -277,7 +315,7 @@ MIN_EARNINGS = 4 * 264_368  # childcare minimum earnings, £10,574.72 a year
 # One-off cliffs, drawn as drops with their £ amount. The other kinds repeat in
 # bands of small steps (the personal allowance every £2, the HICBC every £200)
 # and are described once per band; their average effect is a rate.
-ONE_OFF = ("childcare (£100,000)", "savings allowance", "Marriage Allowance")
+ONE_OFF = ("childcare (£100,000)", "savings allowance", "Marriage Allowance", "free school meals")
 BANDS = ("HICBC", "personal allowance")
 
 
@@ -407,6 +445,19 @@ def seed_checks(binary: pathlib.Path) -> list[str]:
     cliff = {d.pay: d for d in find_drops(ma)}.get(4_366_200)
     if cliff is None or cliff.kind != "Marriage Allowance" or cliff.drop != 25_199_500_000:
         fails.append(f"Marriage Allowance, Scotland: drop at £43,662.01 should be £251.995, got {cliff}")
+    # Lone parent on UC, two pupils with lunches worth £172.90 (65 x £2.66) to 16
+    # August and £332.50 (125 x £2.66) from 17 August: 1p over £7,400.04 of pay
+    # (twelve months of £616.67, SI 2018/148 reg 4(b)) the lunches to 16 August go,
+    # £345.80; pay is under the £710 a month work allowance and the personal
+    # allowance and primary threshold, so the penny is kept whole: £345.79. Where the
+    # UC award reaches nil the lunches from 17 August go, £665, less at most 0.72p
+    # of the penny kept (20 % tax, 8 % NICs).
+    fsm = Model(binary, next(h for h in HOUSEHOLDS if h.key == "uc_school_meals"))
+    ds = [d for d in find_drops(fsm) if d.kind == "free school meals"]
+    if len(ds) != 2 or ds[0].pay != 740_004 or ds[0].drop != 34_579 * UNIT:
+        fails.append(f"free school meals: drop at £7,400.05 should be £345.79, got {ds[:1]}")
+    elif not 66_499_280_000 <= ds[1].drop <= 66_500 * UNIT:
+        fails.append(f"free school meals: drop where UC ends should be £664.9928 to £665, got {ds[1]}")
     return fails
 
 
@@ -438,6 +489,12 @@ def main() -> int:
         "the working-parent hours go (30 a week under 3; the 15 on top of the universal 15 at 3",
         "and 4); the universal 15 hours stay. Reaching the minimum earnings gains Tax-Free",
         "Childcare and the working-parent hours, so it is a rise, not a drop.",
+        "",
+        "Free school lunches (England, Education Act 1996 s512ZB) are valued at DfE's £2.66 a meal,",
+        "an illustrative value: 65 school days from 6 April to 16 August 2026, when Universal Credit",
+        "qualifies only with earned income of at most £7,400.04 a year (SI 2018/148), and 125 from",
+        "17 August 2026, when any award of Universal Credit does (s512ZB(4D)). Their cliffs are",
+        "listed by `netAllFsm_drop_only_at_steps`, found exactly by `cliffMapFsm_complete`.",
         "",
         "The model's UC has no childcare costs element (85 % of costs up to £1,071.09 a month for",
         "one child, £1,836.16 for two or more: SI 2013/376 regs 34 and 36). With it UC would stay",
@@ -477,7 +534,7 @@ def main() -> int:
             md += ["No drops.", ""]
             continue
         md += ["| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |", "|---|---|---|---|---|"]
-        for kind in ("savings allowance", "HICBC", "childcare (£100,000)", "personal allowance"):
+        for kind in ("free school meals", "savings allowance", "HICBC", "childcare (£100,000)", "personal allowance"):
             ds = [d for d in drops if d.kind == kind]
             if not ds:
                 continue

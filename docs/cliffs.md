@@ -11,6 +11,12 @@ the working-parent hours go (30 a week under 3; the 15 on top of the universal 1
 and 4); the universal 15 hours stay. Reaching the minimum earnings gains Tax-Free
 Childcare and the working-parent hours, so it is a rise, not a drop.
 
+Free school lunches (England, Education Act 1996 s512ZB) are valued at DfE's £2.66 a meal,
+an illustrative value: 65 school days from 6 April to 16 August 2026, when Universal Credit
+qualifies only with earned income of at most £7,400.04 a year (SI 2018/148), and 125 from
+17 August 2026, when any award of Universal Credit does (s512ZB(4D)). Their cliffs are
+listed by `netAllFsm_drop_only_at_steps`, found exactly by `cliffMapFsm_complete`.
+
 The model's UC has no childcare costs element (85 % of costs up to £1,071.09 a month for
 one child, £1,836.16 for two or more: SI 2013/376 regs 34 and 36). With it UC would stay
 the better choice to much higher pay, so where the lone-parent households switch from UC
@@ -95,6 +101,17 @@ the step.
 
 - childcare (£100,000): one more penny over £100,000.00 costs £21,493.29, once; net income is back to its level at £147,668.50 of pay.
 - Reaching the minimum earnings (£10,574.72) *gains* £17,493.30, once (the working-parent hours start, and Tax-Free Childcare where it beats Universal Credit).
+
+## Lone parent, 2 children at school (years 3 to 11): UC, free school lunches
+
+| kind | where (pay reaching) | drops | each drop (one-off) | trap after each step |
+|---|---|---|---|---|
+| free school meals | £7,400.05 to £38,241.37 | 2 | £345.79 to £664.99 | £345.79 to £923.61 |
+| HICBC | £60,200.00 to £80,000.00 | 100 | £22.99 to £23.99 | £39.65 to £41.37 |
+| personal allowance | £100,002.00 to £125,140.00 | 12,570 | £0.39 | £0.68 to £0.75 |
+
+- free school meals: one more penny over £7,400.04 costs £345.79, once; net income is back to its level at £7,745.84 of pay.
+- free school meals: one more penny over £38,241.36 costs £664.99, once; net income is back to its level at £39,164.98 of pay.
 
 ## Couple, partner earns £40,000, 1 child aged 3: Tax-Free Childcare, funded hours
 

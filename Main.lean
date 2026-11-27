@@ -100,6 +100,19 @@ Optional fields:
   `targeted_other_benefit` is set, or the child has `"targeted_criteria": true`
   (output `funded_hours_targeted_millionths_pence`: what they add to
   `funded_hours_millionths_pence`).
+* `school_meals` (England): free school lunches, `{"pupils": [{"value_before_pence":
+  17290, "value_after_pence": 33250, "infant": false, "own_route": false}],
+  "other_benefit": false}`. Each pupil's lunches are valued for 6 April to 16
+  August 2026 and from 17 August 2026 (a meal has no statutory value; nil unless
+  given). Eligible all year as an infant (reception to year 2), on a route of
+  their own, or with the parent on guarantee credit or asylum support
+  (`other_benefit`); through the household's Universal Credit (an award above nil)
+  before 17 August only with earned income of at most £7,400.04 a year (a couple's
+  combined), from it whatever the earnings (Education Act 1996 s512ZB(4), (4A),
+  (4D); SI 2018/148). Outputs `free_school_meals_pence`,
+  `free_school_meals_uc_earnings_test_met`, `free_school_meals_eligible` and
+  `net_income_with_meals_millionths_pence` (`netAllFsm`); with `cliff_map`, the
+  map is of that net income.
 
 * `child_benefit_children`: Child Benefit for a whole 2026-27 (53 weeks) for that
   many children, in place of `child_benefit_pence` (output `child_benefit_pence`);
@@ -357,6 +370,10 @@ structure Case where
   residual incomes (pence), dependent children, household income given (pence),
   dependants' income for the grants (pence). -/
   sfe : Option (SfeSchedule × SfeCat × Bool × Bool × List Nat × Nat × Option Nat × Option Nat) := none
+  /-- The Childcare Grant (P9h), with the income of reg 47 (pence). -/
+  cg : Option (CgClaim × Nat) := none
+  /-- Free school lunches (P9h). -/
+  meals : Option Meals := none
   /-- Carer Support Payment: weekly overlapping benefits and additional cared for
   people (P9b). -/
   csp : Option (Nat × Nat) := none
@@ -442,6 +459,7 @@ def UkTax.StepKind.name : StepKind → String
   | .savingsAllowance => "savings_allowance"
   | .marriageAllowance => "marriage_allowance"
   | .childcare => "childcare"
+  | .schoolMeals => "school_meals"
 
 def dropJson (x : Drop) : Json :=
   Json.mkObj [("pay_pence", toJson x.pay), ("kind", toJson x.kind.name),
@@ -940,6 +958,30 @@ def parseCase (j : Json) : Except String Case := do
       pure (some (sched, cat, subB o "final_year", subB o "care_leaver", rs, ← sub o "dependent_children",
         ← opt "household_income_pence", ← opt "dependants_income_pence"))
     | none => pure none
+  let cg ← match (obj "student_support").bind (fun o => (o.getObjVal? "childcare_grant").toOption) with
+    | some g => do
+      let x ← match (obj "student_support").bind (fun o => (o.getObjVal? "dependants_income_pence").toOption) with
+        | some _ => sub ((obj "student_support").getD Json.null) "dependants_income_pence"
+        | none => throw "student_support.childcare_grant needs dependants_income_pence (the income of reg 47)"
+      let n ← sub g "children"
+      if n = 0 then throw "student_support.childcare_grant.children must be 1 or more"
+      let days ← match g.getObjVal? "days" with
+        | .ok _ => sub g "days"
+        | .error _ => pure 365
+      if days > 365 then throw "student_support.childcare_grant.days is at most 365 (reg 47(2A) E)"
+      let w ← sub g "weekly_charges_pence"
+      pure (some (CgClaim.mk (decide (2 ≤ n)) w days (subB g "halved"), x))
+    | none => pure none
+  let meals ← match obj "school_meals" with
+    | some o => do
+      if !england then throw "school_meals: England only (Education Act 1996 s512ZB)"
+      let ps ← match o.getObjValAs? (Array Json) "pupils" with
+        | .ok a => a.toList.mapM fun q => do
+            pure ({ infant := subB q "infant", own := subB q "own_route",
+                    before := ← sub q "value_before_pence", after := ← sub q "value_after_pence" } : Pupil)
+        | .error _ => throw "school_meals.pupils must be an array"
+      pure (some ({ pupils := ps, other := subB o "other_benefit" } : Meals))
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -994,7 +1036,7 @@ def parseCase (j : Json) : Except String Case := do
     ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
     studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp,
     targetedOther := (j.getObjValAs? Bool "targeted_other_benefit").toOption.getD false,
-    car := car, tv := tv, isa := isa, mw := mw, whdIn := whdIn, vedCar := vedCar, sfe := sfe }
+    car := car, tv := tv, isa := isa, mw := mw, whdIn := whdIn, vedCar := vedCar, sfe := sfe, cg := cg, meals := meals }
   return res
 
 def result (c : Case) : Json :=
@@ -1237,6 +1279,29 @@ def result (c : Case) : Json :=
                        ("parents_learning_allowance_half_pence", toJson (plaHalfPence x))]
           | none => [])
       | none => [])
+    ++ (match c.cg with
+      | some (g, x) =>
+        let v := childcareGrant73k g x
+        [("childcare_grant_73000ths_pence", toJson v), ("childcare_grant_pence", toJson (v / 73_000))]
+      | none => [])
+    ++ (match c.meals with
+      | some m =>
+        let award : Int := match floor with
+          | some f => ucAwardFloor P claims f ucEarned
+          | none => ucAward P claims ucEarned
+        let onUc := decide (0 < award)
+        let e := ucEarned + (if c.claims.couple then 10_000 * (c.claims.partnerEarned : Int) else 0)
+        let b := onUc && fsmEarningsOk e
+        [("free_school_meals_pence", toJson (m.value onUc b)),
+         ("free_school_meals_uc_earnings_test_met", toJson b),
+         ("free_school_meals_eligible", Json.arr (m.pupils.map fun ch => Json.mkObj
+            [("before_17_august", toJson (ch.eligibleBefore m b)),
+             ("from_17_august", toJson (ch.eligibleAfter m onUc))]).toArray),
+         ("net_income_with_meals_millionths_pence",
+          if c.employment = i.nonSavings && (c.carer.isNone || !c.claims.uc) then
+            toJson (netAllFsm c.period c.childBenefit rg c.claims m i.savings i.dividends c.employment)
+          else Json.null)]
+      | none => [])
     ++ (match c.isa with
       | some (age, subs, lp) =>
         [("isa_subscriptions_above_limit_pence", toJson (isaExcess subs)),
@@ -1307,17 +1372,23 @@ def result (c : Case) : Json :=
           ("guaranteed", toJson (decide (violations P = []) && inScope)),
           ("in_scope", toJson inScope),
           ("max_pay_pence", toJson maxPay),
-          ("drops", Json.arr ((oneOffDrops c.period c.childBenefit rg c.claims s d maxPay).map
+          ("drops", Json.arr ((match c.meals with
+            | some m => oneOffDropsFsm c.period c.childBenefit rg c.claims m s d maxPay
+            | none => oneOffDrops c.period c.childBenefit rg c.claims s d maxPay).map
             dropJson).toArray),
           ("personal_allowance_band",
-            match bandSummary c.period c.childBenefit rg c.claims s d maxPay with
+            match (match c.meals with
+              | some m => bandSummaryFsm c.period c.childBenefit rg c.claims m s d maxPay
+              | none => bandSummary c.period c.childBenefit rg c.claims s d maxPay) with
             | some b => Json.mkObj [("first_pay_pence", toJson b.first), ("last_pay_pence", toJson b.last),
                 ("count", toJson b.count), ("every_pence_of_income", toJson (200 : Nat)),
                 ("first_drop_millionths_pence", toJson b.firstDrop),
                 ("last_drop_millionths_pence", toJson b.lastDrop)]
             | none => Json.null)]
-          ++ (if whole then [("band_drops", Json.arr ((bandDrops c.period c.childBenefit rg c.claims s d
-                maxPay).map dropJson).toArray)] else [])))]
+          ++ (if whole then [("band_drops", Json.arr ((match c.meals with
+                | some m => bandDropsFsm c.period c.childBenefit rg c.claims m s d maxPay
+                | none => bandDrops c.period c.childBenefit rg c.claims s d maxPay).map dropJson).toArray)]
+              else [])))]
       | none => [])
     |> Json.mkObj
 

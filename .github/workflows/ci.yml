@@ -154,6 +154,9 @@ jobs:
       - name: Compare student support
         working-directory: harness
         run: uv run --frozen python compare_p9g.py --binary ../bin/uktax --random 1000
+      - name: Compare the Childcare Grant and free school meals
+        working-directory: harness
+        run: uv run --frozen python compare_p9h.py --binary ../bin/uktax --random 1000
       - name: Compare council tax and Council Tax Reduction
         working-directory: harness
         run: uv run --frozen python compare_council_tax.py --binary ../bin/uktax --random 1000
@@ -191,5 +194,6 @@ jobs:
             harness/out/compare_p9e.csv
             harness/out/compare_p9f.csv
             harness/out/compare_p9g.csv
+            harness/out/compare_p9h.csv
             harness/out/compare_cgt.csv
             harness/out/compare_sdlt.csv

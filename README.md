@@ -11,14 +11,15 @@ and the disability and carer benefits, the State Pension and Pension Credit,
 Scotland's devolved benefits, Tax-Free Childcare and the funded hours, council tax
 and Council Tax Reduction (the national schemes of England, Scotland and Wales and
 the English local schemes PolicyEngine models), Capital Gains Tax, SDLT, LBTT and
-LTT, student loan repayments, student support in England, company cars, the TV
-licence, ISAs, the minimum wage, Vehicle Excise Duty, the Warm Home Discount and
-the Winter Fuel Payment.
+LTT, student loan repayments, student support in England (with the Childcare
+Grant), free school meals in England, company cars, the TV licence, ISAs, the
+minimum wage, Vehicle Excise Duty, the Warm Home Discount and the Winter Fuel
+Payment.
 
-Of the 90 programme rows in [`docs/coverage.md`](docs/coverage.md), 68 are done and
-22 are out of scope with the reason (consumption duties, discretionary or
+Of the 90 programme rows in [`docs/coverage.md`](docs/coverage.md), 70 are done and
+20 are out of scope with the reason (consumption duties, discretionary or
 cost-reimbursement schemes, reported amounts and the like); none is left to build.
-[`docs/findings.md`](docs/findings.md) classifies 46 sets of differences from
+[`docs/findings.md`](docs/findings.md) classifies 47 sets of differences from
 PolicyEngine; the likely PolicyEngine errors among them have 13 draft issues,
 kept privately and not posted.
 
@@ -595,8 +596,61 @@ year: the maximum less £1 for every complete £6.54, £6.36, £6.41 or £6.47 o
 £4,582 less £1 per complete £4.16, nil below £50) and, with dependants' income,
 `adult_dependants_grant_half_pence` and `parents_learning_allowance_half_pence`
 (reg 47: half the excess over £8,746 or £14,910 off £3,545 or £2,024; the
-allowance at least £50). Sums from SI 2026/130 Sch. The Part 8 contribution and
-the Childcare Grant are not modelled.
+allowance at least £50). Sums from SI 2026/130 Sch. The Part 8 contribution is
+not modelled.
+
+The Childcare Grant (regs 45, 47(2) to (2C), (5)): `student_support.childcare_grant`
+with `children` (1, or 2 or more), `weekly_charges_pence` (the prescribed childcare
+charges each week, an input), `days` (qualifying days in the academic year, at
+most 365, default 365) and `halved` (reg 47(5): the partner is also a student or
+holds a statutory award and is supported for the dependants), with
+`dependants_income_pence` as the income of reg 47. Outputs
+`childcare_grant_73000ths_pence` (exact) and `childcare_grant_pence` (rounded
+down): 85 % of the charges, at most £199.62 a week for one child or £342.24 for
+two or more, for 52 weeks (`A`); over £9,727 or £11,118 of income, `A` less the
+excess; nil over £20,107.23 or £28,914.47; then times the days over 365, and
+halved. The sums are SI 2025/162's, which SI 2026/130 leaves unchanged for
+2026-27. As printed, reg 47(2A) and (2B) scale only the reduction by the days;
+the model scales the whole amount, as SLC's 2026-27 guidance does (findings
+#47). The exclusions of reg 45(3), (3B) and (4) (the UC childcare costs element,
+Tax-Free Childcare, healthcare bursary support, charges paid to the partner) and
+the nanny rule are the caller's. 2026-27 only.
+
+### Free school meals in England (`UkTax/SchoolMeals.lean`)
+
+Eligibility for free school lunches under the Education Act 1996 s512ZB, 2026-27
+only, in its two parts:
+
+| Route | 6 April to 16 August 2026 | From 17 August 2026 | Source |
+|---|---|---|---|
+| Universal Credit (parent's or pupil's) | earned income at most £616.67 in the last assessment period (£1,233.34 over two, £1,850 over three; a couple's combined): £7,400.04 a year over equal months | any award above nil | [s512ZB(4)(a)(ai), (b)(ai)](https://www.legislation.gov.uk/ukpga/1996/56/section/512ZB), [SI 2018/148 regs 2 to 4](https://www.legislation.gov.uk/uksi/2018/148); [s512ZB(4D)](https://www.legislation.gov.uk/ukpga/2026/21/section/32), in force 17 August 2026 ([SI 2026/803 reg 4](https://www.legislation.gov.uk/uksi/2026/803/regulation/4)); nursery schools [SI 2026/706](https://www.legislation.gov.uk/uksi/2026/706) |
+| Guarantee credit of Pension Credit, asylum support | eligible | eligible | s512ZB(4)(aa)(i) with [SI 2005/885](https://www.legislation.gov.uk/uksi/2005/885) (kept by Child Poverty Act 2010 s26(2)); s512ZB(4)(a)(iii) |
+| Reception, year 1, year 2 | eligible | eligible | s512ZB(4A) |
+
+Income support, income-based JSA, income-related ESA and the tax credits stopped
+being routes on 31 March 2022 (Welfare Reform Act 2012 Sch 14 Part 1), and the
+transitional protection of SI 2018/145 art 3 ended on 17 August 2026
+([SI 2026/813](https://www.legislation.gov.uk/uksi/2026/813)). A meal has no
+statutory money value, so the value of each pupil's lunches in each part is an
+input, nil unless given.
+
+Input `school_meals`: `pupils`, each with `value_before_pence` and
+`value_after_pence` (the lunches' value in each part), `infant` (reception to year
+2 at a maintained school or pupil referral unit) and `own_route` (eligible all year
+on a route of the pupil's own), and `other_benefit` (the parent is on guarantee
+credit or asylum support). The Universal Credit route uses the household's UC
+award and earned income (`uc`, with a couple's partner's earned income added).
+Outputs `free_school_meals_pence`, `free_school_meals_uc_earnings_test_met`,
+`free_school_meals_eligible` (each pupil, before and from 17 August) and
+`net_income_with_meals_millionths_pence` (`netAllFsm`: `netAll` plus the
+lunches). With `school_meals`, `cliff_map` maps that net income, its drops of
+`kind` `school_meals` included.
+
+For a lone parent on UC with two pupils in years 3 to 11, lunches valued at DfE's
+2026-27 £2.66 a meal (65 meals to 16 August, 125 after, £505.40 a year each): a
+penny of pay over £7,400.04 loses £345.80 of lunches (£345.79 of net income, the
+penny being kept whole under the work allowance), and where UC ends (£38,241.37 of
+pay) the remaining £665 goes. Infants keep theirs either way.
 
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
@@ -746,7 +800,12 @@ formulas: `TaxParams.maxStep`, `Regime.minGain`, `(100 − taper) % × minGain`)
 carer versions, the annual allowance charge bound (the top rate), and
 `cliffMap_complete` (`UkTax/CliffMap.lean`): for a household, every pay at which a
 penny more lowers net income is among `paPennies` and `oneOffPennies`, computed
-from the figures. The 2026-27 numbers quoted below are corollaries
+from the figures. With free school lunches (`UkTax/SchoolMeals.lean`),
+`netAllFsm_drop_only_at_steps` adds one kind of step, where the lunches are lost
+(`fsm_loss_where`: the UC award reaching nil, or earned income passing £7,400.04),
+and `cliffMapFsm_complete` finds every such penny: earned income is not monotone in
+pay, so the search is a bisection on a counter that never falls and rises at each
+of them (`fsmH_succ`). The 2026-27 numbers quoted below are corollaries
 (`maxStep_y2026`, `Regime.minGain_y2026`, `paStep_y2026`, `hicbcStep_y2026`,
 `valid_y2026`).
 
@@ -772,7 +831,7 @@ Only figures can change, not structure (the £1-per-£2 taper and its rounding, 
 1 % HICBC steps, three UK and six Scottish bands). Figures outside the set (benefit
 amounts, the Marriage Allowance and married couple's allowance, Class 4 and
 employer NICs, CGT, property taxes, council tax, student loans and support, cars,
-VED and the rest) stay 2026-27, so the 96 theorems about them are **proved for
+VED, free school meals and the Childcare Grant and the rest) stay 2026-27, so the 102 theorems about them are **proved for
 2026-27 only**; [`docs/parametric.md`](docs/parametric.md) lists every theorem in
 the axiom guard with its status. Mathlib is still not needed: products of
 symbolic rates and amounts are handled by three small lemmas and `omega`.
@@ -987,6 +1046,21 @@ and relief-at-source contributions.
   the full amount up to £25,000; at 60 or over £50 at £43,857.27 and nothing a penny higher; the
   Parents' Learning Allowance drops from £50 to nothing at £18,957.99, while the
   Adult Dependants' Grant tapers to a penny before it stops.
+- `childcareGrant_anti`, `childcareGrant_bounds`, `childcareGrant_no_cliff`
+  *(one point)*, `childcareGrant_slc` *(one point)* (`UkTax/StudentSupport.lean`):
+  more income never raises the Childcare Grant, for any charges, days and number
+  of children, halved or not; over a whole year it is at most 52 weeks of the
+  weekly basic amount (£10,380.24 or £17,796.48 at the caps) and exactly that up to
+  the threshold; at the full cap it has tapered to 1p at the (2C) limit, so there
+  is no cliff; and it gives SLC's worked examples for 2026-27 (£13,914.48,
+  £5,107.24, and £9,263.61 and £1,707.08 for 243 and 122 days).
+- `fsm_threshold` *(one point)*, `fsm_cliff_example` *(one point)*,
+  `fsm_loss_where`, `netAllFsm_drop_only_at_steps`, `cliffMapFsm_complete`
+  (`UkTax/SchoolMeals.lean`): free school lunches are lost only where the UC award
+  reaches nil or (before 17 August 2026) earned income passes £7,400.04, and net
+  income with them falls only there or at `netAll`'s steps; the cliff map finds
+  every such penny. For two pupils at £2.66 a meal the £7,400.04 cliff is £345.80
+  of lunches. The last three hold for any figures meeting `TaxParams.Valid`.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1127,7 +1201,9 @@ over (the £12,146 cliff is 6,073 % of £200 of pay, about 40 % of £30,000), so
 give it in £. Net income there is the proved `netAll`, read from
 `uktax` (`net_income_millionths_pence`), and the script evaluates it exactly at every
 step penny that `netAll_drop_only_at_steps` allows, so the list is complete within
-the model; nothing is sampled. CI regenerates the tables and charts and checks
+the model; nothing is sampled. For the household with free school lunches it is
+`netAllFsm` (`net_income_with_meals_millionths_pence`), with the pennies where the
+lunches are lost taken from `uktax`'s cliff map (`cliffMapFsm_complete`). CI regenerates the tables and charts and checks
 that `docs/` matches them byte for byte, and the
 script's seed checks hold figures worked out by hand: every personal allowance
 step costs 39.42p, £100,000 to £125,140 keeps exactly 38 % (the 60 % band plus
@@ -1146,6 +1222,12 @@ What it finds, for 2026-27:
 - **Personal savings allowance**: with savings income, crossing the basic rate
   limit costs £100 (£500 of interest moving from 0 % to 20 %) and crossing
   £125,140 costs £200 (£500 at 40 %), with traps of about £140 to £380 of pay.
+- **Free school lunches**: for a lone parent on UC with two pupils in years 3 to
+  11 (lunches at DfE's £2.66 a meal, illustrative), a penny of pay over £7,400.04
+  costs £345.79 (the lunches to 16 August 2026 go; the penny is kept whole under
+  the work allowance), back by £7,745.84; where the UC award reaches nil, at
+  £38,241.37, the lunches from 17 August go, £664.99, back by £39,164.98. The
+  first is 2026-27's alone: from 17 August 2026 any UC award qualifies.
 - **The £100,000 childcare cliff**: going 1p over £100,000 of adjusted net income
   loses Tax-Free Childcare and the working-parent funded hours (at DfE rates, £10,000
   of childcare a child on top):
@@ -1461,6 +1543,21 @@ apart (the over-60 cut-off); household income 44 of 200 agree, the rest exactly
 the deductions PolicyEngine leaves out; grants 150 and 178 of 214 agree, the rest
 inside the reg 47 tapers (one each at the last penny, £15,835.98 and £18,957.98,
 where the law pays 1p and the £50 minimum and PolicyEngine nil).
+
+### The Childcare Grant and free school meals against PolicyEngine
+
+`uv run python compare_p9h.py` compares the Childcare Grant for one child and two,
+with charges below, at and above the caps and the income of reg 47 at the band
+edges and at random, over a whole year (PolicyEngine has no input for the days or
+the reg 47(5) halving; golden cases check them). Agreement is to half a penny
+(PolicyEngine's float32); any other difference must be exactly PolicyEngine's full
+amount (85 % of the charges up to the cap, nil from the limit) against the law's
+£1-for-£1 taper, or the run fails (findings #47; PolicyEngine #2604). For free
+school meals PolicyEngine has no eligibility rule (`free_school_meals` is an
+input, and the run fails if a formula appears); the script checks that the
+model's value, given to PolicyEngine, is added to its net income exactly. Latest
+local run (`--random 1000`): Childcare Grant 338 of 1,090 agree, the other 752
+exactly the taper; free school meals 50 of 50.
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 
