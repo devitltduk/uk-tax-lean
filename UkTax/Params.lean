@@ -618,4 +618,43 @@ claimant or partner or listed employments (paras 2-5, at most £25 for a lone
 parent and £20 otherwise, para 1), else £10 for a couple and £5 single (para 7). -/
 def hbDisregardLoneParent : Nat := 2_500
 
+/-! ## Council tax and Council Tax Reduction, 2026-27
+
+Checked against legislation.gov.uk on 2026-11-27. -/
+
+/-- Band proportions (LGFA 1992 s5(1)): 6 : 7 : 8 : 9 : 11 : 13 : 15 : 18 for bands
+A to H, in ninths of band D; Wales adds band I at 21 (s5(1A)); Scotland 240 : 280 :
+320 : 360 : 473 : 585 : 705 : 882 in 360ths (s74(1), SSI 2016/368 art 2). -/
+def ctNinths : List Nat := [6, 7, 8, 9, 11, 13, 15, 18, 21]
+def ctScot360 : List Nat := [240, 280, 320, 360, 473, 585, 705, 882]
+
+/-- Single person discount (LGFA 1992 s11(1)(b), (3); s79 in Scotland): 25 %. -/
+def ctDiscountPercent : Nat := 25
+
+/-- Council Tax Reduction for pensioners: England (SI 2012/2885 Sch 1, as amended by
+SI 2026/27), Wales (SI 2013/3029 Sch 1, as amended by WSI 2026/13), Scotland (SSI
+2012/319, as amended by SSI 2026/56). For each day: 100 % of the day's council tax
+less the non-dependant deductions × 1/7 (England Sch 1 paras 7-8), less amount B,
+2 6/7 % of the week's income above the applicable amount (para 3(f)), i.e. 20 % a
+week. Capital limit £16,000 (SI 2012/2885 reg 11; WSI 2013/3029 reg 30; SSI
+2012/319 reg 40). Non-dependant deductions a
+week (in remunerative work, by gross weekly income; £x × 1/7 a day): England £15.95,
+under £605 £13.30, under £485 £10.60, under £279 or not working £5.20; Wales £20.05,
+£16.80, £13.35, £6.70 at the same bands; Scotland £16.55, under £614 £13.90, under
+£497 £10.95, under £286 or not working £5.55. -/
+def ctrNonDepEngland : List Nat := [520, 1_060, 1_330, 1_595]
+def ctrNonDepWales : List Nat := [670, 1_335, 1_680, 2_005]
+def ctrNonDepScotland : List Nat := [555, 1_095, 1_390, 1_655]
+def ctrBandsGb : List Nat := [27_900, 48_500, 60_500]
+def ctrBandsScotland : List Nat := [28_600, 49_700, 61_400]
+
+/-- Applicable amounts that differ from Housing Benefit's: Wales and Scotland have
+no lower rate for pensionable age reached from 1 April 2021 (single £256.00, couple
+£383.35: WSI 2013/3029 Sch 2 para 1; SSI 2012/319 Sch 1 para 2); Scotland's child
+amount is £109.85 (SSI 2012/319 Sch 1 para 3); Wales keeps the family premium,
+£20.22 (WSI 2013/3029 Sch 2 para 3), which England sets at nil for weeks from
+1 May 2016 (SI 2012/2885 Sch 2 para 3(b)). Premiums as Housing Benefit's in all
+three (Sch 2 Part 4; SSI 2012/319 Sch 1 para 13). -/
+def ctrChildScotland : Nat := 10_985
+
 end UkTax

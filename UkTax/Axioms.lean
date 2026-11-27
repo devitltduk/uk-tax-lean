@@ -7,6 +7,7 @@ import UkTax.Nics
 import UkTax.Disability
 import UkTax.Pension
 import UkTax.HousingBenefit
+import UkTax.CouncilTax
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -201,3 +202,15 @@ today, so any change to it is seen.
 /-- info: 'UkTax.nonDep_mono' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.nonDep_mono
+
+/-- info: 'UkTax.ctr_step' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ctr_step
+
+/-- info: 'UkTax.ctr_full' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ctr_full
+
+/-- info: 'UkTax.councilTax_discount' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.councilTax_discount

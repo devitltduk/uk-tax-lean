@@ -125,6 +125,14 @@ Optional fields:
   "disabled_children": 0, "carers": 0}`, Housing Benefit for pensioners
   (`UkTax/HousingBenefit.lean`); output `housing_benefit_twentieths_pence` for the
   year (52 weeks), and the weekly maximum and applicable amount;
+* `council_tax`: `{"band": "A" .. "H" (or "I" in Wales), "band_d_pence": n,
+  "single_person_discount": false}` (by `country`; output `council_tax_1440ths_pence`
+  for the year, `UkTax/CouncilTax.lean`);
+* `council_tax_reduction` (with `pension_credit`): `{"council_tax_pence": n}` (the
+  year's bill) and the household fields of `housing_benefit` (non-dependants,
+  premiums, `pensionable_age_before_april_2021`); the pensioner scheme of
+  `country`; outputs `council_tax_reduction_7280ths_pence` for the year (365 days)
+  and the withdrawal;
 * `new_state_pension`: `{"qualifying_years": n}` for someone with no qualifying
   year before 6 April 2016 (output `new_state_pension_weekly_35ths_pence`).
 
@@ -182,6 +190,9 @@ structure Case where
   pc : Option PcClaim := none
   nspYears : Option Nat := none
   hb : Option HbClaim := none
+  ctr : Option (Nat × HbClaim) := none
+  ct : Option Nat := none
+  nation : Nation := .england
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -406,29 +417,48 @@ def parseCase (j : Json) : Except String Case := do
         throw "pension_credit: severe_disability and carers must be 0, 1 or 2"
       pure (some pcl)
     | none => pure none
+  let parseHb (o : Json) : Except String HbClaim := do
+    let lha ← match o.getObjVal? "lha_weekly_pence" with
+      | .ok _ => some <$> sub o "lha_weekly_pence"
+      | .error _ => pure none
+    let nds ← match o.getObjValAs? (Array Json) "non_dependants" with
+      | .ok xs => xs.toList.mapM fun n => do
+          let g ← sub n "gross_weekly_pence"
+          pure ({ working := subB n "working", grossWeekly := g } : NonDep)
+      | .error _ => pure []
+    let rent ← sub o "rent_weekly_pence"
+    let sd ← sub o "severe_disability"
+    let edc ← sub o "enhanced_disability_children"
+    let dc ← sub o "disabled_children"
+    let cr ← sub o "carers"
+    pure {
+      rent := rent, lha := lha, nonDeps := nds, nonDepExempt := subB o "non_dependant_exempt",
+      oldRates := subB o "pensionable_age_before_april_2021", lone := subB o "lone_parent",
+      familyPremium := subB o "family_premium", severeDisability := sd,
+      enhancedDisabilityChildren := edc, disabledChildren := dc, carers := cr }
   let hb ← match obj "housing_benefit" with
     | some o => do
       if pc.isNone then
         throw "housing_benefit: give the household's income as pension_credit (HB(SPC), for pensioners)"
-      let lha ← match o.getObjVal? "lha_weekly_pence" with
-        | .ok _ => some <$> sub o "lha_weekly_pence"
-        | .error _ => pure none
-      let nds ← match o.getObjValAs? (Array Json) "non_dependants" with
-        | .ok xs => xs.toList.mapM fun n => do
-            let g ← sub n "gross_weekly_pence"
-            pure ({ working := subB n "working", grossWeekly := g } : NonDep)
-        | .error _ => pure []
-      let rent ← sub o "rent_weekly_pence"
-      let sd ← sub o "severe_disability"
-      let edc ← sub o "enhanced_disability_children"
-      let dc ← sub o "disabled_children"
-      let cr ← sub o "carers"
-      let h : HbClaim := {
-        rent := rent, lha := lha, nonDeps := nds, nonDepExempt := subB o "non_dependant_exempt",
-        oldRates := subB o "pensionable_age_before_april_2021", lone := subB o "lone_parent",
-        familyPremium := subB o "family_premium", severeDisability := sd,
-        enhancedDisabilityChildren := edc, disabledChildren := dc, carers := cr }
-      pure (some h)
+      pure (some (← parseHb o))
+    | none => pure none
+  let nation : Nation := if scottish then .scotland else if england then .england else .wales
+  let ctr ← match obj "council_tax_reduction" with
+    | some o => do
+      if pc.isNone then
+        throw "council_tax_reduction: give the household's income as pension_credit (the pensioner schemes)"
+      if !england && !scottish && (j.getObjValAs? String "country").toOption != some "wales" then
+        throw "council_tax_reduction: Northern Ireland has rates, not council tax"
+      pure (some (← sub o "council_tax_pence", ← parseHb o))
+    | none => pure none
+  let ct ← match obj "council_tax" with
+    | some o => do
+      let band ← match o.getObjValAs? String "band" with
+        | .ok b => match ["A", "B", "C", "D", "E", "F", "G", "H", "I"].idxOf? b with
+          | some i => if i = 8 && nation != .wales then throw "council_tax: band I is only in Wales" else pure i
+          | none => throw "council_tax: band must be A to I"
+        | .error _ => throw "council_tax: band is required"
+      pure (some (councilTax nation band (← sub o "band_d_pence") (subB o "single_person_discount")))
     | none => pure none
   let nspYears ← match obj "new_state_pension" with
     | some o => pure (some (← sub o "qualifying_years"))
@@ -443,7 +473,8 @@ def parseCase (j : Json) : Except String Case := do
     zeroRated := (j.getObjValAs? Bool "employer_zero_rated").toOption.getD false,
     class1A := c1, class2Weeks := c2,
     class3Weeks := c3, disability := disability, carer := carer,
-    maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb }
+    maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
+    ctr := ctr, ct := ct, nation := nation }
   return res
 
 def result (c : Case) : Json :=
@@ -524,6 +555,17 @@ def result (c : Case) : Json :=
         ("housing_benefit_maximum_weekly_pence", toJson h.maximum),
         ("housing_benefit_applicable_amount_weekly_pence", toJson (h.applicable pc))]
       | _, _ => [])
+    ++ (match c.ctr, c.pc with
+      | some (ctAmt, h), some pc => [
+        ("council_tax_reduction_7280ths_pence", toJson (councilTaxReduction c.nation ctAmt h pc)),
+        ("council_tax_reduction_withdrawal_7280ths_pence",
+          toJson (match ctrIncome h pc with
+            | some i => ctrWithdrawal (ctrNonDeps c.nation h) (ctrApplicable c.nation h pc) i
+            | none => 7_280 * ctAmt))]
+      | _, _ => [])
+    ++ (match c.ct with
+      | some v => [("council_tax_1440ths_pence", toJson v)]
+      | none => [])
     ++ (match c.nspYears with
       | some y => [("new_state_pension_weekly_35ths_pence", toJson (nspReduced35 y))]
       | none => [])

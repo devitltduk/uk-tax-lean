@@ -281,6 +281,28 @@ income net of tax (reg 33(12)) and nothing over £16,000 of capital. Input
 working-age Housing Benefit, the additional £17.10 earnings disregard, childcare
 charges, and the LHA itself (an input).
 
+### Council tax and Council Tax Reduction for pensioners (`UkTax/CouncilTax.lean`)
+
+- **Council tax**: the band D amount (an input) in the band's proportion, 6 : 7 :
+  8 : 9 : 11 : 13 : 15 : 18 ninths for bands A to H and 21 for band I in Wales
+  ([LGFA 1992 s5](https://www.legislation.gov.uk/ukpga/1992/14/section/5)), 240 :
+  280 : 320 : 360 : 473 : 585 : 705 : 882 360ths in Scotland
+  ([s74](https://www.legislation.gov.uk/ukpga/1992/14/section/74)); 25 % off with
+  one resident (s11, s79).
+- **Council Tax Reduction for pensioners**, in each nation's prescribed scheme
+  (England [SI 2012/2885](https://www.legislation.gov.uk/uksi/2012/2885/schedule/1),
+  Wales WSI 2013/3029, Scotland SSI 2012/319): for each day, the day's council tax
+  less non-dependant deductions × 1/7 (England £15.95, £13.30, £10.60, £5.20 at
+  £605, £485 and £279 of gross weekly income; Wales £20.05, £16.80, £13.35, £6.70;
+  Scotland £16.55, £13.90, £10.95, £5.55 at £614, £497 and £286), less 2 6/7 % of
+  the week's income above the applicable amount; summed over the 365 days of
+  2026-27. Income and the guarantee credit and savings credit routes as Housing
+  Benefit's. The applicable amount is Housing Benefit's in England (no family
+  premium); Wales and Scotland pay £256.00 / £383.35 whatever the date
+  pensionable age was reached, Wales with the £20.22 family premium, Scotland with
+  £109.85 a child. Inputs `council_tax` and `council_tax_reduction` (the year's
+  bill, with the household's income in `pension_credit`).
+
 ### Tax-Free Childcare and the funded hours (England)
 
 A parent is eligible when they, and their partner if they have one, each expect
@@ -452,6 +474,11 @@ relief-at-source contributions.
   any rise; with the guarantee credit it is the maximum whatever the income and
   capital; without it, a penny over £16,000 of capital loses all of it; and a
   non-dependant's deduction never falls as their income rises.
+- `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
+  extra unit of weekly income above the applicable amount costs exactly 20 % of it
+  for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
+  non-dependants the reduction is the whole bill; the single person discount is
+  exactly a quarter.
 - `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
@@ -501,7 +528,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 144 cases with the expected figures worked out by hand
+`tests/golden.json` holds 152 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -530,7 +557,9 @@ tax, a couple's £10 earnings disregard, the capital step 1p over £12,000, the
 severe disability amount, and the new State Pension's reduced rate and minimum.
 For Housing Benefit: the passport, the 65 % taper with tax deducted, the pre-2021
 allowance, a non-dependant band, the capital limit 1p over, savings credit only,
-and the LHA cap.
+and the LHA cap. For council tax: a band in each nation (Wales's band I), the
+single person discount, and the pensioner reduction's taper over 365 days, a
+non-dependant band, Wales's £256 allowance and a Scottish non-dependant.
 
 ### Where earning more lowers net income
 
@@ -743,6 +772,16 @@ within 2 float32 steps plus 65 % of the savings credit rounding of findings #22
 (largest difference 39p a year). Households with a non-dependant have no savings,
 since PolicyEngine shares household savings between benefit units (findings #26).
 
+### Council tax and Council Tax Reduction against PolicyEngine
+
+`uv run python compare_council_tax.py` compares council tax for every band in the
+three nations with one or two adults, and the pensioner reduction in each nation
+(ages 70 and 80, pensions, savings, non-dependants in each band or with no
+income). Latest local run: council tax 1,000 of 1,000; the reduction 1,024 of
+1,024 on PolicyEngine's 52-week basis. PolicyEngine annualises the daily schemes
+at 52 weeks instead of 365/7, so it withdraws 364/365 of the law's amount and
+pays up to £9.75 a year more (findings #27, a draft issue).
+
 ### Funded hours against PolicyEngine
 
 `uv run python compare_childcare.py` compares the funded hours' yearly value for a
@@ -769,5 +808,5 @@ GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
 comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs,
-non-means-tested benefits, Pension Credit and Housing Benefit, with 1,000 random
-cases each; reliefs and allowances).
+non-means-tested benefits, Pension Credit, Housing Benefit and council tax, with
+1,000 random cases each; reliefs and allowances).

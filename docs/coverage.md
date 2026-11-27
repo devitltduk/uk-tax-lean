@@ -34,7 +34,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P4 | Universal Credit in full (**done**, except self-employment and the minimum income floor) | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
 | P5 | Other means-tested and disability benefits | Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant (P5a, **done**); Housing Benefit for pensioners (P5b, **done**); working-age Housing Benefit and legacy benefits still in payment (P5c) |
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
-| P7 | Council tax | council tax, Council Tax Reduction |
+| P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
 | P8 | CGT, property taxes and the remaining income tax reliefs | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
 | P9 | The rest | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
@@ -129,9 +129,9 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
-| Council tax | `council_tax` (an input), `simulated_council_tax`, `council_tax_band_d_amount` | Local Government Finance Act 1992 | planned (P7: liability from band, Band D and discounts) |
-| Council Tax Reduction: Scotland and Wales national schemes, England pension-age scheme | `council_tax_reduction` and 60 components | LGFA 1992 s13A, Schs 1A, 1B; SI 2012/2885 (England, pension age); SI 2013/3029 (Wales); SSI 2021/249 (Scotland, working age), SSI 2012/319 (Scotland, pension age) | planned (P7) |
-| Council Tax Reduction: English working-age local schemes (Kingston, Merton, Newham, Oxford, Westminster) | `council_tax_reduction` via `gov.local_authorities.*` | each authority's scheme | planned (P7, the five PolicyEngine has) |
+| Council tax | `council_tax` (an input), `simulated_council_tax`, `council_tax_band_d_amount` | Local Government Finance Act 1992 ss 5, 11, 74, 79 | **done** (P7: liability from band and band D, the single person discount; other discounts, disregards, premiums and exemptions not modelled) |
+| Council Tax Reduction: Scotland and Wales national schemes, England pension-age scheme | `council_tax_reduction` and 60 components | LGFA 1992 s13A, Schs 1A, 1B; SI 2012/2885 (England, pension age); SI 2013/3029 (Wales); SSI 2021/249 (Scotland, working age), SSI 2012/319 (Scotland, pension age) | **done** for pensioners in all three nations (P7, daily over 365 days; findings #27, #28); the Welsh and Scottish working-age schemes planned (P7b) |
+| Council Tax Reduction: English working-age local schemes (Kingston, Merton, Newham, Oxford, Westminster) | `council_tax_reduction` via `gov.local_authorities.*` | each authority's scheme | planned (P7b, the five PolicyEngine has) |
 | High Value Council Tax Surcharge | `high_value_council_tax_surcharge` | announced at Budget 2025, from April 2028 | out of scope: not in force in 2026-27 |
 | Business rates | `business_rates` | LGFA 1988 | out of scope: receipts allocated to households by shareholding, an incidence assumption |
 

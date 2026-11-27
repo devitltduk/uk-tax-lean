@@ -67,7 +67,8 @@ def taxes(binary: pathlib.Path, cs: list[dict]) -> list[int]:
     people = []
     for c in cs:
         for p in (c["a"], c["b"]) if c["couple"] else (c["a"],):
-            people.append({"non_savings_pence": p["sp"] + p["pp"], "savings_pence": 0, "dividends_pence": 0})
+            people.append({"non_savings_pence": p["sp"] + p["pp"], "savings_pence": 0, "dividends_pence": 0,
+                           "country": c.get("nation", "england")})
     tax = iter(r["liability_pence"] for r in run(binary, people))
     return [next(tax) + (next(tax) if c["couple"] else 0) for c in cs]
 
