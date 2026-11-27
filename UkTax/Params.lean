@@ -706,6 +706,21 @@ amount is £109.85 (SSI 2012/319 Sch 1 para 3); Wales keeps the family premium,
 three (Sch 2 Part 4; SSI 2012/319 Sch 1 para 13). -/
 def ctrChildScotland : Nat := 10_985
 
+/-- Council Tax Reduction for working-age applicants in Wales (WSI 2013/3029 Sch 7,
+as amended for 2026-27; consolidated text on legislation.gov.uk checked
+2026-11-27): personal allowances (para 1) £101.85 single aged 25 or over (or
+entitled to main phase ESA) or lone parent, £80.60 single 18 to 24, £159.85
+couple; each child or young person £87.88 (para 3); the family premium £20.22 for
+any family with a child (para 4(1)(b), not limited to protected cases as in
+Housing Benefit). Premiums (para 17), the earnings disregards (Sch 8 paras 4-11,
+17) and the non-dependant deductions (Sch 6 para 5) are those of Housing Benefit
+and of the pensioner scheme. Tariff income (Sch 6 para 33): £1 for each £250 or
+part above £6,000. -/
+def ctrWalesSingle25 : Nat := 10_185
+def ctrWalesSingleU25 : Nat := 8_060
+def ctrWalesLoneParent : Nat := 10_185
+def ctrWalesCouple : Nat := 15_985
+
 /-! ## Capital Gains Tax, 2026-27
 
 TCGA 1992 as amended by Finance Act 2025 ss 7-8 and Finance Act 2023 s8. -/

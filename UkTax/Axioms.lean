@@ -14,6 +14,7 @@ import UkTax.CarerUc
 import UkTax.UcSelfEmployed
 
 import UkTax.HousingBenefitWa
+import UkTax.CtrWorkingAge
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -308,3 +309,11 @@ today, so any change to it is seen.
 /-- info: 'UkTax.hbWa_abolition' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms UkTax.hbWa_abolition
+
+/-- info: 'UkTax.ctrWalesUc_excess' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ctrWalesUc_excess
+
+/-- info: 'UkTax.ctrWaYear_bounds' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ctrWaYear_bounds

@@ -367,6 +367,29 @@ disregards, the cap's grace period.
   £109.85 a child. Inputs `council_tax` and `council_tax_reduction` (the year's
   bill, with the household's income in `pension_credit`).
 
+
+### Council Tax Reduction for working-age applicants in Wales (`UkTax/CtrWorkingAge.lean`)
+
+The Welsh prescribed scheme, classes C and D
+([WSI 2013/3029](https://www.legislation.gov.uk/wsi/2013/3029) regs 24, 25, Schs
+6-8), input `council_tax_reduction_working_age` with `"country": "wales"`. The
+maximum is the bill by the day less the non-dependant deductions × 1/7 (the
+pensioner amounts); the reduction is the maximum less 2 6/7 % a day of the week's
+income above the applicable amount, so over 365 days the bill less 365/7 weeks of
+the deductions and 20 % of the excess.
+
+| Figure | 2026-27 | Source |
+|---|---|---|
+| Personal allowance | £101.85 single 25 or over or lone parent, £80.60 single 18 to 24, £159.85 couple | Sch 7 para 1 |
+| Child, family premium | £87.88 each; £20.22 for any family with a child | Sch 7 paras 3, 4 |
+| Premiums, earnings disregards | as working-age Housing Benefit (£5, £10, £20, £25, the £17.10 step) | Sch 7 para 17, Sch 8 |
+| Capital | £16,000; £1 a week per £250 or part above £6,000 | Sch 6 para 33 |
+| On UC (an award above nil) | applicable amount the UC maximum amount × 12/52; income the UC income and award × 12/52 | Sch 6 paras 3, 9 |
+
+Income is net earnings from pay (gross less tax, Class 1 and half the pension
+contributions) less the disregards, other income and tariff income; income support,
+income-based JSA or income-related ESA give the maximum (`passported`). Not
+modelled: self-employment, childcare charges, the extended reduction.
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -589,6 +612,12 @@ relief-at-source contributions.
   guarantee credit it is the maximum whatever the income and capital; without it,
   a penny over £16,000 of capital loses all of it; and a
   non-dependant's deduction never falls as their income rises.
+- `ctrWalesUc_excess`, `ctrWaYear_bounds` (`UkTax/CtrWorkingAge.lean`): for a UC
+  claimant in Wales the excess income is the household's earned income less 55 %
+  of it above the work allowance, whatever the maximum amount, unearned income,
+  Carer's Allowance or childcare element (they cancel while UC is in payment), so
+  the reduction depends on earnings alone; a reduction never exceeds the bill and
+  each unit of excess costs at most 73/364 of it.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -930,6 +959,14 @@ local run: 1,017 of 1,017 agree within 2 float32 steps plus 0.4p (921 paid, 65 o
 UC). In law the child amount adds up to £8,742 a year for the 357 families with
 children, specified accommodation up to £847 where the cap would bite, and the
 weekly cap gives 8p to £63.35 a year less where it binds (findings #34).
+
+### Council Tax Reduction in Wales for working-age applicants against PolicyEngine
+
+`uv run python compare_ctr_wa.py` compares working-age households in Wales (single,
+under 25, lone parents, couples, 0 to 3 children) with pay and savings, half on
+UC. On PolicyEngine's 52-week basis (findings #27: its withdrawal is 364/365 of the
+law's), latest local run: 1,009 of 1,009 agree within 2 float32 steps plus 0.4p
+(and 2 steps of the UC amounts on UC; 796 paid, 510 on UC).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 
