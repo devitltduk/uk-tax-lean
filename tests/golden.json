@@ -2767,5 +2767,83 @@
     "working": "as above, but Housing Benefit in specified accommodation counts as nil, and there are no other welfare benefits: no reduction, 52 x £300 = £15,600",
     "housing_benefit_wa_rate_before_millionths_pence": 1560000000000,
     "housing_benefit_wa_rate_from_october_millionths_pence": 1560000000000
+  },
+  {
+    "name": "Wales working-age CTR, single on pay, not on UC",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "non_savings_pence": 1200000,
+      "employment_pence": 1200000,
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 150000
+      }
+    },
+    "source": "WSI 2013/3029 regs 24, 25, Sch 6 paras 4-6, 15, 33, Sch 7 paras 1, 3, 4, Sch 8",
+    "working": "net earnings £12,000 less 52 x £5 = £11,740; applicable 52 x £101.85 = £5,296.20; excess £6,443.80 (52 weeks); amount B 2 6/7 % a day of the week's excess for 365 days: £6,443.80 x 73 / 364 = £1,292.3005; reduction £1,500 - £1,292.3005 = £207.6995 (x 364 000 000 per penny)",
+    "council_tax_reduction_wa_364m_pence": 7560260000000
+  },
+  {
+    "name": "Wales working-age CTR on UC: income and award against the maximum amount",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "non_savings_pence": 1000000,
+      "employment_pence": 1000000,
+      "uc": {
+        "couple": false,
+        "children": 1
+      },
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 250000
+      }
+    },
+    "source": "WSI 2013/3029 Sch 6 paras 3, 6, 9; SI 2013/376 regs 22, 36",
+    "working": "UC: maximum 12 x (£424.90 + £303.94) = £8,746.08; taper 55 % x (£10,000 - £8,520) = £814; award £7,932.08. Applicable amount the maximum, income £10,000 + £7,932.08 (each x 12/52 a week): excess £9,186 a year (52 weeks). £9,186 x 73 / 364 = £1,842.2473; reduction £2,500 - £1,842.2473 = £657.7527",
+    "council_tax_reduction_wa_364m_pence": 23942200000000
+  },
+  {
+    "name": "Wales working-age CTR, passported, with a working non-dependant",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 120000,
+        "passported": true,
+        "non_dependants": [
+          {
+            "working": true,
+            "gross_weekly_pence": 30000
+          }
+        ]
+      }
+    },
+    "source": "WSI 2013/3029 Sch 6 paras 4, 5(2)(b), 6(2)",
+    "working": "income support etc.: class C, the maximum. Non-dependant on £300 a week: £13.35 x 1/7 a day, 365/7 x £13.35 = £696.1071; £1,200 - £696.1071 = £503.8929",
+    "council_tax_reduction_wa_364m_pence": 18341700000000
+  },
+  {
+    "name": "Wales working-age CTR, lone parent below the applicable amount (family premium)",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "non_savings_pence": 1500000,
+      "employment_pence": 1500000,
+      "council_tax_reduction_working_age": {
+        "council_tax_pence": 180000,
+        "lone_parent": true,
+        "children": 2
+      }
+    },
+    "source": "WSI 2013/3029 Sch 7 paras 1, 3, 4(1)(b), Sch 8 para 5",
+    "working": "applicable £101.85 + 2 x £87.88 + £20.22 (any family with a child in Wales) = £297.83 a week, £15,487.16 a year; pay £15,000 less tax £486 and Class 1 £194.40 = £14,319.60, less 52 x £25 = £13,019.60, below it: class C, the whole £1,800",
+    "council_tax_reduction_wa_364m_pence": 65520000000000,
+    "council_tax_reduction_wa_applicable_weekly_pence": 29783
   }
 ]

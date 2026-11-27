@@ -68,6 +68,8 @@ CHECKED = (
     "housing_benefit_wa_rate_before_millionths_pence",
     "housing_benefit_wa_rate_from_october_millionths_pence",
     "housing_benefit_wa_payable_728_millionths_pence",
+    "council_tax_reduction_wa_364m_pence",
+    "council_tax_reduction_wa_applicable_weekly_pence",
 )
 
 failures = 0

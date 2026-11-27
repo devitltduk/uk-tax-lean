@@ -82,6 +82,9 @@ jobs:
       - name: Compare working-age Housing Benefit
         working-directory: harness
         run: uv run --frozen python compare_housing_wa.py --binary ../bin/uktax --random 1000
+      - name: Compare Council Tax Reduction, Wales, working age
+        working-directory: harness
+        run: uv run --frozen python compare_ctr_wa.py --binary ../bin/uktax --random 1000
       - name: Compare council tax and Council Tax Reduction
         working-directory: harness
         run: uv run --frozen python compare_council_tax.py --binary ../bin/uktax --random 1000
@@ -108,5 +111,6 @@ jobs:
             harness/out/compare_housing.csv
             harness/out/compare_housing_wa.csv
             harness/out/compare_council_tax.csv
+            harness/out/compare_ctr_wa.csv
             harness/out/compare_cgt.csv
             harness/out/compare_sdlt.csv
