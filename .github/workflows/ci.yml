@@ -58,6 +58,9 @@ jobs:
       - name: Compare Universal Credit in full
         working-directory: harness
         run: uv run --frozen python compare_uc_full.py --binary ../bin/uktax --random 1000
+      - name: Compare Universal Credit for the self-employed
+        working-directory: harness
+        run: uv run --frozen python compare_uc_se.py --binary ../bin/uktax --random 1000
       - name: Compare funded childcare hours
         working-directory: harness
         run: uv run --frozen python compare_childcare.py --binary ../bin/uktax --random 1000
@@ -93,6 +96,7 @@ jobs:
             harness/out/comparison.csv
             harness/out/compare_uc.csv
             harness/out/compare_uc_full.csv
+            harness/out/compare_uc_se.csv
             harness/out/compare_childcare.csv
             harness/out/compare_reliefs.csv
             harness/out/compare_nics.csv

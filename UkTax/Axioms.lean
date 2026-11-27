@@ -11,6 +11,7 @@ import UkTax.CouncilTax
 import UkTax.Cgt
 import UkTax.Sdlt
 import UkTax.CarerUc
+import UkTax.UcSelfEmployed
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -265,3 +266,15 @@ today, so any change to it is seen.
 /-- info: 'UkTax.cgtBand_scottish' does not depend on any axioms -/
 #guard_msgs in
 #print axioms UkTax.cgtBand_scottish
+
+/-- info: 'UkTax.mifCouple_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.mifCouple_eq
+
+/-- info: 'UkTax.uc_flat_below_floor' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.uc_flat_below_floor
+
+/-- info: 'UkTax.earned_plus_uc_mono_floor' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.earned_plus_uc_mono_floor

@@ -63,6 +63,8 @@ CHECKED = (
     "cgt_exact_ten_thousandths_pence",
     "sdlt_exact_ten_thousandths_pence",
     "net_income_carer_uc_millionths_pence",
+    "uc_earned_income_ten_thousandths_pence",
+    "uc_minimum_income_floor_ten_thousandths_pence",
 )
 
 failures = 0

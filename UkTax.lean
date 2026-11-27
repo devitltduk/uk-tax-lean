@@ -14,4 +14,5 @@ import UkTax.CouncilTax
 import UkTax.Cgt
 import UkTax.Sdlt
 import UkTax.CarerUc
+import UkTax.UcSelfEmployed
 import UkTax.Axioms

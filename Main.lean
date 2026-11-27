@@ -71,7 +71,15 @@ Optional fields:
   property allowances and rent-a-room relief elected as gives the least
   (`UkTax/Profits.lean`), are added to `non_savings_pence` (which is then the
   other non-savings income, such as pay). No losses: a loss counts as nil. Not
-  with `uc` or the childcare tests;
+  with the childcare tests; with `uc`, a trade only (no property or rent-a-room
+  income): its receipts less expenses, less the tax and Class 4 on it, are
+  self-employed earnings (reg 57, nil for a loss; `UkTax/UcSelfEmployed.lean`).
+  `uc.minimum_income_floor`: `{"expected_hours": 35, "partner_expected_hours": 35,
+  "whole_pounds": true}` applies the floor of reg 62 (the caller has found the
+  claimant in gainful self-employment, subject to all work-related requirements
+  and outside a start-up period); outputs `uc_earned_income_ten_thousandths_pence`
+  (before the floor) and `uc_minimum_income_floor_ten_thousandths_pence` (the net
+  individual threshold);
 * National Insurance beyond employee Class 1 (`UkTax/Nics.lean`):
   `employer_zero_rated` (an employee under 21 or a relevant apprentice under 25:
   employer Class 1 at 0 % up to the upper secondary threshold; default false),
@@ -208,6 +216,11 @@ structure Case where
   nation : Nation := .england
   cgt : Option (Nat × Nat) := none
   sdlt : Option (SdltKind × Nat) := none
+  /-- UC profit of the trade, receipts less expenses (reg 57), pence. -/
+  ucProfit : Int := 0
+  /-- The minimum income floor: whole pounds, the claimant's and the partner's
+  expected hours. -/
+  mif : Option (Bool × Nat × Nat) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -345,9 +358,22 @@ def parseCase (j : Json) : Except String Case := do
   let re ← optField "rent_a_room_expenses_pence"
   let shared := (j.getObjValAs? Bool "rent_a_room_shared").toOption.getD false
   let profits := tradeProfit tr te + propertyProfit shared pr pe rr re
-  if tr + te + pr + pe + rr + re > 0 && (uc.isSome || !costs.isEmpty || partner.isSome
+  if tr + te + pr + pe + rr + re > 0 && (!costs.isEmpty || partner.isSome
       || (j.getObjVal? "funded_children").toOption.isSome) then
-    throw "trading, property and rent-a-room income are not modelled with Universal Credit or the childcare tests yet"
+    throw "trading, property and rent-a-room income are not modelled with the childcare tests yet"
+  if pr + pe + rr + re > 0 && uc.isSome then
+    throw "property and rent-a-room income are not modelled with Universal Credit yet"
+  let mif ← match (j.getObjVal? "uc").toOption.bind (fun u => (u.getObjVal? "minimum_income_floor").toOption) with
+    | some m => do
+      let h (k : String) : Except String Nat :=
+        match m.getObjVal? k with
+        | .ok _ => match m.getObjValAs? Nat k with
+          | .ok v => .ok v
+          | .error _ => .error s!"uc.minimum_income_floor.{k} must be a whole number of hours"
+        | .error _ => .ok 35
+      pure (some ((m.getObjValAs? Bool "whole_pounds").toOption.getD true, ← h "expected_hours",
+        ← h "partner_expected_hours"))
+    | none => pure none
   let income : Income :=
     { income with nonSavings := income.nonSavings - netPay + profits }
   let rg : Regime := { scottish, relief, netPay, blind, maTransfer, maReceive, mca }
@@ -509,7 +535,8 @@ def parseCase (j : Json) : Except String Case := do
     class1A := c1, class2Weeks := c2,
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
-    ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt }
+    ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
+    ucProfit := (tr : Int) - te, mif := mif }
   return res
 
 def result (c : Case) : Json :=
@@ -523,6 +550,17 @@ def result (c : Case) : Json :=
     | some ov => if c.claims.uc then c.claims.withCa (caYear true ov (caEarnings c.period rg c.employment))
                  else c.claims
     | none => c.claims
+  -- earned income for UC: pay, plus self-employed earnings (reg 57) with a trade
+  let ucEarned := if c.ucProfit ≠ 0 || c.tradeProfit > 0 then
+      earnedWithTrade c.period rg c.employment c.tradeProfit c.ucProfit
+    else earned c.period rg i.savings i.dividends c.employment
+  -- the minimum income floor (reg 62): a lower bound on the claimant's earned income
+  let mifF : Option Int := c.mif.map fun (w, h, _) => mifNetYear rg.scottish w h
+  let floor : Option Int := c.mif.map fun (w, h, ph) =>
+    let F := mifNetYear rg.scottish w h
+    if c.claims.couple then
+      min F (F + mifNetYear rg.scottish w ph - 10_000 * (c.claims.partnerEarned : Int))
+    else F
   [
     ("liability_pence", toJson (finalLiability rg i)),
     ("tax_exact_ten_thousandths_pence", toJson (finalTaxExact rg i)),
@@ -550,7 +588,11 @@ def result (c : Case) : Json :=
     ("class_3_pence", toJson (class3 c.class3Weeks)),
     ("hicbc_pence", toJson (hicbc ani c.childBenefit)),
     ("uc_millionths_pence",
-      toJson (ucAward claims (earned c.period rg i.savings i.dividends c.employment))),
+      toJson (match floor with
+        | some f => ucAwardFloor claims f ucEarned
+        | none => ucAward claims ucEarned)),
+    ("uc_earned_income_ten_thousandths_pence", toJson ucEarned),
+    ("uc_minimum_income_floor_ten_thousandths_pence", toJson mifF),
     ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment ani)),
     ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment ani)),
     ("childcare_eligible", toJson (childcareEligible c.claims c.employment ani)),
