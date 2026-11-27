@@ -121,7 +121,7 @@ the 2026-27 rates, the step positions as literals), or **new**.
 | `cgt_band` | Cgt.lean | already | any figures | band is the (parametric) BRL less Step 3 income; CGT rates 2026-27 |
 | `ucAward_withCa` | CarerUc.lean | easy | any figures |  |
 | `carer_uc_net` | CarerUc.lean | easy | any figures |  |
-| `carer_uc_cliff` | CarerUc.lean | easy | any figures |  |
+| `carer_uc_cliff` | CarerUc.lean | easy | any figures | restated: the cliff at pay `g + 1` over the earnings limit (before, `carer_uc_net` at one pay) |
 | `cgtBand_scottish` | Cgt.lean | already | any figures |  |
 | `mifCouple_eq` | UcSelfEmployed.lean | already | any figures | no figure of the set involved |
 | `uc_flat_below_floor` | UcSelfEmployed.lean | already | any figures |  |
@@ -140,6 +140,7 @@ the 2026-27 rates, the step positions as literals), or **new**.
 | `cliffMap_complete` | CliffMap.lean | new | `Valid` | households in `CliffScope` |
 | `firstAbove_eq` | CliffMap.lean | new | any figures | binary search correctness |
 | `Regime.topRate_y2026` | Reliefs.lean | new | 2026-27 (a fact about the default set) |  |
+| `aaCharge_le_y2026` | Reliefs.lean | new | 2026-27 (a fact about the default set) | `aaCharge_le` with `topRate_y2026`: 45 % outside Scotland, 48 % in it |
 | `bandTax_eq` | Proofs.lean | new | rates in order, BRL ≤ HRL |  |
 | `sliceTax_mono` | Proofs.lean | new | rates in order, BRL ≤ HRL |  |
 
@@ -150,7 +151,13 @@ the 2026-27 rates, the step positions as literals), or **new**.
 These are about figures outside the parameter set (benefit amounts and their
 limits, Class 4 and employer NICs, CGT, SDLT, LBTT and LTT, council tax and its
 reductions, student loans and support, company cars, VED, the minimum wage and
-ISAs), which the model holds at their 2026-27 values. `class4Exact_full_class1`
+ISAs), which the model holds at their 2026-27 values. As in the README, several
+are checks at one point (`lbtt_ads_cliff`, `ltt_higher_cliff`, `ftb_cliff`,
+`higher_cliff`, `oxford_cliffs`, `pla_cliff`, `adg_no_cliff`, `ml80c_cliff`,
+`csp_cliff`, `caYear_cliff`, `ma_threshold_cliff`, `targeted_cliff`,
+`targetedValue_two`, `car_50g_step`, `lisa_age_cliff`, `ved_supplement_cliff`,
+`sl_unearned_cliff`, `wfp_charge_cliff`): they give the size of a jump at a named
+edge, not that there is no other. `class4Exact_full_class1`
 depends on a relation between specific figures (employee Class 1 at 8 % above
 Class 4 at 6 % on the same band) and is stated for `TaxParams.y2026`.
 
@@ -159,8 +166,8 @@ Class 4 at 6 % on the same band) and is stated for `TaxParams.y2026`.
 | Cgt.lean | `cgt_succ_other`, `cgt_succ_badr`, `cgt_exempt` |
 | CompanyCar.lean | `rangePct_bounds`, `co2Pct_bounds`, `co2Pct_mono`, `rangePct_anti`, `carPct_bounds`, `carPct_mono`, `carPct_range`, `car_50g_step` |
 | CouncilTax.lean | `ctr_step`, `ctr_full`, `councilTax_discount` |
-| CtrEnglandLocal.lean | `newham_at_most_70`, `localYear_taper`, `oxford_cliff_480`, `oxfordPct_anti`, `oxford_mono` |
-| CtrWorkingAge.lean | `ctrWaYear_bounds`, `scotBandsEH_le_main`, `scotBandsEH_floor`, `scotTotal_bounds`, `scot_capital_cliff` |
+| CtrEnglandLocal.lean | `newham_at_most_70`, `localYear_taper`, `oxford_cliffs`, `oxfordPct_anti`, `oxford_mono` |
+| CtrWorkingAge.lean | `ctrWaYear_bounds`, `scotBandsEH_le_main`, `scotBandsEH_floor`, `scotTotal_bounds`, `scotTotal_le_bill`, `scot_capital_cliff` |
 | Devolved.lean | `wfpAmount_eq`, `scp_cliff`, `csp_cliff`, `pawhpAmount_le` |
 | Disability.lean | `caYear_anti`, `caYear_change`, `caYear_cliff`, `ma_threshold_cliff`, `ma_mono`, `jsa_total_succ`, `esa_total_gain` |
 | HousingBenefit.lean | `hb_total_gain`, `hb_passport`, `hb_capital_cliff`, `nonDep_mono` |
@@ -175,4 +182,4 @@ Class 4 at 6 % on the same band) and is stated for `TaxParams.y2026`.
 | StudentLoans.lean | `threshold_le`, `sl_unearned_cliff`, `sl_unearned_cliff_size`, `sl_succ_earned`, `wfpAmount_le`, `wfp_charge_cliff`, `wfp_charge_benefit` |
 | StudentSupport.lean | `ml80a_anti`, `ml80b_anti`, `ml80a_d_bounds`, `ml80c_cliff`, `pla_cliff`, `adg_no_cliff` |
 | Targeted.lean | `targeted_cliff`, `targetedValue_two`, `targetedExtra_working` |
-| Ved.lean | `ved_supplement_cliff`, `vedFirst_top`, `vedFirst_mono_lt`, `vedFirst_mono` |
+| Ved.lean | `ved_supplement_cliff`, `vedFirst_top`, `vedFirst_mono_lt`, `vedFirst_mono`, `vedFirstDiesel_top`, `vedFirstDiesel_mono_lt`, `vedFirstCar_mono` |

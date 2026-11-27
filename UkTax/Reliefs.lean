@@ -190,6 +190,14 @@ theorem aaCharge_le {rg : Regime} (hP : rg.params.Valid) (i : Income) (c : Nat) 
   dsimp only
   omega
 
+/-- For 2026-27: the annual allowance charge is at most 45 % of the excess outside
+Scotland and 48 % in it. -/
+theorem aaCharge_le_y2026 {rg : Regime} (h : rg.params = .y2026) (i : Income) (c : Nat) :
+    aaCharge rg i c ≤ (if rg.scottish then 4_800 else 4_500) * c := by
+  have hP : rg.params.Valid := by rw [h]; exact valid_y2026
+  have := aaCharge_le hP i c
+  rwa [Regime.topRate_y2026 h] at this
+
 /-- **The taper never takes the allowance below £10,000 or above £60,000.** -/
 theorem allowance_bounds (r : ReliefsIn) : aaMinimum ≤ r.allowance ∧ r.allowance ≤ annualAllowance := by
   unfold ReliefsIn.allowance aaMinimum annualAllowance

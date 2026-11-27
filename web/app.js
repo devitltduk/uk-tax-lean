@@ -174,7 +174,8 @@ function showResult(s) {
   showCheck(r, s.params);
   const net = takeHome(r);
   $("net").textContent = net == null ? "n/a" : gbp.format(net);
-  $("netMonthly").textContent = net == null ? "" : `${gbp.format(net / 12)} a month`;
+  // Not a model output: the year divided by 12 here, and labelled so.
+  $("netMonthly").textContent = net == null ? "" : `${gbp.format(net / 12)} a month (the year ÷ 12, worked out on this page)`;
 
   const ucCounted = r.uc_millionths_pence >= r.tfc_millionths_pence;
   const rows = [
@@ -339,7 +340,8 @@ function drawChart(sw, you) {
     tip.append(strong, ` take-home at ${gbp0.format(px)} pay`);
     if (mtr != null) {
       const p = document.createElement("div");
-      p.textContent = `keeps ${Math.round((1 - mtr) * 100)}p of each extra £1 here`;
+      // Not a model output: the slope between the neighbouring chart points, labelled so.
+      p.textContent = `keeps about ${Math.round((1 - mtr) * 100)}p of each extra £1 here (from the neighbouring points, worked out on this page)`;
       tip.append(p);
     }
     tip.hidden = false;
@@ -376,7 +378,12 @@ function drawChart(sw, you) {
     const tr = body.insertRow();
     for (const c of row.cells) tr.insertCell().textContent = c;
   }
-  if (!rows.length) body.insertRow().insertCell().textContent = "No cliffs in this range.";
+  if (!rows.length) {
+    // "No cliffs" only where the cliff map is proved complete for this situation.
+    body.insertRow().insertCell().textContent = !sw.cm ? "No cliff map for this situation."
+      : sw.cm.guaranteed ? "No cliffs in this range."
+      : "None found, but the list is not proved complete here (see the note above).";
+  }
   const note = $("cliffNote");
   if (!sw.cm) note.textContent = "The cliff map is not available for this situation (income other than pay, or Carer's Allowance with Universal Credit).";
   else if (sw.cm.guaranteed) note.textContent = `Every cliff below ${gbp0.format(sw.cm.max_pay_pence / 100)} of pay is listed: proved for these figures (cliffMap_complete).`;

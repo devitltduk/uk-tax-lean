@@ -1147,7 +1147,7 @@ def result (c : Case) : Json :=
           else (if onUc then walesUcExcess P claims ucEarned else walesOwnExcess h E)
         let passported := h.passported && !onUc
         let xEff : Int := if passported then 0 else x
-        let capOk := onUc || !(h.capital > hbCapitalLimit)
+        let capOk := ctrCapitalOk onUc h.capital
         let main : Int := if capOk then ctrWaYear ct nd xEff else 0
         [("council_tax_reduction_wa_364m_pence", toJson main),
          ("council_tax_reduction_wa_withdrawal_364m_pence",

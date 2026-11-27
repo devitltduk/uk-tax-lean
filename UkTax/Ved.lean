@@ -77,4 +77,33 @@ theorem vedFirst_mono (x : Nat) :
   · exact vedFirst_mono_lt x h
   · rw [vedFirst_top x (by omega), vedFirst_top (x + 1) (by omega)]; exact Nat.le_refl _
 
+/-- Above 255 g/km a diesel car's first licence costs the top rate. -/
+theorem vedFirstDiesel_top (x : Nat) (h : 255 < x) :
+    bandRate vedFirstYearDiesel vedFirstYearLimits x = 5690 := by
+  simp only [bandRate, vedFirstYearDiesel, vedFirstYearLimits]
+  simp only [show ¬ x ≤ 0 by omega, show ¬ x ≤ 50 by omega, show ¬ x ≤ 75 by omega, show ¬ x ≤ 90 by omega, show ¬ x ≤ 100 by omega, show ¬ x ≤ 110 by omega, show ¬ x ≤ 130 by omega, show ¬ x ≤ 150 by omega, show ¬ x ≤ 170 by omega, show ¬ x ≤ 190 by omega, show ¬ x ≤ 225 by omega, show ¬ x ≤ 255 by omega, ite_false]
+
+set_option maxRecDepth 20000 in
+/-- The same for a diesel car not meeting RDE2, gram by gram up to 260 g/km. -/
+theorem vedFirstDiesel_mono_lt : ∀ x, x < 260 →
+    bandRate vedFirstYearDiesel vedFirstYearLimits x ≤ bandRate vedFirstYearDiesel vedFirstYearLimits (x + 1) := by
+  decide
+
+/-- **The first licence never costs less as CO2 rises**, for every car registered
+from 1 April 2017: petrol, diesel (RDE2 or not) and zero emission (CO2 is then
+ignored), at any list price. -/
+theorem vedFirstCar_mono (co2 : Nat) (diesel zev pre : Bool) (price : Nat) :
+    ved (.modern co2 diesel zev pre price 0) ≤ ved (.modern (co2 + 1) diesel zev pre price 0) := by
+  cases zev
+  · cases diesel
+    · simpa [ved] using vedFirst_mono co2
+    · have : bandRate vedFirstYearDiesel vedFirstYearLimits co2
+          ≤ bandRate vedFirstYearDiesel vedFirstYearLimits (co2 + 1) := by
+        by_cases h : co2 < 260
+        · exact vedFirstDiesel_mono_lt co2 h
+        · rw [vedFirstDiesel_top co2 (by omega), vedFirstDiesel_top (co2 + 1) (by omega)]
+          exact Nat.le_refl _
+      simpa [ved] using this
+  · simp [ved]
+
 end UkTax

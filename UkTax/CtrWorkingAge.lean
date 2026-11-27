@@ -62,6 +62,11 @@ deductions `nd` pence a week, and the year's excess income `x` (1/1 000 000 penc
 def ctrWaYear (ct nd : Nat) (x : Int) : Int :=
   max 0 (cu * ct - 365 * 52_000_000 * (nd : Int) - 73 * max 0 x)
 
+/-- The capital test: without UC (whose own capital test applies), capital over
+£16,000 (`capital` pence) rules out the reduction (Wales Sch 6 para 2(d); Scotland
+reg 66 with reg 16(1)(c) of the HB-based rules). -/
+def ctrCapitalOk (onUc : Bool) (capital : Nat) : Bool := onUc || decide (capital ≤ hbCapitalLimit)
+
 /-- The year's withdrawal, `cu`: 365/7 weeks of the deductions and of 20 % of the
 excess. -/
 def ctrWaWithdrawal (nd : Nat) (x : Int) : Int := 365 * 52_000_000 * (nd : Int) + 73 * max 0 x
@@ -266,7 +271,8 @@ theorem scotBandsEH_floor (b ct nd A T : Nat) (x : Int) (hb : 4 ≤ b ∧ b ≤ 
   have h0 : max 0 (x + 52_000_000 * ((A : Int) - T)) = 0 := Int.max_eq_left hx
   rw [h0, Int.mul_zero, Int.add_zero]
 
-/-- The entitlement is at least each of its parts and at most the bill. -/
+/-- The entitlement is at least each of its parts, and at most the bill if each part
+is (the hypotheses; `scotTotal_le_bill` proves the bound for the model's parts). -/
 theorem scotTotal_bounds (main sar bands : Int) (ct : Nat) (hm : main ≤ cu * ct) (hs : sar ≤ cu * ct)
     (hb : bands ≤ suPerCu * (cu * ct)) :
     suPerCu * main ≤ scotTotal true main sar bands ∧ bands ≤ scotTotal true main sar bands ∧
@@ -275,9 +281,38 @@ theorem scotTotal_bounds (main sar bands : Int) (ct : Nat) (hm : main ≤ cu * c
   simp only [↓reduceIte]
   omega
 
-/-- **The capital cliff.** One penny of capital above £16,000 ends the whole Scottish
-reduction (reg 66): the main reduction, the second adult rebate and reg 14. -/
-theorem scot_capital_cliff (main sar bands : Int) : scotTotal false main sar bands = 0 := by
-  unfold scotTotal; rfl
+/-- **The Scottish reduction never exceeds the bill.** With the parts the model
+computes (reg 13 on bill `ct`, the second adult rebate at its Sch 2 rate on council
+tax due `gct`, reg 14 in band `b`), the entitlement is at most the larger of the two
+bills, for any income, deductions, band and capital. -/
+theorem scotTotal_le_bill (capOk ob st : Bool) (b ct nd A T gct gi : Nat) (x : Int) :
+    scotTotal capOk (ctrWaYear ct nd x) (scotSar gct (scotSarRate ob st gi)) (scotBandsEH b ct nd A T x)
+      ≤ suPerCu * (cu * (max ct gct : Nat)) := by
+  have hm : ctrWaYear ct nd x ≤ cu * ct := (ctrWaYear_bounds ct nd x 0 (Int.le_refl 0)).1
+  have hr : scotSarRate ob st gi ≤ 1000 := by
+    unfold scotSarRate; split <;> (try split) <;> (try split) <;> (try split) <;> omega
+  have hs : scotSar gct (scotSarRate ob st gi) ≤ cu * gct := by
+    unfold scotSar cu
+    rw [Int.mul_assoc]
+    have := Int.mul_le_mul_of_nonneg_right (show (scotSarRate ob st gi : Int) ≤ 1000 by omega)
+      (show (0 : Int) ≤ gct by omega)
+    omega
+  have hb : scotBandsEH b ct nd A T x ≤ suPerCu * (cu * ct) := by
+    unfold scotBandsEH scotBandShare suPerCu cu
+    split <;> (try split) <;> (try split) <;> (try split) <;> omega
+  have hmax : (ct : Int) ≤ ((max ct gct : Nat) : Int) ∧ (gct : Int) ≤ ((max ct gct : Nat) : Int) := by
+    constructor <;> omega
+  unfold scotTotal suPerCu cu at *
+  split <;> omega
+
+/-- **The capital cliff.** Without UC, one penny of capital above £16,000 ends the
+whole Scottish reduction (reg 66): at £16,000 it is the greater of reg 13 and reg 14,
+a penny more and it is nil, the main reduction, the second adult rebate and reg 14
+alike. -/
+theorem scot_capital_cliff (main sar bands : Int) :
+    scotTotal (ctrCapitalOk false hbCapitalLimit) main sar bands = scotTotal true main sar bands ∧
+      scotTotal (ctrCapitalOk false (hbCapitalLimit + 1)) main sar bands = 0 := by
+  unfold ctrCapitalOk hbCapitalLimit scotTotal
+  simp
 
 end UkTax

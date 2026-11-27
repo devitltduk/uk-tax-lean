@@ -156,13 +156,19 @@ theorem localYear_taper (s : LocalScheme) (ct nd : Nat) (x δ : Int) (hδ : 0 �
   constructor <;> omega
 
 /-- **Oxford's cliffs.** With no non-dependants, a penny of weekly income above
-£480.00 costs a quarter of the bill: the reduction falls from the whole bill to
-three quarters of it. The same quarter is lost at £530.00, £580.00 and £660.00. -/
-theorem oxford_cliff_480 (ct : Nat) :
-    oxfordYear ct 0 (52_000_000 * 48_000) = 364_000_000 * 100 * (ct : Int) ∧
-      oxfordYear ct 0 (52_000_000 * 48_001) = 364_000_000 * 75 * (ct : Int) := by
+£480.00, £530.00, £580.00 or £660.00 costs a quarter of the bill: the reduction
+falls from 100 % to 75 %, 75 % to 50 %, 50 % to 25 % and 25 % to nothing. -/
+theorem oxford_cliffs (ct : Nat) :
+    (oxfordYear ct 0 (52_000_000 * 48_000) = 364_000_000 * 100 * (ct : Int) ∧
+      oxfordYear ct 0 (52_000_000 * 48_001) = 364_000_000 * 75 * (ct : Int)) ∧
+    (oxfordYear ct 0 (52_000_000 * 53_000) = 364_000_000 * 75 * (ct : Int) ∧
+      oxfordYear ct 0 (52_000_000 * 53_001) = 364_000_000 * 50 * (ct : Int)) ∧
+    (oxfordYear ct 0 (52_000_000 * 58_000) = 364_000_000 * 50 * (ct : Int) ∧
+      oxfordYear ct 0 (52_000_000 * 58_001) = 364_000_000 * 25 * (ct : Int)) ∧
+    (oxfordYear ct 0 (52_000_000 * 66_000) = 364_000_000 * 25 * (ct : Int) ∧
+      oxfordYear ct 0 (52_000_000 * 66_001) = 0) := by
   unfold oxfordYear oxfordPct
-  constructor <;> simp <;> omega
+  refine ⟨⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩⟩ <;> simp <;> omega
 
 /-- Oxford's percentage never rises with income. -/
 theorem oxfordPct_anti (x y : Int) (hxy : x ≤ y) : oxfordPct y ≤ oxfordPct x := by
