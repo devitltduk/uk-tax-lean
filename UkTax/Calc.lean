@@ -73,6 +73,12 @@ structure Regime where
   /-- Is the spouse entitled to the married couple's allowance (a party born
   before 6 April 1935; s45, s46). -/
   mca : Bool := false
+  /-- Reliefs deducted at Step 2 (ITA 2007 s24) whose deduction from net income the
+  model allocates with the allowances: gifts of shares and land to charity (s431).
+  s25(2) deducts each "in the way which will result in the greatest reduction in
+  liability", which is what the search over allocations finds; they also lower
+  net income and so adjusted net income. -/
+  step2 : Nat := 0
   deriving Repr, DecidableEq
 
 /-- The basic rate limit, raised by the relief. -/
@@ -167,14 +173,14 @@ def Income.total (i : Income) : Nat := i.nonSavings + i.savings + i.dividends
 
 /-- Adjusted net income (ITA 2007 s58): net income less the grossed-up Gift Aid
 and the gross pension contributions relieved at source. -/
-def Income.ani (rg : Regime) (i : Income) : Nat := i.total - rg.relief
+def Income.ani (rg : Regime) (i : Income) : Nat := i.total - rg.step2 - rg.relief
 
 /-- The allowances this taxpayer deducts at Step 3: the personal allowance (ITA
 2007 s35, tapered), less the Marriage Allowance given up (s55B(6)), plus the blind
 person's allowance (s38, not tapered). -/
 def Income.personalAllowance (rg : Regime) (i : Income) : Nat :=
   (personalAllowanceFor (i.ani rg) - (if rg.maTransfer then maTransferable else 0))
-    + (if rg.blind then blindPersonsAllowance else 0)
+    + (if rg.blind then blindPersonsAllowance else 0) + rg.step2
 
 /-- How much of the personal allowance is set against each kind of income. -/
 structure Alloc where

@@ -819,6 +819,24 @@ def cgtBadrRate : Nat := 1_800
 /-- Annual exempt amount: £3,000 (s1K(2), FA 2023 s8). -/
 def cgtExemptAmount : Nat := 300_000
 
+/-! ## Reliefs and the annual allowance charge, 2026-27 (area 6)
+
+Checked on legislation.gov.uk 2026-11-27. -/
+
+/-- The annual allowance (FA 2004 s228(1)): £60,000. The taper (s228ZA): for an
+individual whose adjusted income exceeds £260,000 and threshold income exceeds
+£260,000 less the allowance (£200,000), the allowance is reduced by half the excess
+of adjusted income over £260,000, the reduction rounded down to a whole pound
+(s228ZA(2)), not below £10,000. -/
+def annualAllowance : Nat := 6_000_000
+def aaTaperAdjusted : Nat := 26_000_000
+def aaMinimum : Nat := 1_000_000
+
+/-- The tax reduction for finance costs of a dwelling-related loan (ITTOIA 2005
+ss 274A, 274AA(5)): the property basic rate, for 2026-27 the basic rate, 20 %
+(the separate property rates start in 2027-28, FA 2026 Sch 1). -/
+def financeCostRate : Nat := 2_000
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

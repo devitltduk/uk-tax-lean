@@ -97,7 +97,7 @@ theorem carer_uc_net (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) 
     100 * netCa p cb rg 0 0 C g + ucAward (c.withCa C) (earned p rg 0 0 g)
       = 100 * netCa p cb rg 0 0 0 g + ucAward (c.withCa 0) (earned p rg 0 0 g)
         - 100 * ((finalTaxExact rg ⟨g + C, 0, 0⟩ : Int) - finalTaxExact rg ⟨g, 0, 0⟩)
-        - micro * ((hicbc (g + C - rg.relief) cb : Int) - hicbc (g - rg.relief) cb) := by
+        - micro * ((hicbc (g + C - rg.step2 - rg.relief) cb : Int) - hicbc (g - rg.step2 - rg.relief) cb) := by
   rw [ucAward_withCa c _ C hc h]
   unfold netCa micro
   simp only [Nat.add_zero]
@@ -115,8 +115,8 @@ theorem carer_uc_cliff (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims
       = 100 * netCa p cb rg 0 0 0 g + ucAward (c.withCa 0) (earned p rg 0 0 g)
         - 100 * ((finalTaxExact rg ⟨g + caYear ent ov (caEarnings p rg g), 0, 0⟩ : Int)
             - finalTaxExact rg ⟨g, 0, 0⟩)
-        - micro * ((hicbc (g + caYear ent ov (caEarnings p rg g) - rg.relief) cb : Int)
-            - hicbc (g - rg.relief) cb) :=
+        - micro * ((hicbc (g + caYear ent ov (caEarnings p rg g) - rg.step2 - rg.relief) cb : Int)
+            - hicbc (g - rg.step2 - rg.relief) cb) :=
   carer_uc_net p cb rg c _ g hc h
 
 end UkTax

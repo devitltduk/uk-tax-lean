@@ -189,6 +189,16 @@ Optional fields:
   reduction in 1/36 400 000 000 pence; for the default-scheme councils the
   withdrawal and the weekly applicable amount, for Oxford the band's percentage and
   the year's income in 1/1 000 000 pence (52 weeks);
+* `reliefs` (area 6, `UkTax/Reliefs.lean`): one individual's income from its
+  sources, `{"pay_pence", "employment_expenses_pence", "trading_profit_pence",
+  "capital_allowances_pence", "losses_brought_forward_pence",
+  "property_profit_pence" (before finance costs), "finance_costs_pence",
+  "savings_pence", "dividends_pence", "share_gifts_pence",
+  "employer_pension_contributions_pence", "unused_annual_allowance_pence"}` (each
+  default 0; the top-level income fields are ignored for it, the country and Gift
+  Aid fields apply). Outputs `reliefs_tax_exact_ten_thousandths_pence` (income tax
+  after the finance cost reduction, with the annual allowance charge), its parts,
+  the tapered annual allowance and Class 4 on the trade;
 * `land_tax`: `{"tax": "sdlt" | "lbtt" | "ltt", "kind": "residential" |
   "first_time_buyer" | "additional_dwelling" | "non_residential",
   "consideration_pence": n, "non_resident": false, "lease_rents_pence": [n, ...],
@@ -287,6 +297,8 @@ structure Case where
   consideration, non-resident, and the lease's yearly rents with whether the land
   is residential. -/
   land : Option (Nat × LandKind × Nat × Bool × List Nat × Bool) := none
+  /-- One individual's income with the area 6 reliefs. -/
+  reliefs : Option ReliefsIn := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -655,6 +667,22 @@ def parseCase (j : Json) : Except String Case := do
       pure (some (tax, kind, ← sub o "consideration_pence", nr, rents,
         (o.getObjValAs? Bool "lease_residential").toOption.getD false))
     | none => pure none
+  let reliefs ← match obj "reliefs" with
+    | some o => do
+      let r : ReliefsIn := {
+        pay := ← sub o "pay_pence", employmentExpenses := ← sub o "employment_expenses_pence",
+        trade := ← sub o "trading_profit_pence", capitalAllowances := ← sub o "capital_allowances_pence",
+        lossesBroughtForward := ← sub o "losses_brought_forward_pence",
+        property := ← sub o "property_profit_pence", financeCosts := ← sub o "finance_costs_pence",
+        savings := ← sub o "savings_pence", dividends := ← sub o "dividends_pence",
+        shareGifts := ← sub o "share_gifts_pence", pensionInput := ← sub o "employer_pension_contributions_pence",
+        unusedAllowance := ← sub o "unused_annual_allowance_pence" }
+      if r.capitalAllowances > r.trade then
+        throw "reliefs: capital allowances above the trading profit would make a loss, which is not modelled"
+      if maTransfer || maReceive || mca then
+        throw "reliefs: not with the marriage allowance or the married couple's allowance"
+      pure (some r)
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -704,7 +732,7 @@ def parseCase (j : Json) : Except String Case := do
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
-    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land }
+    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs }
   return res
 
 def result (c : Case) : Json :=
@@ -887,6 +915,18 @@ def result (c : Case) : Json :=
            ("council_tax_reduction_local_withdrawal_lcu_pence",
              if capOk then toJson (localWithdrawal s nd x) else Json.null),
            ("council_tax_reduction_local_applicable_weekly_pence", toJson (s.applicable h limited))]
+      | none => [])
+    ++ (match c.reliefs with
+      | some r =>
+        let t := finalTaxExact (r.regime rg) r.income
+        [("reliefs_tax_exact_ten_thousandths_pence", toJson (r.tax rg)),
+         ("reliefs_tax_before_reductions_ten_thousandths_pence", toJson t),
+         ("reliefs_finance_reduction_ten_thousandths_pence", toJson (r.financeReduction rg t)),
+         ("reliefs_annual_allowance_pence", toJson r.allowance),
+         ("reliefs_chargeable_amount_pence", toJson r.chargeable),
+         ("reliefs_aa_charge_ten_thousandths_pence", toJson (aaCharge (r.regime rg) r.income r.chargeable)),
+         ("reliefs_net_income_pence", toJson r.netIncome),
+         ("reliefs_class_4_exact_ten_thousandths_pence", toJson (class4Exact c.period r.pay r.tradeProfit))]
       | none => [])
     ++ (match c.land with
       | some (tax, kind, p, nr, rents, resi) =>
