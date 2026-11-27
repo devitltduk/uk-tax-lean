@@ -905,6 +905,17 @@ def pawhpHigher : Nat := 31_670
 def pawhpHigherSharedWithUnder80 : Nat := 21_115
 def pawhpHigherSharedWith80 : Nat := 15_835
 
+/-! ## Early learning for 2-year-olds, England (P9c) -/
+
+/-- The targeted 15 hours for a 2-year-old (SI 2014/2147 regs 3, 4; 570 hours a
+year over 38 weeks). A parent on Universal Credit qualifies with earned income
+(UC Regs Part 6 Ch 2) of no more than £1,283.34 in the assessment period before
+the request, a couple's combined (reg 1(3)(c), (4)); over twelve equal months,
+£15,400.08 a year. Checked 2026-11-27 against
+<https://www.legislation.gov.uk/uksi/2014/2147/regulation/1>. -/
+def targetedHoursWeekly : Nat := 15
+def targetedUcMonthlyLimit : Nat := 128_334
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

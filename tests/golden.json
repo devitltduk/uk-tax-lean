@@ -3850,5 +3850,113 @@
     "source": "SSI 2024/351 regs 9, 10 (SSI 2026/170 reg 15); ITEPA 2003 s681I",
     "working": "reg 10(5)(b)(i): £105.55",
     "pension_age_winter_heating_payment_pence": 10555
+  },
+  {
+    "name": "Targeted hours: lone parent on UC with a 2-year-old and a 3-year-old",
+    "input": {
+      "non_savings_pence": 1000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1000000,
+      "country": "england",
+      "uc": {
+        "children": 2
+      },
+      "funded_children": [
+        {
+          "age": "2"
+        },
+        {
+          "age": "3_4"
+        }
+      ]
+    },
+    "source": "SI 2014/2147 regs 1(2)-(4), 3, 4; DfE statutory guidance April 2026 para A1.11; DfE 2026-27 rate £8.90 (2-year-olds)",
+    "working": "pay £10,000, below the working-parent minimum (£10,574.72), on UC with earned income well under £1,283.34 a month: the 2-year-old gets 15 hours × £8.90 × 38 = £5,073.00; the 3-year-old's universal 15 hours × £6.61 × 38 = £3,767.70",
+    "funded_hours_targeted_millionths_pence": 507300000000,
+    "funded_hours_millionths_pence": 376770000000
+  },
+  {
+    "name": "Targeted hours: one-earner couple at £1,283.34 a month of earned income",
+    "input": {
+      "non_savings_pence": 1650066,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1650066,
+      "country": "england",
+      "uc": {
+        "couple": true,
+        "children": 1
+      },
+      "funded_children": [
+        {
+          "age": "2"
+        }
+      ]
+    },
+    "source": "SI 2014/2147 regs 1(2)-(4), 3, 4; DfE statutory guidance April 2026 para A1.11; DfE 2026-27 rate £8.90 (2-year-olds)",
+    "working": "pay £16,500.66: tax 20 % × £3,930.66 = £786.132, NI 8 % × £3,930.66 = £314.4528, earned income £15,400.0752 a year, not over 12 × £1,283.34 = £15,400.08; the partner has no pay, so no working-parent hours: £5,073.00",
+    "funded_hours_targeted_millionths_pence": 507300000000
+  },
+  {
+    "name": "Targeted hours: one-earner couple a penny of pay later",
+    "input": {
+      "non_savings_pence": 1650067,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1650067,
+      "country": "england",
+      "uc": {
+        "couple": true,
+        "children": 1
+      },
+      "funded_children": [
+        {
+          "age": "2"
+        }
+      ]
+    },
+    "source": "SI 2014/2147 regs 1(2)-(4), 3, 4; DfE statutory guidance April 2026 para A1.11; DfE 2026-27 rate £8.90 (2-year-olds)",
+    "working": "pay £16,500.67: earned income £15,400.0824 a year, over £15,400.08 (£1,283.34 a month): nothing",
+    "funded_hours_targeted_millionths_pence": 0
+  },
+  {
+    "name": "Targeted hours: a 2-year-old on Disability Living Allowance, no benefits",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "england",
+      "funded_children": [
+        {
+          "age": "2",
+          "targeted_criteria": true
+        }
+      ]
+    },
+    "source": "SI 2014/2147 regs 1(2)-(4), 3, 4; DfE statutory guidance April 2026 para A1.11; DfE 2026-27 rate £8.90 (2-year-olds)",
+    "working": "reg 1(2) \"eligible child\" (DLA): 15 hours × £8.90 × 38 = £5,073.00 whatever the parents' income",
+    "funded_hours_targeted_millionths_pence": 507300000000
+  },
+  {
+    "name": "Targeted hours: a 2-year-old with working-parent hours gets 30 in all",
+    "input": {
+      "non_savings_pence": 1700000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1700000,
+      "country": "england",
+      "funded_children": [
+        {
+          "age": "2",
+          "targeted_criteria": true
+        }
+      ]
+    },
+    "source": "SI 2014/2147 regs 1(2)-(4), 3, 4; DfE statutory guidance April 2026 para A1.11; DfE 2026-27 rate £8.90 (2-year-olds)",
+    "working": "pay £17,000 meets the working-parent test: 30 hours × £8.90 × 38 = £10,146.00, the first 15 under the targeted entitlement (para A1.11); the targeted hours add nothing",
+    "funded_hours_targeted_millionths_pence": 0,
+    "funded_hours_millionths_pence": 1014600000000
   }
 ]
