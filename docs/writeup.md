@@ -46,7 +46,7 @@ HM Treasury's [algorithmic transparency record for PolicyEngine
 UK](https://www.gov.uk/algorithmic-transparency-records/hmt-modelling-policy-engine),
 published on 17 December 2024 (ATRS v3.0), describes a Beta/Pilot by its
 Personal Tax, Welfare and Pensions team, exploring PolicyEngine to supplement
-its existing model (IGOTM). It states: "HMT does not currently use
+its existing models (IGOTM). It states: "HMT does not currently use
 PolicyEngine." The record may be out of date.
 
 Comparing household results with that model, the record says NI calculations
@@ -61,8 +61,8 @@ review and testing".
 This project is an independent reference for the household-level rules: every
 parameter is cited to legislation, the model's properties are machine-checked
 in Lean, and PolicyEngine is compared with it case by case, down to the lines
-of its source where they differ. That is the kind of "thorough review and
-testing" the record names, applied to the rules. The project has no connection
+of its source where they differ. That is in the spirit of the "thorough review
+and testing" the record asks for, applied to the rules. The project has no connection
 with HM Treasury and is not endorsed by it.
 
 It does not explain HM Treasury's income-tax gap. Besides the variable matching
