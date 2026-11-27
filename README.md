@@ -1,24 +1,29 @@
 # uk-tax-lean
 
-UK income tax (including Scottish rates, Gift Aid, pension contributions
-relieved at source and under net pay, the Marriage Allowance, the married
-couple's allowance, the blind person's allowance, and trading and property
-income with the trading and property allowances and rent-a-room relief),
-National Insurance (employee and employer Class 1, Class 1A, 2, 3 and 4), the High Income Child Benefit
-Charge, Universal Credit, Child Benefit, PIP, DLA, Attendance Allowance, Carer's
-Allowance, Maternity Allowance, new style JSA and ESA, the Sure Start Maternity Grant
-and the £100,000 childcare cliff for 2026-27,
-for taxpayers anywhere in the UK (childcare rules are England's), formalised in
-Lean 4, with proofs about it and a harness that checks it against
-[PolicyEngine UK](https://github.com/PolicyEngine/policyengine-uk).
+The UK tax and benefit system for one household in 2026-27, formalised in Lean 4
+with exact pence, proofs about it, hand-worked golden cases and a harness that
+checks it against
+[PolicyEngine UK](https://github.com/PolicyEngine/policyengine-uk) in CI: income tax (with Scottish rates, Gift Aid, pension relief, the marriage
+and blind person's allowances, trading and property income, losses, reliefs and
+the annual allowance charge), National Insurance (Classes 1, 1A, 2, 3 and 4), the
+High Income Child Benefit Charge, Universal Credit, Housing Benefit, Child Benefit
+and the disability and carer benefits, the State Pension and Pension Credit,
+Scotland's devolved benefits, Tax-Free Childcare and the funded hours, council tax
+and Council Tax Reduction (the national schemes of England, Scotland and Wales and
+the English local schemes PolicyEngine models), Capital Gains Tax, SDLT, LBTT and
+LTT, student loan repayments, student support in England, company cars, the TV
+licence, ISAs, the minimum wage, Vehicle Excise Duty, the Warm Home Discount and
+the Winter Fuel Payment.
+
+Of the 90 programme rows in [`docs/coverage.md`](docs/coverage.md), 68 are done and
+22 are out of scope with the reason (consumption duties, discretionary or
+cost-reimbursement schemes, reported amounts and the like); none is left to build.
+[`docs/findings.md`](docs/findings.md) classifies 46 sets of differences from
+PolicyEngine; the likely PolicyEngine errors among them have 13 draft issues in
+[`docs/drafts/issues/`](docs/drafts/issues/) (not posted).
 
 A write-up of the results, with the cliff map and the differences from
 PolicyEngine UK, is in [`docs/writeup.md`](docs/writeup.md).
-
-What PolicyEngine UK models and how much of it is formalised here, programme by
-programme, is in [`docs/coverage.md`](docs/coverage.md); every difference found
-from PolicyEngine, with its classification, is in
-[`docs/findings.md`](docs/findings.md).
 
 ## What is modelled
 
@@ -688,11 +693,15 @@ carer, the lower minimum earnings for parents under 21 or apprentices, the 15
 hours for disadvantaged 2-year-olds in net income and the cliff map (modelled
 separately, `UkTax/Targeted.lean`), a child changing
 age band during the year (the model takes one band for the year), Wales's,
-Scotland's and Northern Ireland's own childcare schemes, income-related ESA, reliefs and deductions not listed above (losses and loss
-relief, capital allowances, property finance costs, employment expenses; Gift
-Aid, pension contributions and trading or property income with Universal Credit
-or the childcare tests), other tax reductions, property income's own rates (from 2027-28), the default rates for non-residents, top-slicing relief,
-foreign income, capital gains, and every tax year other than 2026-27.
+Scotland's and Northern Ireland's own childcare schemes, the means test for
+income-related ESA (an input, as in PolicyEngine), Gift Aid, pension
+contributions and trading or property income with Universal Credit or the
+childcare tests, other tax reductions, property income's own rates (from
+2027-28), the default rates for non-residents, top-slicing relief, foreign income,
+and every tax year other than 2026-27. Losses, capital allowances, property
+finance costs, employment expenses, capital gains and working-age Housing Benefit are
+modelled in their own modules below; what each leaves out is in
+[`docs/coverage.md`](docs/coverage.md).
 
 That includes 2027-28 savings rates, where the sources currently differ. As
 enacted, Finance Act 2026 s5 sets 22 / 42 / 47 % from 6 April 2027. Budget 2026
