@@ -2,7 +2,8 @@ import Lean.Data.Json
 import UkTax
 
 /-!
-`uktax`: read incomes as JSON on stdin, print the 2026-27 liability as JSON.
+`uktax`: read incomes as JSON on stdin, print the 2026-27 liability (or the
+liability with other figures, `params`) as JSON.
 
 Input: one object, or an array of objects, with whole-pence amounts:
 
@@ -253,6 +254,30 @@ election stands.
 `nic_pence` is rounded down to the penny for display only; payroll rounds each
 period's contribution, which is not modelled. `hicbc_pence` is exact (whole
 pounds, by s681C(3)).
+
+## Other figures
+
+`params`: an object replacing any of the 2026-27 figures of the parameter set
+(`UkTax/TaxParams.lean`; field names in `paramFields`: money in pence, rates in
+basis points, `uc_taper_percent` in per cent), e.g.
+`{"params": {"higher_rate_bp": 3500, "personal_allowance_income_limit_pence": 11000000}}`.
+Unknown fields are refused. With `params` the output adds `params` (the whole set
+used) and `params_check`: `{"ok": true, "violations": []}` exactly when the set
+meets the conditions the parametric theorems need (`checkParams_ok_iff`), and
+otherwise each broken condition, e.g. `{"condition": "higher_rate", "message":
+"the higher rate (35%) is below the basic rate (40%)"}`. Everything is computed
+with the figures either way.
+
+`cliff_map`: `{"max_pay_pence": 15000000, "whole_band": false}` (both optional)
+adds the cliff map for this household with pay varying from 0 to `max_pay_pence`
+(`UkTax/CliffMap.lean`): `drops`, every one-off penny `pay_pence` at which a penny
+more lowers `net_income_millionths_pence`, with `kind` and
+`drop_millionths_pence`; `personal_allowance_band`, the personal allowance's run
+of steps every £2 of income (first and last pay, count, and the drop at each end;
+`whole_band: true` adds every one as `band_drops`); and `guaranteed`, true when
+`params_check` passes and the household is in scope (`in_scope`: no Marriage
+Allowance transfer, a recipient with pay only), in which case `drops_complete`
+proves that no drop is missing. `null` where `net_income_millionths_pence` is.
 -/
 
 open Lean UkTax
@@ -333,6 +358,92 @@ structure Case where
   /-- Carer Support Payment: weekly overlapping benefits and additional cared for
   people (P9b). -/
   csp : Option (Nat × Nat) := none
+  /-- A parameter set was given (`params`): echo it and check it. -/
+  paramsGiven : Bool := false
+  /-- The Marriage Allowance transfer was asked for (before the rate test). -/
+  maTransferAsked : Bool := false
+  /-- The cliff map: pay up to which to map, and whether to evaluate the whole
+  personal allowance band. -/
+  cliffMap : Option (Nat × Bool) := none
+
+/-- The parameter set in JSON: each field's name, how to read it and how to set it.
+Money in pence, rates in basis points, the UC taper in whole per cent. -/
+def paramFields : List (String × (TaxParams → Nat) × (TaxParams → Nat → TaxParams)) :=
+  [
+    ("personal_allowance_pence", fun P => P.pa, fun P v => { P with pa := v }),
+    ("personal_allowance_income_limit_pence", fun P => P.paLimit, fun P v => { P with paLimit := v }),
+    ("basic_rate_limit_pence", fun P => P.brl, fun P v => { P with brl := v }),
+    ("higher_rate_limit_pence", fun P => P.hrl, fun P v => { P with hrl := v }),
+    ("starting_rate_limit_savings_pence", fun P => P.srls, fun P v => { P with srls := v }),
+    ("savings_allowance_basic_pence", fun P => P.psaBasic, fun P v => { P with psaBasic := v }),
+    ("savings_allowance_higher_pence", fun P => P.psaHigher, fun P v => { P with psaHigher := v }),
+    ("savings_allowance_additional_pence", fun P => P.psaAdditional, fun P v => { P with psaAdditional := v }),
+    ("dividend_allowance_pence", fun P => P.divAllowance, fun P v => { P with divAllowance := v }),
+    ("basic_rate_bp", fun P => P.nsRates.basic, fun P v => { P with nsRates := { P.nsRates with basic := v } }),
+    ("higher_rate_bp", fun P => P.nsRates.higher, fun P v => { P with nsRates := { P.nsRates with higher := v } }),
+    ("additional_rate_bp", fun P => P.nsRates.additional, fun P v => { P with nsRates := { P.nsRates with additional := v } }),
+    ("savings_basic_rate_bp", fun P => P.savRates.basic, fun P v => { P with savRates := { P.savRates with basic := v } }),
+    ("savings_higher_rate_bp", fun P => P.savRates.higher, fun P v => { P with savRates := { P.savRates with higher := v } }),
+    ("savings_additional_rate_bp", fun P => P.savRates.additional, fun P v => { P with savRates := { P.savRates with additional := v } }),
+    ("dividend_ordinary_rate_bp", fun P => P.divRates.basic, fun P v => { P with divRates := { P.divRates with basic := v } }),
+    ("dividend_upper_rate_bp", fun P => P.divRates.higher, fun P v => { P with divRates := { P.divRates with higher := v } }),
+    ("dividend_additional_rate_bp", fun P => P.divRates.additional, fun P v => { P with divRates := { P.divRates with additional := v } }),
+    ("scottish_starter_limit_pence", fun P => P.scStarterLimit, fun P v => { P with scStarterLimit := v }),
+    ("scottish_basic_limit_pence", fun P => P.scBasicLimit, fun P v => { P with scBasicLimit := v }),
+    ("scottish_intermediate_limit_pence", fun P => P.scIntermediateLimit, fun P v => { P with scIntermediateLimit := v }),
+    ("scottish_higher_limit_pence", fun P => P.scHigherLimit, fun P v => { P with scHigherLimit := v }),
+    ("scottish_advanced_limit_pence", fun P => P.scAdvancedLimit, fun P v => { P with scAdvancedLimit := v }),
+    ("scottish_starter_rate_bp", fun P => P.scStarterRate, fun P v => { P with scStarterRate := v }),
+    ("scottish_basic_rate_bp", fun P => P.scBasicRate, fun P v => { P with scBasicRate := v }),
+    ("scottish_intermediate_rate_bp", fun P => P.scIntermediateRate, fun P v => { P with scIntermediateRate := v }),
+    ("scottish_higher_rate_bp", fun P => P.scHigherRate, fun P v => { P with scHigherRate := v }),
+    ("scottish_advanced_rate_bp", fun P => P.scAdvancedRate, fun P v => { P with scAdvancedRate := v }),
+    ("scottish_top_rate_bp", fun P => P.scTopRate, fun P v => { P with scTopRate := v }),
+    ("nic_primary_threshold_annual_pence", fun P => P.ptAnnual, fun P v => { P with ptAnnual := v }),
+    ("nic_primary_threshold_monthly_pence", fun P => P.ptMonthly, fun P v => { P with ptMonthly := v }),
+    ("nic_primary_threshold_weekly_pence", fun P => P.ptWeekly, fun P v => { P with ptWeekly := v }),
+    ("nic_upper_earnings_limit_annual_pence", fun P => P.uelAnnual, fun P v => { P with uelAnnual := v }),
+    ("nic_upper_earnings_limit_monthly_pence", fun P => P.uelMonthly, fun P v => { P with uelMonthly := v }),
+    ("nic_upper_earnings_limit_weekly_pence", fun P => P.uelWeekly, fun P v => { P with uelWeekly := v }),
+    ("nic_main_rate_bp", fun P => P.nicMain, fun P v => { P with nicMain := v }),
+    ("nic_additional_rate_bp", fun P => P.nicAdditional, fun P v => { P with nicAdditional := v }),
+    ("hicbc_threshold_pence", fun P => P.cbThreshold, fun P v => { P with cbThreshold := v }),
+    ("hicbc_step_pence", fun P => P.cbStep, fun P v => { P with cbStep := v }),
+    ("uc_taper_percent", fun P => P.ucTaper, fun P v => { P with ucTaper := v }),
+    ("childcare_income_limit_pence", fun P => P.ccLimit, fun P v => { P with ccLimit := v }),
+    ("childcare_minimum_earnings_pence", fun P => P.ccMinEarnings, fun P v => { P with ccMinEarnings := v })
+  ]
+
+/-- A parameter set from JSON: the 2026-27 set with the fields given replaced. -/
+def parseParams (j : Json) : Except String TaxParams := do
+  let keys ← match j with
+    | .obj kvs => pure kvs.keys
+    | _ => throw "params must be an object"
+  for k in keys do
+    unless paramFields.any (·.1 == k) do throw s!"params: unknown field \"{k}\""
+  paramFields.foldlM (init := ({} : TaxParams)) fun P (k, _, set) =>
+    match j.getObjVal? k with
+    | .ok _ => match j.getObjValAs? Nat k with
+      | .ok v => pure (set P v)
+      | .error _ => throw s!"params.{k} must be a non-negative whole number"
+    | .error _ => pure P
+
+def paramsJson (P : TaxParams) : Json :=
+  Json.mkObj (paramFields.map fun (k, get, _) => (k, toJson (get P)))
+
+def violationJson (v : Violation) : Json :=
+  Json.mkObj [("condition", toJson v.condition), ("message", toJson v.message)]
+
+def UkTax.StepKind.name : StepKind → String
+  | .personalAllowance => "personal_allowance"
+  | .hicbc => "hicbc"
+  | .savingsAllowance => "savings_allowance"
+  | .marriageAllowance => "marriage_allowance"
+  | .childcare => "childcare"
+
+def dropJson (x : Drop) : Json :=
+  Json.mkObj [("pay_pence", toJson x.pay), ("kind", toJson x.kind.name),
+    ("drop_millionths_pence", toJson x.size)]
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -491,7 +602,19 @@ def parseCase (j : Json) : Except String Case := do
     | none => pure none
   let income : Income :=
     { income with nonSavings := income.nonSavings - netPay + profits }
-  let rg : Regime := { scottish, relief, netPay, blind, maTransfer, maReceive, mca }
+  let params ← match (j.getObjVal? "params").toOption with
+    | some pj => parseParams pj
+    | none => pure {}
+  let cliffMap ← match (j.getObjVal? "cliff_map").toOption with
+    | some cj =>
+      let mp ← match cj.getObjVal? "max_pay_pence" with
+        | .ok _ => match cj.getObjValAs? Nat "max_pay_pence" with
+          | .ok v => pure v
+          | .error _ => throw "cliff_map.max_pay_pence must be a non-negative whole number"
+        | .error _ => pure 15_000_000
+      pure (some (mp, (cj.getObjValAs? Bool "whole_band").toOption.getD false))
+    | none => pure none
+  let rg : Regime := { scottish, relief, netPay, blind, maTransfer, maReceive, mca, params }
   let obj (k : String) : Option Json := (j.getObjVal? k).toOption
   let sub (o : Json) (k : String) : Except String Nat :=
     match o.getObjVal? k with
@@ -857,6 +980,8 @@ def parseCase (j : Json) : Except String Case := do
   let c3 ← optField "class_3_weeks"
   let res : Case := {
     income := income, regime := income.settle rg, employment := employment - netPay,
+    paramsGiven := (j.getObjVal? "params").toOption.isSome, maTransferAsked := maTransfer,
+    cliffMap := cliffMap,
     period := period, childBenefit := cb, claims := claims,
     tradeProfit := tradeProfit tr te, propertyProfit := propertyProfit shared pr pe rr re,
     zeroRated := (j.getObjValAs? Bool "employer_zero_rated").toOption.getD false,
@@ -1163,6 +1288,34 @@ def result (c : Case) : Json :=
       | none => [])
     ++ (match c.nspYears with
       | some y => [("new_state_pension_weekly_35ths_pence", toJson (nspReduced35 y))]
+      | none => [])
+    ++ (if c.paramsGiven then
+        [("params", paramsJson P),
+         ("params_check", Json.mkObj [("ok", toJson (decide (violations P = []))),
+           ("violations", Json.arr ((violations P).map violationJson).toArray)])]
+      else [])
+    ++ (match c.cliffMap with
+      | some (maxPay, whole) =>
+        let ok := c.employment = i.nonSavings && (c.carer.isNone || !c.claims.uc)
+        if !ok then [("cliff_map", Json.null)] else
+        let s := i.savings
+        let d := i.dividends
+        let inScope := !c.maTransferAsked && (!rg.maReceive || (s == 0 && d == 0))
+        [("cliff_map", Json.mkObj ([
+          ("guaranteed", toJson (decide (violations P = []) && inScope)),
+          ("in_scope", toJson inScope),
+          ("max_pay_pence", toJson maxPay),
+          ("drops", Json.arr ((oneOffDrops c.period c.childBenefit rg c.claims s d maxPay).map
+            dropJson).toArray),
+          ("personal_allowance_band",
+            match bandSummary c.period c.childBenefit rg c.claims s d maxPay with
+            | some b => Json.mkObj [("first_pay_pence", toJson b.first), ("last_pay_pence", toJson b.last),
+                ("count", toJson b.count), ("every_pence_of_income", toJson (200 : Nat)),
+                ("first_drop_millionths_pence", toJson b.firstDrop),
+                ("last_drop_millionths_pence", toJson b.lastDrop)]
+            | none => Json.null)]
+          ++ (if whole then [("band_drops", Json.arr ((bandDrops c.period c.childBenefit rg c.claims s d
+                maxPay).map dropJson).toArray)] else [])))]
       | none => [])
     |> Json.mkObj
 

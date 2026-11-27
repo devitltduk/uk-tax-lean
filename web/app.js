@@ -9,6 +9,100 @@ const AGES = [["under_2", "under 2"], ["2", "2"], ["3_4", "3 or 4"], ["school", 
 
 let model;
 
+// --- the figures editor ---------------------------------------------------------
+
+// The main figures, as the model's `params` fields. "£" fields are pence shown as
+// pounds, "%" fields basis points shown as per cent, "pc" whole per cent. `also`
+// lists fields set to the same value (savings income is taxed at the main rates).
+const FIELDS = [
+  ["Income tax"],
+  ["personal_allowance_pence", "Personal allowance", "£"],
+  ["personal_allowance_income_limit_pence", "Allowance taper starts at (income)", "£"],
+  ["basic_rate_limit_pence", "Basic rate limit (above the allowance)", "£"],
+  ["higher_rate_limit_pence", "Higher rate limit", "£"],
+  ["basic_rate_bp", "Basic rate", "%", ["savings_basic_rate_bp"]],
+  ["higher_rate_bp", "Higher rate", "%", ["savings_higher_rate_bp"]],
+  ["additional_rate_bp", "Additional rate", "%", ["savings_additional_rate_bp"]],
+  ["Dividends"],
+  ["dividend_allowance_pence", "Dividend allowance", "£"],
+  ["dividend_ordinary_rate_bp", "Ordinary rate", "%"],
+  ["dividend_upper_rate_bp", "Upper rate", "%"],
+  ["dividend_additional_rate_bp", "Additional rate", "%"],
+  ["National Insurance (employee)"],
+  ["nic_main_rate_bp", "Main rate", "%"],
+  ["nic_additional_rate_bp", "Additional rate", "%"],
+  ["Child Benefit charge, childcare and Universal Credit"],
+  ["hicbc_threshold_pence", "Child Benefit charge starts at", "£"],
+  ["hicbc_step_pence", "Income for each 1% of the charge", "£"],
+  ["childcare_income_limit_pence", "Childcare help income limit", "£"],
+  ["uc_taper_percent", "Universal Credit taper", "pc"],
+];
+const shown = (unit, v) => (unit === "£" ? v / 100 : unit === "%" ? v / 100 : v);
+const stored = (unit, x) => Math.max(0, Math.round(Number(x || 0) * (unit === "pc" ? 1 : 100)));
+
+function buildEditor() {
+  const box = $("paramFields");
+  for (const [key, label, unit] of FIELDS) {
+    if (!label) {
+      const h = document.createElement("h3");
+      h.textContent = key;
+      box.append(h);
+      continue;
+    }
+    const l = document.createElement("label");
+    l.dataset.key = key;
+    l.textContent = `${label} (${unit === "£" ? "£" : "%"})`;
+    const input = document.createElement("input");
+    Object.assign(input, { type: "number", min: "0", step: unit === "pc" ? "1" : "0.01", name: `p_${key}` });
+    input.value = shown(unit, model.defaults[key]);
+    l.append(input);
+    box.append(l);
+  }
+  $("resetParams").addEventListener("click", () => {
+    for (const [key, label, unit] of FIELDS) if (label) form[`p_${key}`].value = shown(unit, model.defaults[key]);
+    update();
+  });
+}
+
+// The figures that differ from the built-in ones, or null if none do.
+function editedParams() {
+  const out = {};
+  for (const [key, label, unit, also = []] of FIELDS) {
+    if (!label) continue;
+    const v = stored(unit, form[`p_${key}`].value);
+    form[`p_${key}`].parentElement.classList.toggle("changed", v !== model.defaults[key]);
+    if (v === model.defaults[key]) continue;
+    out[key] = v;
+    for (const k of also) out[k] = v;
+  }
+  return Object.keys(out).length ? out : BUILTIN_PARAMS;
+}
+
+function showCheck(r, params) {
+  const el = $("paramsStatus");
+  el.replaceChildren();
+  if (!params) {
+    el.textContent = "The 2026-27 figures: the guarantees hold.";
+    el.className = "check-status ok";
+    return;
+  }
+  const chk = r.params_check;
+  if (chk.ok) {
+    el.textContent = "The guarantees hold for these figures.";
+    el.className = "check-status ok";
+    return;
+  }
+  el.className = "check-status error";
+  el.append("The guarantees do not hold for these figures:");
+  const ul = document.createElement("ul");
+  for (const v of chk.violations) {
+    const li = document.createElement("li");
+    li.textContent = v.message;
+    ul.append(li);
+  }
+  el.append(ul);
+}
+
 // --- form -> model input ------------------------------------------------------
 
 function kidRows() {
@@ -35,7 +129,7 @@ function situation() {
   const kids = kidRows();
   return {
     pay: pence(form.pay.value),
-    params: form.params.value === BUILTIN_PARAMS.id ? BUILTIN_PARAMS : { id: form.params.value },
+    params: editedParams(),
     input(pay) {
       const c = {
         non_savings_pence: pay,
@@ -77,6 +171,7 @@ function showResult(s) {
   const t0 = performance.now();
   const r = model.calculate(input, s.params);
   const ms = performance.now() - t0;
+  showCheck(r, s.params);
   const net = takeHome(r);
   $("net").textContent = net == null ? "n/a" : gbp.format(net);
   $("netMonthly").textContent = net == null ? "" : `${gbp.format(net / 12)} a month`;
@@ -124,22 +219,41 @@ function sweep(s) {
   const out = model.calculate(pays.map((g) => s.input(g)), s.params);
   const ms = performance.now() - t0;
   const nets = out.map(takeHome);
-  // A cliff: take-home falls across a step. Bisect to the penny where it falls.
+  // Where take-home falls, from the model's cliff map: every penny the cliff
+  // theorem allows is evaluated (the personal allowance band at its two ends), and
+  // `cliffMap_complete` proves nothing is missed when the guarantees hold.
+  const t1 = performance.now();
+  const cm = model.calculate({ ...s.input(0), cliff_map: { max_pay_pence: maxPay } }, s.params).cliff_map;
   const cliffs = [];
-  let calls = 0;
-  const netAt = (g) => (calls++, takeHome(model.calculate(s.input(g), s.params)));
-  for (let i = 0; i < POINTS; i++) {
-    if (nets[i] == null || nets[i + 1] == null || nets[i + 1] >= nets[i]) continue;
-    let lo = pays[i], hi = pays[i + 1], nlo = nets[i], nhi = nets[i + 1];
-    while (hi - lo > 1) {
-      const mid = Math.floor((lo + hi) / 2);
-      const nm = netAt(mid);
-      if (nm > nhi) { lo = mid; nlo = nm; } else { hi = mid; nhi = nm; }
+  const bands = [];
+  if (cm) {
+    const one = cm.drops.filter((d) => d.kind !== "hicbc");
+    const after = one.length ? model.calculate(one.map((d) => s.input(d.pay_pence + 1)), s.params).map(takeHome) : [];
+    one.forEach((d, i) => cliffs.push({ pay: (d.pay_pence + 1) / 100, net: after[i], drop: d.drop_millionths_pence / 1e8, kind: d.kind }));
+    const hicbc = cm.drops.filter((d) => d.kind === "hicbc");
+    if (hicbc.length) {
+      const sizes = hicbc.map((d) => d.drop_millionths_pence / 1e8);
+      bands.push({ kind: "hicbc", from: (hicbc[0].pay_pence + 1) / 100, to: (hicbc.at(-1).pay_pence + 1) / 100,
+        count: hicbc.length, min: Math.min(...sizes), max: Math.max(...sizes) });
     }
-    cliffs.push({ pay: hi / 100, net: nhi, drop: nlo - nhi });
+    const b = cm.personal_allowance_band;
+    if (b) {
+      const sizes = [b.first_drop_millionths_pence, b.last_drop_millionths_pence].map((x) => x / 1e8);
+      bands.push({ kind: "personal_allowance", from: (b.first_pay_pence + 1) / 100, to: (b.last_pay_pence + 1) / 100,
+        count: b.count, min: Math.min(...sizes), max: Math.max(...sizes) });
+    }
   }
-  return { pays: pays.map((g) => g / 100), nets, cliffs, ms, calls };
+  const cmMs = performance.now() - t1;
+  return { pays: pays.map((g) => g / 100), nets, cliffs, bands, cm, ms, cmMs };
 }
+
+const KIND = {
+  personal_allowance: "Personal allowance taper (£1 off the allowance per £2)",
+  hicbc: "High Income Child Benefit Charge (1% more per step)",
+  savings_allowance: "Personal savings allowance falls (or a rate limit)",
+  marriage_allowance: "Marriage Allowance lost",
+  childcare: "Tax-Free Childcare and funded hours lost",
+};
 
 function svg(tag, attrs, parent) {
   const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
@@ -182,6 +296,13 @@ function drawChart(sw, you) {
   svg("line", { class: "ref", x1: x(0), y1: y(0), x2: x(lim), y2: y(lim) }, root);
   svg("text", { class: "ref-label", x: x(lim * 0.3) + 6, y: y(lim * 0.3) + 4 }, root).textContent = "take-home = pay";
 
+  for (const b of sw.bands) {
+    if (b.from > xMax) continue;
+    const x0 = x(b.from), x1 = x(Math.min(b.to, xMax));
+    svg("rect", { class: "band", x: x0, y: M.t, width: Math.max(2, x1 - x0), height: H - M.t - M.b }, root);
+    svg("text", { class: "band-label", x: x0 + 3, y: M.t + 24 + (b.kind === "hicbc" ? 12 : 0) }, root).textContent =
+      b.kind === "hicbc" ? "Child Benefit charge" : "allowance taper";
+  }
   svg("path", { class: "line", d: pts.map(([a, b], i) => `${i ? "L" : "M"}${x(a).toFixed(1)},${y(b).toFixed(1)}`).join("") }, root);
 
   if (you != null && you <= xMax) {
@@ -189,9 +310,10 @@ function drawChart(sw, you) {
     svg("text", { class: "you-label", x: x(you) + 4, y: M.t + 10 }, root).textContent = "you";
   }
   for (const c of sw.cliffs) {
+    if (c.pay > xMax || c.net == null) continue;
     svg("circle", { class: "cliff", cx: x(c.pay), cy: y(c.net), r: 5 }, root);
   }
-  const big = [...sw.cliffs].sort((a, b) => b.drop - a.drop)[0];
+  const big = [...sw.cliffs].filter((c) => c.pay <= xMax && c.net != null).sort((a, b) => b.drop - a.drop)[0];
   if (big) {
     svg("text", { class: "cliff-label", x: x(big.pay) + 8, y: y(big.net) + 16 }, root).textContent =
       `cliff at ${gbp0.format(big.pay)}: −${gbp0.format(big.drop)}`;
@@ -243,12 +365,23 @@ function drawChart(sw, you) {
 
   const body = $("cliffs").tBodies[0];
   body.replaceChildren();
-  for (const c of sw.cliffs) {
+  const rows = [
+    ...sw.cliffs.map((c) => ({ at: c.pay, cells: [gbp.format(c.pay - 0.01), KIND[c.kind], gbp.format(c.drop)] })),
+    ...sw.bands.map((b) => ({ at: b.from, cells: [
+      `${gbp.format(b.from - 0.01)} to ${gbp.format(b.to - 0.01)}, ${b.count.toLocaleString("en-GB")} steps`,
+      KIND[b.kind],
+      b.min.toFixed(2) === b.max.toFixed(2) ? `${gbp.format(b.min)} each` : `${gbp.format(b.min)} to ${gbp.format(b.max)} each`] })),
+  ].sort((a, b) => a.at - b.at);
+  for (const row of rows) {
     const tr = body.insertRow();
-    tr.insertCell().textContent = gbp.format(c.pay - 0.01);
-    tr.insertCell().textContent = gbp.format(c.drop);
+    for (const c of row.cells) tr.insertCell().textContent = c;
   }
-  if (!sw.cliffs.length) body.insertRow().insertCell().textContent = "No cliffs in this range.";
+  if (!rows.length) body.insertRow().insertCell().textContent = "No cliffs in this range.";
+  const note = $("cliffNote");
+  if (!sw.cm) note.textContent = "The cliff map is not available for this situation (income other than pay, or Carer's Allowance with Universal Credit).";
+  else if (sw.cm.guaranteed) note.textContent = `Every cliff below ${gbp0.format(sw.cm.max_pay_pence / 100)} of pay is listed: proved for these figures (cliffMap_complete).`;
+  else if (!sw.cm.in_scope) note.textContent = "The cliff list is not proved complete for this situation (Marriage Allowance transfer, or received with savings or dividends).";
+  else note.textContent = "These figures break a condition the theorems need, so the cliff list is not proved complete.";
 }
 
 // --- wiring ------------------------------------------------------------------------
@@ -267,7 +400,7 @@ function update() {
       $("timing").textContent =
         `Model loaded in ${model.loadMs.toFixed(0)} ms. This calculation: ${ms.toFixed(2)} ms. ` +
         `Chart: ${POINTS + 1} calculations in one call, ${sw.ms.toFixed(0)} ms ` +
-        `(${((sw.ms / (POINTS + 1)) * 1000).toFixed(0)} µs each), and ${sw.calls} more to find the cliffs to the penny.`;
+        `(${((sw.ms / (POINTS + 1)) * 1000).toFixed(0)} µs each); cliff map ${sw.cmMs.toFixed(0)} ms.`;
     } catch (e) {
       if (!(e instanceof ModelError)) throw e;
       $("error").textContent = `The model can't calculate this: ${e.message}`;
@@ -303,7 +436,8 @@ async function runGolden() {
 
 try {
   model = await loadModel();
-  $("status").textContent = `Model loaded in ${model.loadMs.toFixed(0)} ms (WebAssembly, ${BUILTIN_PARAMS.label}).`;
+  $("status").textContent = `Model loaded in ${model.loadMs.toFixed(0)} ms (WebAssembly).`;
+  buildEditor();
   form.addEventListener("input", update);
   $("golden").addEventListener("click", runGolden);
   window.uktax = model; // for checking from the console

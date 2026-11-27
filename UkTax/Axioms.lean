@@ -26,6 +26,7 @@ import UkTax.Misc
 import UkTax.Ved
 import UkTax.StudentSupport
 import UkTax.CliffMap
+import UkTax.CheckParams
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -599,3 +600,17 @@ cliff map (`UkTax/CliffMap.lean`). -/
 /-- info: 'UkTax.sliceTax_mono' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.sliceTax_mono
+
+/-! The condition check (`UkTax/CheckParams.lean`) and what `uktax` reports of the cliff map. -/
+
+/-- info: 'UkTax.checkParams_ok_iff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.checkParams_ok_iff
+
+/-- info: 'UkTax.violations_eq_nil_iff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.violations_eq_nil_iff
+
+/-- info: 'UkTax.drops_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.drops_complete

@@ -1,17 +1,17 @@
 // The uktax model compiled to WebAssembly (wasm/build.sh), behind a small API.
 //
-// calculate(input) takes one case (an object, as the CLI's JSON input) or an
-// array of cases and returns what the CLI prints, parsed. calculateText takes
+// calculate(input, params) takes one case (an object, as the CLI's JSON input) or
+// an array of cases and returns what the CLI prints, parsed. calculateText takes
 // and returns JSON text, byte for byte the CLI's output.
 //
-// Parameter sets: this build has the 2026-27 rates and thresholds compiled in.
-// Every call takes a `params` argument so the app is already wired for a model
-// that accepts a parameter set (rates and thresholds as JSON); until then any
-// set other than BUILTIN_PARAMS is refused rather than silently ignored.
+// Parameter sets: `params` is null for the 2026-27 figures built into the model,
+// or an object of figures (the CLI's `params` field: pence, basis points, the UC
+// taper in per cent) replacing some of them. The model checks the set against the
+// conditions its theorems need and returns the result as `params_check`.
 
 import createUkTax from "./dist/uktax.mjs";
 
-export const BUILTIN_PARAMS = Object.freeze({ id: "builtin-2026-27", label: "2026-27 (built into the model)" });
+export const BUILTIN_PARAMS = null;
 
 export class ModelError extends Error {}
 
@@ -22,24 +22,21 @@ export async function loadModel() {
   const run = mod.cwrap("uktax_run", "string", ["string"]);
   const loadMs = performance.now() - t0;
 
-  function checkParams(params) {
-    if (params !== BUILTIN_PARAMS && params?.id !== BUILTIN_PARAMS.id) {
-      throw new ModelError(
-        "this build of the model has the 2026-27 figures built in and cannot take a parameter set yet",
-      );
-    }
-  }
-
-  function calculateText(text, params = BUILTIN_PARAMS) {
-    checkParams(params);
+  function calculateText(text) {
     const out = run(text);
     if (out.startsWith("error:")) throw new ModelError(out.slice(6));
     return out;
   }
 
-  return {
-    loadMs,
-    calculateText,
-    calculate: (input, params = BUILTIN_PARAMS) => JSON.parse(calculateText(JSON.stringify(input), params)),
-  };
+  const withParams = (c, params) => (params ? { ...c, params } : c);
+
+  function calculate(input, params = BUILTIN_PARAMS) {
+    const cases = Array.isArray(input) ? input.map((c) => withParams(c, params)) : withParams(input, params);
+    return JSON.parse(calculateText(JSON.stringify(cases)));
+  }
+
+  // The built-in figures, read from the model itself.
+  const defaults = calculate({ non_savings_pence: 0, savings_pence: 0, dividends_pence: 0 }, {}).params;
+
+  return { loadMs, calculateText, calculate, defaults };
 }

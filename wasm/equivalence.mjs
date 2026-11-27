@@ -4,7 +4,9 @@
 // (each whole number in the input rescaled at random, so every input the golden
 // cases exercise is varied, and some variations are rejected by the model), and
 // N random households of the kind the web app builds, through both builds, and
-// asserts the JSON text is identical. A rejected input must give the same error
+// asserts the JSON text is identical. Some households carry a parameter set other
+// than 2026-27 (a few fixed ones, including sets that break the theorems'
+// conditions, and random edits of the figures), and some ask for the cliff map. A rejected input must give the same error
 // message on both. The golden cases are also run as one array, as the CLI takes them.
 //
 // Usage: node wasm/equivalence.mjs [--random N] [--seed S] [--binary path/to/uktax]
@@ -61,6 +63,35 @@ function mutate(v) {
   return v;
 }
 
+// Parameter sets other than 2026-27: fixed ones, and random edits.
+const PARAM_SETS = [
+  {},
+  { personal_allowance_income_limit_pence: 11_000_000 },
+  { basic_rate_bp: 4000, higher_rate_bp: 3500, savings_basic_rate_bp: 4000, savings_higher_rate_bp: 3500 },
+  { personal_allowance_pence: 1_500_000, basic_rate_limit_pence: 4_000_000, higher_rate_limit_pence: 13_000_000,
+    uc_taper_percent: 50, hicbc_threshold_pence: 8_000_000, hicbc_step_pence: 40_000,
+    childcare_income_limit_pence: 12_000_000 },
+  { scottish_higher_rate_bp: 4500, scottish_top_rate_bp: 5000, dividend_upper_rate_bp: 3375,
+    nic_main_rate_bp: 600, nic_primary_threshold_monthly_pence: 110_000 },
+  { additional_rate_bp: 9000, uc_taper_percent: 120 },
+];
+const EDITABLE = [
+  ["personal_allowance_pence", 0, 3_000_000], ["personal_allowance_income_limit_pence", 0, 20_000_000],
+  ["basic_rate_limit_pence", 0, 8_000_000], ["higher_rate_limit_pence", 0, 20_000_000],
+  ["basic_rate_bp", 0, 6000], ["higher_rate_bp", 0, 7000], ["dividend_allowance_pence", 0, 500_000],
+  ["nic_main_rate_bp", 0, 2000], ["hicbc_threshold_pence", 0, 12_000_000], ["hicbc_step_pence", 0, 100_000],
+  ["uc_taper_percent", 0, 100], ["childcare_income_limit_pence", 0, 20_000_000],
+];
+function params() {
+  if (rand() < 0.5) return pick(PARAM_SETS);
+  const p = {};
+  for (let i = int(1, 4); i > 0; i--) {
+    const [k, lo, hi] = pick(EDITABLE);
+    p[k] = int(lo, hi);
+  }
+  return p;
+}
+
 function household() {
   const pay = pick([int(0, 15_000_000), int(9_000_000, 13_000_000), int(0, 5_000_000)]);
   const children = int(0, 4);
@@ -90,6 +121,8 @@ function household() {
   }
   if (!uc && !c.partner && rand() < 0.15) c.marriage_allowance = pick(["transfer", "receive"]);
   if (!uc && rand() < 0.15) c.pension_relief_at_source_gross_pence = int(0, 2_000_000);
+  if (rand() < 0.4) c.params = params();
+  if (rand() < 0.1) c.cliff_map = { max_pay_pence: pick([15_000_000, int(0, 20_000_000)]) };
   return c;
 }
 
