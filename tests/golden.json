@@ -2141,5 +2141,149 @@
     "source": "SI 2006/214 regs 12D, 13D",
     "working": "rent £150, LHA £120: eligible rent £120; guarantee credit: £120 x 52 = £6,240",
     "housing_benefit_twentieths_pence": 12480000
+  },
+  {
+    "name": "Council tax, England band B",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "council_tax": {
+        "band": "B",
+        "band_d_pence": 228000
+      }
+    },
+    "source": "LGFA 1992 s5(1)",
+    "working": "7/9 x £2,280 = £1,773.333 (1,440ths: 4 x 40 x 7 x 228,000)",
+    "council_tax_1440ths_pence": 255360000
+  },
+  {
+    "name": "Council tax, England band B with the single person discount",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "council_tax": {
+        "band": "B",
+        "band_d_pence": 228000,
+        "single_person_discount": true
+      }
+    },
+    "source": "LGFA 1992 s11(1)(b), (3)",
+    "working": "75 % of £1,773.333 = £1,330",
+    "council_tax_1440ths_pence": 191520000
+  },
+  {
+    "name": "Council tax, Scotland band E",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland",
+      "council_tax": {
+        "band": "E",
+        "band_d_pence": 150000
+      }
+    },
+    "source": "LGFA 1992 s74(1); SSI 2016/368",
+    "working": "473/360 x £1,500 = £1,970.833",
+    "council_tax_1440ths_pence": 283800000
+  },
+  {
+    "name": "Council tax, Wales band I",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "council_tax": {
+        "band": "I",
+        "band_d_pence": 200000
+      }
+    },
+    "source": "LGFA 1992 s5(1A)",
+    "working": "21/9 x £2,000 = £4,666.67",
+    "council_tax_1440ths_pence": 672000000
+  },
+  {
+    "name": "Council Tax Reduction, England pensioner: 20 % of excess income for 365 days",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 1300000
+      },
+      "council_tax_reduction": {
+        "council_tax_pence": 200000
+      }
+    },
+    "source": "SI 2012/2885 Sch 1 paras 3(f), 7",
+    "working": "income £12,914 (State Pension £13,000 less £86 tax), £248.3462 a week, £10.3462 over £238; amount B a day 2 6/7 % of it; over 365 days 20 % x 10.3462 x 365/7 = £107.896; £2,000 - £107.896 = £1,892.104",
+    "council_tax_reduction_7280ths_pence": 1377452000
+  },
+  {
+    "name": "Council Tax Reduction with the guarantee credit and a working non-dependant on £300 a week",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 900000
+      },
+      "council_tax_reduction": {
+        "council_tax_pence": 200000,
+        "non_dependants": [
+          {
+            "working": true,
+            "gross_weekly_pence": 30000
+          }
+        ]
+      }
+    },
+    "source": "SI 2012/2885 Sch 1 para 8(1), (2)(b) (SI 2026/27 reg 5)",
+    "working": "guarantee credit: no income counts; £300 is from £279 to under £485: £10.60 x 1/7 a day, 365 days: £552.714; £2,000 - £552.714 = £1,447.286",
+    "council_tax_reduction_7280ths_pence": 1053624000
+  },
+  {
+    "name": "Council Tax Reduction, Wales: the £256 allowance whatever the date",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "pension_credit": {
+        "state_pension_pence": 1300000
+      },
+      "council_tax_reduction": {
+        "council_tax_pence": 200000
+      }
+    },
+    "source": "WSI 2013/3029 Sch 2 para 1",
+    "working": "income £248.35 a week, under £256 (Wales has no lower rate from April 2021): the whole £2,000",
+    "council_tax_reduction_7280ths_pence": 1456000000
+  },
+  {
+    "name": "Council Tax Reduction, Scotland: guarantee credit, a non-dependant not in work",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland",
+      "pension_credit": {
+        "state_pension_pence": 900000
+      },
+      "council_tax_reduction": {
+        "council_tax_pence": 200000,
+        "non_dependants": [
+          {
+            "working": false
+          }
+        ]
+      }
+    },
+    "source": "SSI 2012/319 reg 48(1)(b) (SSI 2026/56 reg 5)",
+    "working": "£5.55 x 1/7 a day over 365 days = £289.393; £2,000 - £289.393 = £1,710.607",
+    "council_tax_reduction_7280ths_pence": 1245322000
   }
 ]

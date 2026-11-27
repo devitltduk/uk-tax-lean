@@ -76,6 +76,9 @@ jobs:
       - name: Compare Housing Benefit for pensioners
         working-directory: harness
         run: uv run --frozen python compare_housing.py --binary ../bin/uktax --random 1000
+      - name: Compare council tax and Council Tax Reduction
+        working-directory: harness
+        run: uv run --frozen python compare_council_tax.py --binary ../bin/uktax --random 1000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -90,3 +93,4 @@ jobs:
             harness/out/compare_disability.csv
             harness/out/compare_pension.csv
             harness/out/compare_housing.csv
+            harness/out/compare_council_tax.csv

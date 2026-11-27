@@ -58,6 +58,8 @@ CHECKED = (
     "guarantee_credit_tenths_pence",
     "new_state_pension_weekly_35ths_pence",
     "housing_benefit_twentieths_pence",
+    "council_tax_1440ths_pence",
+    "council_tax_reduction_7280ths_pence",
 )
 
 failures = 0
