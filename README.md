@@ -418,6 +418,30 @@ Outputs: `council_tax_reduction_wa_364m_pence` (the reg 13 main reduction),
 `council_tax_reduction_wa_total_su_pence`, in 1/(364 000 000 × 891 261) pence so
 that the band shares are exact. Not modelled: self-employment, childcare charges
 without UC, the extended reduction, joint liability.
+### Council Tax Reduction: English local working-age schemes (`UkTax/CtrEnglandLocal.lean`)
+
+The five councils' schemes PolicyEngine models, input `council_tax_reduction_local`
+with `"country": "england"`. Kingston upon Thames, Merton, Newham and Westminster
+follow the default scheme (SI 2012/2886) by the day; Oxford bands income.
+
+| Council | Maximum | Taper | Allowances (single 25+, under 25, couple), a child | Non-dependants | Capital |
+|---|---|---|---|---|---|
+| Kingston upon Thames | 100 % | 20 % | £90.50, £71.70, £142.25; £83.24, none for a third child born after 1 April 2017 | £5.64 to £17.31 | £16,000 |
+| Merton | 100 % | 20 % | £95.55, £75.65, £150.15; £87.88 | £5.20 to £15.95 | £16,000 |
+| Newham | 70 % | 25 % (3 4/7 % a day) | the Housing Benefit amounts | £7.54 to £22.61 (bands £183, £316, £394) | £6,000 |
+| Westminster | 100 % | 20 % | £95.55, £75.65, £150.15; £87.88 | £5.20 to £15.95 | £16,000 |
+| Oxford | 100 %, 75 %, 50 %, 25 %, nil by weekly income to £480, £530, £580, £660 | none | none | £5.20 to £15.95 | £16,000 |
+
+Without UC the default-scheme councils count net earnings less the Housing Benefit
+disregards (£5, £10, £25, the £17.10 step), other income and tariff income (£1 per
+£250 or part above £6,000), and disregard Child Benefit; with UC the UC maximum
+amount against the UC income and award, × 12/52. Oxford counts all earnings
+without UC; with UC, DWP's earned income, the award and other unearned income
+(Child Benefit included), less £48.15 of each carer element and £84.46 of each
+disabled child element. Output `council_tax_reduction_local_lcu_pence`, the year's
+reduction in 1/36 400 000 000 pence. Not modelled: premiums, self-employment,
+childcare, the class F (second adult) reduction.
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -652,6 +676,12 @@ relief-at-source contributions.
   or £479 a week it is the whole band-rise share less the deductions, however far
   income is above the applicable amount; the entitlement is at least each part and
   at most the bill; a penny of capital over £16,000 ends all of it.
+- `newham_at_most_70`, `localYear_taper`, `oxford_cliff_480`, `oxfordPct_anti`,
+  `oxford_mono` (`UkTax/CtrEnglandLocal.lean`): Newham never pays a working-age
+  applicant more than 70 % of the bill; on a council's taper more income never
+  raises the reduction and each unit costs at most the taper for 365/7 weeks;
+  Oxford's reduction never rises with income, and a penny a week above £480.00
+  (likewise £530, £580, £660) costs a quarter of the bill.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1010,6 +1040,18 @@ models neither reg 14 nor the second adult rebate). Latest local run: 1,021 of
 bands E to H reduction PolicyEngine leaves out is worth £244.44 a year to a single
 person in band F with a £2,200 bill and £321 a week, and £164.13 more than reg 13
 to a couple in band H with £4,000 and £479 a week (findings #36).
+
+### English local Council Tax Reduction schemes against PolicyEngine
+
+`uv run python compare_ctr_local.py` compares the five councils like with like: UC
+claimants everywhere (any family, pay, capital), and the own rules where
+PolicyEngine's omissions do not apply (findings #37: no children, no earnings,
+Merton below £6,000 of capital, not Kingston) and in Oxford with children and pay.
+Latest local run: 860 of 860 agree on PolicyEngine's 52-week basis within 2 float32
+steps plus 0.4p (552 claiming UC; 175 households left out as not like with like).
+Under the schemes a lone parent with two children and £15,000 of pay gets the whole
+£1,800 bill in Kingston, Merton and Westminster (£1,260 in Newham); PolicyEngine
+gives nil.
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

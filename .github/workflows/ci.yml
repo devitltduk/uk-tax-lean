@@ -88,6 +88,9 @@ jobs:
       - name: Compare Council Tax Reduction, Scotland, working age
         working-directory: harness
         run: uv run --frozen python compare_ctr_wa.py --binary ../bin/uktax --random 1000 --country scotland
+      - name: Compare Council Tax Reduction, English local schemes, working age
+        working-directory: harness
+        run: uv run --frozen python compare_ctr_local.py --binary ../bin/uktax --random 1000
       - name: Compare council tax and Council Tax Reduction
         working-directory: harness
         run: uv run --frozen python compare_council_tax.py --binary ../bin/uktax --random 1000
@@ -116,5 +119,6 @@ jobs:
             harness/out/compare_council_tax.csv
             harness/out/compare_ctr_wa.csv
             harness/out/compare_ctr_wa_scotland.csv
+            harness/out/compare_ctr_local.csv
             harness/out/compare_cgt.csv
             harness/out/compare_sdlt.csv

@@ -73,6 +73,8 @@ CHECKED = (
     "council_tax_reduction_wa_second_adult_364m_pence",
     "council_tax_reduction_wa_bands_e_h_su_pence",
     "council_tax_reduction_wa_total_su_pence",
+    "council_tax_reduction_local_lcu_pence",
+    "council_tax_reduction_local_applicable_weekly_pence",
 )
 
 failures = 0

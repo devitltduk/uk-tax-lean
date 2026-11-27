@@ -178,6 +178,17 @@ Optional fields:
   and the outputs add `council_tax_reduction_wa_second_adult_364m_pence`,
   `council_tax_reduction_wa_bands_e_h_su_pence` and the entitlement
   `council_tax_reduction_wa_total_su_pence`, in 1/(364 000 000 × 891 261) pence;
+* `council_tax_reduction_local` (with `"country": "england"`): a working-age
+  applicant under one of the five English councils' schemes PolicyEngine models
+  (`UkTax/CtrEnglandLocal.lean`): `authority` (`kingston_upon_thames`, `merton`,
+  `newham`, `westminster`, `oxford`), `council_tax_pence`, the household fields of
+  `housing_benefit_working_age` without premiums, `limited_children` (children
+  given no amount by Kingston's two-child rule) and `child_benefit_children` (Oxford
+  counts Child Benefit as income on UC). With `uc` and an award above nil
+  the UC rules apply. Outputs `council_tax_reduction_local_lcu_pence`, the year's
+  reduction in 1/36 400 000 000 pence; for the default-scheme councils the
+  withdrawal and the weekly applicable amount, for Oxford the band's percentage and
+  the year's income in 1/1 000 000 pence (52 weeks);
 * `sdlt`: `{"kind": "residential" | "first_time_buyer" | "additional_dwelling" |
   "non_residential", "consideration_pence": n}`, Stamp Duty Land Tax in England or
   Northern Ireland (`UkTax/Sdlt.lean`; output `sdlt_exact_ten_thousandths_pence`);
@@ -260,6 +271,9 @@ structure Case where
   /-- Working-age CTR: the bill, the household, the band (0 = A, ..., 7 = H; 8 if not
   given) and the second adult rebate (council tax due, rate in tenths of a percent). -/
   ctrWa : Option (Nat × HbWaClaim × Nat × Option (Nat × Nat)) := none
+  /-- English local working-age CTR: the council, the bill, the household and the
+  children with no amount under a two-child limit. -/
+  ctrLocal : Option (LocalAuthority × Nat × HbWaClaim × Nat × Nat) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -587,6 +601,23 @@ def parseCase (j : Json) : Except String Case := do
         | .error _ => pure none
       pure (some (← sub o "council_tax_pence", ← parseHbWa "council_tax_reduction_working_age" o, band, sar))
     | none => pure none
+  let ctrLocal ← match obj "council_tax_reduction_local" with
+    | some o => do
+      if !england then throw "council_tax_reduction_local: the English councils' schemes (country england)"
+      let la ← match o.getObjValAs? String "authority" with
+        | .ok "kingston_upon_thames" => pure LocalAuthority.kingston
+        | .ok "merton" => pure .merton
+        | .ok "newham" => pure .newham
+        | .ok "westminster" => pure .westminster
+        | .ok "oxford" => pure .oxford
+        | _ => throw "council_tax_reduction_local.authority must be kingston_upon_thames, merton, newham, westminster or oxford"
+      let h ← parseHbWa "council_tax_reduction_local" o
+      if h.familyPremium || h.disability || h.enhancedDisability || h.severeDisability > 0
+          || h.enhancedDisabilityChildren > 0 || h.disabledChildren > 0 || h.carers > 0 || h.esa != .none then
+        throw "council_tax_reduction_local: premiums and components are not modelled for the local schemes"
+      pure (some (la, ← sub o "council_tax_pence", h, ← sub o "limited_children",
+        childBenefitFor (← sub o "child_benefit_children") 1))
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -636,7 +667,7 @@ def parseCase (j : Json) : Except String Case := do
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
-    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa }
+    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal }
   return res
 
 def result (c : Case) : Json :=
@@ -796,6 +827,29 @@ def result (c : Case) : Json :=
                ("council_tax_reduction_wa_bands_e_h_su_pence", toJson (if capOk then bands else 0)),
                ("council_tax_reduction_wa_total_su_pence", toJson (scotTotal capOk main sarV bands))]
             else [])
+      | none => [])
+    ++ (match c.ctrLocal with
+      | some (la, ct, h, limited, cb) =>
+        let s := la.scheme
+        let onUc := claims.uc && decide (0 < ucAward claims ucEarned)
+        let nd := s.nonDepTotal h.housing
+        let E := hbWaEarnings c.period rg c.employment
+        let passported := h.passported && !onUc
+        let capOk := la == .oxford && onUc || !(h.capital > s.capitalLimit)
+        if la == .oxford then
+          let x : Int := if passported then 0 else if onUc then oxfordUcIncome claims cb ucEarned else oxfordOwnIncome h E
+          [("council_tax_reduction_local_lcu_pence", toJson (if capOk then oxfordYear ct nd x else 0)),
+           ("council_tax_reduction_local_uc_route", toJson onUc),
+           ("council_tax_reduction_local_oxford_percent", toJson (oxfordPct x)),
+           ("council_tax_reduction_local_income_millionths_pence", toJson x)]
+        else
+          let x : Int := if passported then 0 else if onUc then walesUcExcess claims ucEarned
+            else localOwnExcess s h limited E
+          [("council_tax_reduction_local_lcu_pence", toJson (if capOk then localYear s ct nd x else 0)),
+           ("council_tax_reduction_local_uc_route", toJson onUc),
+           ("council_tax_reduction_local_withdrawal_lcu_pence",
+             if capOk then toJson (localWithdrawal s nd x) else Json.null),
+           ("council_tax_reduction_local_applicable_weekly_pence", toJson (s.applicable h limited))]
       | none => [])
     ++ (match c.sdlt with
       | some (k, p) => [("sdlt_exact_ten_thousandths_pence", toJson (sdltExact k p))]
