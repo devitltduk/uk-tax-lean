@@ -23,4 +23,5 @@ import UkTax.Reliefs
 import UkTax.StudentLoans
 import UkTax.Devolved
 import UkTax.Targeted
+import UkTax.CompanyCar
 import UkTax.Axioms

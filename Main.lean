@@ -313,6 +313,11 @@ structure Case where
   /-- The parent has a qualifying benefit for the targeted 2-year-old hours other
   than the Universal Credit worked out here (P9c). -/
   targetedOther : Bool := false
+  /-- A company car: list price, capital contributions, CO2, electric range,
+  diesel (s141), days unavailable, payments for private use, fuel provided (P9d). -/
+  car : Option (Nat × Nat × Nat × Nat × Bool × Nat × Nat × Bool) := none
+  /-- The TV licence: required, blind holder, over 75 with Pension Credit (P9d). -/
+  tv : Option (Bool × Bool × Bool) := none
   /-- Carer Support Payment: weekly overlapping benefits and additional cared for
   people (P9b). -/
   csp : Option (Nat × Nat) := none
@@ -739,6 +744,18 @@ def parseCase (j : Json) : Except String Case := do
         throw "carer_support_payment: not modelled with Gift Aid, relief at source, or trading and property income"
       pure (some (← sub o "overlapping_weekly_pence", ← sub o "additional_cared_for"))
     | none => pure none
+  let car ← match obj "company_car" with
+    | some o => do
+      let u ← sub o "days_unavailable"
+      if u > taxYearDays then throw "company_car.days_unavailable: at most 365 in 2026-27"
+      pure (some (← sub o "list_price_pence", ← sub o "capital_contributions_pence", ← sub o "co2_g_km",
+        ← sub o "electric_range_miles", subB o "diesel_non_euro_6d", u, ← sub o "private_use_payments_pence",
+        subB o "fuel_provided"))
+    | none => pure none
+  let tv ← match obj "tv_licence" with
+    | some o => pure (some ((o.getObjValAs? Bool "required").toOption.getD true, subB o "blind",
+        subB o "over_75_with_pension_credit"))
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -790,7 +807,8 @@ def parseCase (j : Json) : Except String Case := do
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
     ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
     studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp,
-    targetedOther := (j.getObjValAs? Bool "targeted_other_benefit").toOption.getD false }
+    targetedOther := (j.getObjValAs? Bool "targeted_other_benefit").toOption.getD false,
+    car := car, tv := tv }
   return res
 
 def result (c : Case) : Json :=
@@ -1009,6 +1027,15 @@ def result (c : Case) : Json :=
         let pay := if rg.scottish then pawhpAmount w else wfpAmount w
         [(if rg.scottish then "pension_age_winter_heating_payment_pence" else "winter_fuel_payment_pence", toJson pay),
          ("winter_fuel_payment_charge_pence", toJson (wfpCharge total pay w.relevantBenefit))]
+      | none => [])
+    ++ (match c.car with
+      | some (price, contrib, co2, range, diesel, u, pay, fuel) =>
+        [("company_car_percent", toJson (carPct co2 range diesel)),
+         ("company_car_benefit_36500ths_pence", toJson (carBenefit price contrib co2 range diesel u pay)),
+         ("car_fuel_benefit_36500ths_pence", toJson (fuelBenefit co2 range diesel u fuel))]
+      | none => [])
+    ++ (match c.tv with
+      | some (req, blind, aged) => [("tv_licence_pence", toJson (tvLicence req blind aged))]
       | none => [])
     ++ (match c.scp with
       | some (n, other) =>

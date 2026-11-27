@@ -527,6 +527,21 @@ the working-parent hours the child has 30 in all, the first 15 targeted (DfE
 statutory guidance para A1.11), so `funded_hours_targeted_millionths_pence` is
 what they add to `funded_hours_millionths_pence`.
 
+### Company cars, car fuel and the TV licence (`UkTax/CompanyCar.lean`)
+
+Input `company_car`: `list_price_pence`, `capital_contributions_pence`,
+`co2_g_km` (rounded down), `electric_range_miles` (rounded up),
+`diesel_non_euro_6d`, `days_unavailable`, `private_use_payments_pence`,
+`fuel_provided`; outputs the appropriate percentage and both cash equivalents in
+1/36 500 pence. Input `tv_licence`: `required` (default true), `blind`,
+`over_75_with_pension_credit`.
+
+| Programme | Rule | Source |
+|---|---|---|
+| Company car benefit | list price less capital contributions (up to £5,000) × the appropriate percentage (2026-27: 4 % at 0 g/km; 4 % to 16 % at 1-50 g/km by electric range; 17 % to 21 % to 74 g/km; then 21 % plus a point for each 5 g/km above 75, at most 37 %; diesel not meeting Euro 6d 4 points more, at most 37 %), less the share for days unavailable, less payments for private use | ITEPA 2003 ss 121, 132, 139, 141, 143, 144 |
+| Car fuel benefit | the appropriate percentage of £29,200, less the share for days unavailable; nil for a car that cannot emit CO2 | ss 149-152 |
+| TV licence | £180; half for a blind holder; nil for a holder of 75 or over with Pension Credit (the BBC's concession) | SI 2004/692 Sch 1, reg 5; Communications Act 2003 s365A |
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -799,6 +814,11 @@ relief-at-source contributions.
   (`UkTax/Targeted.lean`): a penny of earned income a year past £15,400.08 takes
   away a 2-year-old's targeted hours, £5,073 at the DfE rate, for a family without
   the working-parent hours; with them the targeted hours add nothing.
+- `carPct_bounds`, `carPct_mono`, `carPct_range`, `car_50g_step`
+  (`UkTax/CompanyCar.lean`): the appropriate percentage stays between 4 % and
+  37 %, never falls as CO2 rises or rises as the electric range grows, and jumps
+  from 4 % to 17 % between 50 and 51 g/km for a long-range hybrid (£5,200 more
+  benefit on a £40,000 car).
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1211,6 +1231,13 @@ Winter Heating Payment and the charge). Latest local run: 1,000 of 1,000, 1,007 
 1,007 and 2,042 of 2,042 agree; 7 families at the end of UC and 1 carer at the
 earnings limit are float32 precision. PolicyEngine has no Carer Additional Person
 Payment (findings #41).
+
+### Company cars and the TV licence against PolicyEngine
+
+`uv run python compare_p9d.py` compares random company cars across every CO2 band
+edge and electric range edge, petrol and diesel, with contributions, days
+unavailable, payments and fuel, and the TV licence for blind and older holders.
+Latest local run: 1,033 of 1,033 and 16 of 16 agree (findings #43).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 
