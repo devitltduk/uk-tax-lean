@@ -2011,5 +2011,135 @@
     "source": "SI 2015/173 reg 13(1)",
     "working": "fewer than 10: nil",
     "new_state_pension_weekly_35ths_pence": 0
+  },
+  {
+    "name": "Housing Benefit with the guarantee credit: the whole rent",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 900000
+      },
+      "housing_benefit": {
+        "rent_weekly_pence": 10000
+      }
+    },
+    "source": "SI 2006/214 regs 26, 50",
+    "working": "State Pension £9,000 a year, £173.08 a week, under £238: guarantee credit, so all income disregarded; 52 x £100 = £5,200",
+    "housing_benefit_twentieths_pence": 10400000
+  },
+  {
+    "name": "Housing Benefit tapered at 65 %, income net of tax",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 1300000
+      },
+      "housing_benefit": {
+        "rent_weekly_pence": 10000
+      }
+    },
+    "source": "SSCBA 1992 s130(3); SI 2006/214 regs 22, 33(12), 51, Sch 3 para 1(1)(c)",
+    "working": "£13,000 less tax £86 = £12,914, £248.3462 a week; no guarantee credit; applicable amount £238 (pensionable age after 1 April 2021); 65 % x £10.3462 = £6.725; £100 - £6.725 = £93.275 a week, £4,850.30 a year",
+    "housing_benefit_twentieths_pence": 9700600
+  },
+  {
+    "name": "Housing Benefit at the pre-April 2021 rate: income under £256",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 1300000
+      },
+      "housing_benefit": {
+        "rent_weekly_pence": 10000,
+        "pensionable_age_before_april_2021": true
+      }
+    },
+    "source": "SI 2006/214 Sch 3 para 1(1)(b)",
+    "working": "same income, £248.35 a week, under the £256 allowance: the whole £100 a week, £5,200",
+    "housing_benefit_twentieths_pence": 10400000
+  },
+  {
+    "name": "Non-dependant deduction, gross £300 a week",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 900000
+      },
+      "housing_benefit": {
+        "rent_weekly_pence": 10000,
+        "non_dependants": [
+          {
+            "working": true,
+            "gross_weekly_pence": 30000
+          }
+        ]
+      }
+    },
+    "source": "SI 2006/214 reg 55(1), (2)(c)",
+    "working": "£300 is from £279 to under £365: £64.35; maximum £100 - £64.35 = £35.65 a week; guarantee credit, so the maximum: £1,853.80",
+    "housing_benefit_twentieths_pence": 3707600
+  },
+  {
+    "name": "No Housing Benefit with capital 1p over £16,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 1300000,
+        "capital_pence": 1600001
+      },
+      "housing_benefit": {
+        "rent_weekly_pence": 10000
+      }
+    },
+    "source": "SI 2006/214 reg 43",
+    "working": "State Pension £13,000, capital £16,000.01: deemed income £13 a week takes income over £238, no guarantee credit; capital over £16,000: nil",
+    "housing_benefit_twentieths_pence": 0
+  },
+  {
+    "name": "Housing Benefit with savings credit only: income plus the savings credit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "savings_credit": true,
+        "state_pension_pence": 1150000,
+        "other_pension_pence": 150000
+      },
+      "housing_benefit": {
+        "rent_weekly_pence": 10000
+      }
+    },
+    "source": "SI 2006/214 reg 27(1), (4)(a)",
+    "working": "Pension Credit income £248.3462 a week (State Pension £11,500, pension £1,500, tax £86), savings credit £13.83: £262.1762; 65 % x (262.1762 - 238) = £15.7145; £100 - £15.7145 = £84.2855 a week, £4,382.846 a year",
+    "housing_benefit_twentieths_pence": 8765692
+  },
+  {
+    "name": "Housing Benefit capped at the local housing allowance",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "pension_credit": {
+        "state_pension_pence": 900000
+      },
+      "housing_benefit": {
+        "rent_weekly_pence": 15000,
+        "lha_weekly_pence": 12000
+      }
+    },
+    "source": "SI 2006/214 regs 12D, 13D",
+    "working": "rent £150, LHA £120: eligible rent £120; guarantee credit: £120 x 52 = £6,240",
+    "housing_benefit_twentieths_pence": 12480000
   }
 ]

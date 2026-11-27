@@ -73,6 +73,9 @@ jobs:
       - name: Compare Pension Credit
         working-directory: harness
         run: uv run --frozen python compare_pension.py --binary ../bin/uktax --random 1000
+      - name: Compare Housing Benefit for pensioners
+        working-directory: harness
+        run: uv run --frozen python compare_housing.py --binary ../bin/uktax --random 1000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -86,3 +89,4 @@ jobs:
             harness/out/compare_nics.csv
             harness/out/compare_disability.csv
             harness/out/compare_pension.csv
+            harness/out/compare_housing.csv
