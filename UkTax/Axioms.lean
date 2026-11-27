@@ -21,6 +21,7 @@ import UkTax.Reliefs
 import UkTax.StudentLoans
 import UkTax.Devolved
 import UkTax.Targeted
+import UkTax.CompanyCar
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -455,3 +456,35 @@ today, so any change to it is seen.
 /-- info: 'UkTax.targetedExtra_working' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms UkTax.targetedExtra_working
+
+/-- info: 'UkTax.rangePct_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.rangePct_bounds
+
+/-- info: 'UkTax.co2Pct_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.co2Pct_bounds
+
+/-- info: 'UkTax.co2Pct_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.co2Pct_mono
+
+/-- info: 'UkTax.rangePct_anti' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.rangePct_anti
+
+/-- info: 'UkTax.carPct_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.carPct_bounds
+
+/-- info: 'UkTax.carPct_mono' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.carPct_mono
+
+/-- info: 'UkTax.carPct_range' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.carPct_range
+
+/-- info: 'UkTax.car_50g_step' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.car_50g_step

@@ -916,6 +916,31 @@ the request, a couple's combined (reg 1(3)(c), (4)); over twelve equal months,
 def targetedHoursWeekly : Nat := 15
 def targetedUcMonthlyLimit : Nat := 128_334
 
+/-! ## Company cars, car fuel and the TV licence, 2026-27 (P9d)
+
+Checked 2026-11-27. -/
+
+/-- The appropriate percentage (ITEPA 2003 s139, the table for 2026-27 substituted
+by FA 2023 s11(5), (6); s139(3)(a) 21 % by s11(3), (4)): 0 g/km 4 %; 1-50 g/km by
+electric range, 130 miles or more 4 %, 70-129 7 %, 40-69 10 %, 30-39 14 %, under
+30 16 %; 51-54 17 %, 55-59 18 %, 60-64 19 %, 65-69 20 %, 70-74 21 %; from 75 g/km
+21 % plus a point for each full 5 g/km above 75, at most 37 % (s139(3), (4)). A
+diesel car not meeting Euro 6d adds 4 points, at most 37 % (s141(2), Step 3:
+legislation.gov.uk still prints 35 %, but FA 2025 s5(6) substitutes "38%" for
+"37%" there from 2028-29, so 37 % is the figure in force). -/
+def carMaxPct : Nat := 37
+def carDieselSupplement : Nat := 4
+
+/-- Capital contributions count up to £5,000 (s132(3)); the car fuel benefit
+charge multiplier is £29,200 (s150(1)). 2026-27 has 365 days (s143(3) Y). -/
+def carContributionCap : Nat := 500_000
+def carFuelMultiplier : Nat := 2_920_000
+def taxYearDays : Nat := 365
+
+/-- The TV licence fee, £180.00 (Communications (Television Licensing) Regulations
+2004, SI 2004/692, Sch 1 Part 1 para 2); half for a blind licence holder (reg 5). -/
+def tvLicenceFee : Nat := 18_000
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

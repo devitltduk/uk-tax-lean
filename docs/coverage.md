@@ -36,7 +36,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
 | P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
 | P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a; SDLT **done**, P8b; LBTT, LTT, leases and non-residents **done**, P8c; reliefs **done**, area 6) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
-| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits; P9c **done**: the targeted 2-year-old hours, the other childcare schemes scoped) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
+| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits; P9c **done**: the targeted 2-year-old hours, the other childcare schemes scoped; P9d **done**: company cars, car fuel and the TV licence, consumption duties scoped) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
 ## Taxes on income
 
@@ -58,7 +58,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Self-employment and property income as non-savings income | `taxable_self_employment_income`, `taxable_property_income`, `property_finance_cost_relief` | ITTOIA 2005 Parts 2-3, s272A (finance costs restriction), ss 274A-274C (the tax reduction) | **done** for income tax (P2, profits from receipts and expenses); the finance cost reduction **done** (area 6: 20 % of the lowest of costs, profits and adjusted total income, one property business, no costs brought forward) |
 | Trade loss relief, capital allowances, relief cap | `loss_relief`, `trade_loss_relief_against_general_income`, `capital_allowances`, `income_tax_relief_cap` | ITA 2007 ss 64, 83, 24A; CAA 2001 | capital allowances and losses brought forward (s83) **done** (area 6, as inputs, for income tax and Class 4); sideways relief (s64) and the s24A cap not modelled |
 | Rent-a-room relief | `rent_a_room_relief`, `rent_a_room_income_tax` | ITTOIA 2005 ss 784-802 | **done** (P2, Part 3 receipts; findings #13) |
-| Company car and car fuel benefits | `company_car_benefit`, `car_fuel_benefit`, `ni_class_1a` | ITEPA 2003 ss 114-153 | planned (P9: the cash equivalent; Class 1A on it is done in P3) |
+| Company car and car fuel benefits | `company_car_benefit`, `car_fuel_benefit`, `company_car_appropriate_percentage` | ITEPA 2003 ss 121, 132, 139 (FA 2023 s11), 141, 143, 144, 149-152 | **done** (P9d: the 2026-27 appropriate percentages, the diesel supplement, capital contributions, unavailability, payments, the £29,200 fuel multiplier; Class 1A on it in P3; cars without a CO2 figure or registered before 1998, and optional remuneration, not modelled) |
 | Employment expenses and deductions | `employment_deductions`, `employment_expenses` | ITEPA 2003 Part 5 | **done** (area 6, as an input: off the earnings for income tax, not for NICs) |
 | Winter fuel payment charge | `winter_fuel_payment_charge` | Finance Act 2026 Sch 10 (inserting ITEPA 2003 Part 10 Ch 9, s681I) | **done** (P9a: the whole payment above £35,000 of total income, none on a relevant benefit) |
 | ISA cash-interest charge (from 2027-28) | `isa_cash_interest_flat_rate_charge` | Budget 2026; from 6 April 2027 | out of scope: starts after 2026-27 |
@@ -69,7 +69,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 |---|---|---|---|
 | Class 1 primary (employee), category A | `ni_class_1_employee`, `ni_class_1_employee_primary`, `ni_class_1_employee_additional` | SSCBA 1992 s8; SI 2001/1004 regs 10-11 | **done** |
 | Class 1 secondary (employer), employment allowance | `ni_class_1_employer`, `ni_employer` | SSCBA 1992 s9; SI 2001/1004 reg 10; NICA 2014 s1 | **done** (P3: 15 %, the secondary and under-21 / apprentice thresholds on each earnings-period basis); the Employment Allowance is the employer's, not modelled per employee (PolicyEngine has none either) |
-| Class 1A on car benefits | `ni_class_1a` | SSCBA 1992 s10 | **done** (P3: 15 % of a given cash equivalent; the car benefit itself planned in P9) |
+| Class 1A on car benefits | `ni_class_1a` | SSCBA 1992 s10 | **done** (P3: 15 % of a given cash equivalent; the car benefit itself in P9d) |
 | Class 2 | `ni_class_2` | SSCBA 1992 s11 (as amended from 2024-25) | **done** (P3: treated as paid at or above the £7,105 small profits threshold; voluntary £3.65 a week below it) |
 | Class 3 | `ni_class_3` | SSCBA 1992 s13 | **done** (P3: £18.40 a week, for weeks given) |
 | Class 4, including losses | `ni_class_4`, `ni_class_4_main`, `ni_class_4_maximum`, `ni_class_4_loss_relief` | SSCBA 1992 ss 15-18; SI 2001/1004 reg 100 | **done** (P3: 6 % / 2 %, the reg 100 annual maximum with employee Class 1); loss relief for losses brought forward (Sch 2 para 3) **done** (area 6) |
@@ -150,13 +150,13 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
-| VAT (standard and reduced rate on household spending, domestic energy, private school fees) | `vat`, `full_rate_vat_consumption`, `reduced_rate_vat_consumption`, `private_school_vat`, `domestic_energy_vat` | VATA 1994 ss 2, 29A, Schs 7A-8 | planned (P9: rate × spending) |
-| Fuel duty | `fuel_duty` | Hydrocarbon Oil Duties Act 1979 s6 | planned (P9) |
-| Alcohol duty | `alcohol_duty` | Finance (No. 2) Act 2023 Part 2 | planned (P9) |
-| Tobacco duty | `tobacco_duty` | Tobacco Products Duty Act 1979 | planned (P9) |
+| VAT (standard and reduced rate on household spending, domestic energy, private school fees) | `vat`, `full_rate_vat_consumption`, `reduced_rate_vat_consumption`, `private_school_vat`, `domestic_energy_vat` | VATA 1994 ss 2, 29A, Schs 7A-8 | out of scope: VAT is charged on suppliers; PolicyEngine grosses survey spending up to receipts (`vat_grossing_factor`) and assumes full pass-through, a calibration and an incidence assumption |
+| Fuel duty | `fuel_duty` | Hydrocarbon Oil Duties Act 1979 s6 | out of scope: the duty is charged on producers and importers; a household's share rests on full pass-through and survey quantities, an incidence assumption (as business rates); findings #43 on the 2026-27 rate |
+| Alcohol duty | `alcohol_duty` | Finance (No. 2) Act 2023 Part 2 | out of scope: the duty is charged on producers and importers; a household's share rests on full pass-through and survey quantities, an incidence assumption (as business rates) |
+| Tobacco duty | `tobacco_duty` | Tobacco Products Duty Act 1979 | out of scope: the duty is charged on producers and importers; a household's share rests on full pass-through and survey quantities, an incidence assumption (as business rates) |
 | Vehicle Excise Duty | `vehicle_excise_duty` | Vehicle Excise and Registration Act 1994 Sch 1 | planned (P9) |
 | Gambling duties | `gambling_duty` | Betting and Gaming Duties Act 1981; Finance Act 1997; Finance Act 2014 | out of scope: duty bases attributed to households by proxy |
-| TV licence | `tv_licence` | Communications Act 2003 s363; SI 2004/692 | planned (P9) |
+| TV licence | `tv_licence` | Communications Act 2003 ss 363, 365, 365A; SI 2004/692 Sch 1, reg 5 | **done** (P9d: £180, half for a blind holder, nil under the BBC's s365A concession for a holder of 75 or over with Pension Credit; the residential care concession not modelled) |
 | Student loan repayments | `student_loan_repayment` | SI 2009/470 reg 29, Sch 1A | **done** (P9a: plans 1, 2, 4, 5 and Postgraduate, more than one at once, the £2,000 unearned income rule; the balance cap and PAYE periods not modelled; findings #40) |
 | ISA subscription limits, Lifetime ISA bonus and charge | `isa_subscriptions_above_limit`, `lifetime_isa_bonus` | SI 1998/1870 | planned (P9) |
 | National Minimum Wage | `minimum_wage` | National Minimum Wage Act 1998; SI 2015/621 | planned (P9; already used for the childcare test) |

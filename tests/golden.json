@@ -3958,5 +3958,134 @@
     "working": "pay £17,000 meets the working-parent test: 30 hours × £8.90 × 38 = £10,146.00, the first 15 under the targeted entitlement (para A1.11); the targeted hours add nothing",
     "funded_hours_targeted_millionths_pence": 0,
     "funded_hours_millionths_pence": 1014600000000
+  },
+  {
+    "name": "Company car, petrol, 120 g/km, £40,000, with private fuel",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "company_car": {
+        "list_price_pence": 4000000,
+        "co2_g_km": 120,
+        "fuel_provided": true
+      }
+    },
+    "source": "ITEPA 2003 ss 121, 132, 139 (FA 2023 s11(5)), 141, 143, 144, 149-152",
+    "working": "s139(3): 21 % + 1 point for each full 5 g/km above 75 (45 g/km: 9) = 30 %; car £40,000 × 30 % = £12,000.00; fuel £29,200 × 30 % = £8,760.00",
+    "company_car_percent": 30,
+    "company_car_benefit_36500ths_pence": 43800000000,
+    "car_fuel_benefit_36500ths_pence": 31974000000
+  },
+  {
+    "name": "Company car, hybrid at 50 g/km with 130 miles of electric range",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "company_car": {
+        "list_price_pence": 4000000,
+        "co2_g_km": 50,
+        "electric_range_miles": 130
+      }
+    },
+    "source": "ITEPA 2003 ss 121, 132, 139 (FA 2023 s11(5)), 141, 143, 144, 149-152",
+    "working": "s139(1) table for 2026-27: 1-50 g/km with a range of 130 or more, 4 %: £1,600.00",
+    "company_car_percent": 4,
+    "company_car_benefit_36500ths_pence": 5840000000
+  },
+  {
+    "name": "Company car, 51 g/km: the next band",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "company_car": {
+        "list_price_pence": 4000000,
+        "co2_g_km": 51,
+        "electric_range_miles": 130
+      }
+    },
+    "source": "ITEPA 2003 ss 121, 132, 139 (FA 2023 s11(5)), 141, 143, 144, 149-152",
+    "working": "51-54 g/km, 17 % whatever the range: £6,800.00",
+    "company_car_percent": 17,
+    "company_car_benefit_36500ths_pence": 24820000000
+  },
+  {
+    "name": "Company car, diesel not meeting Euro 6d, 160 g/km",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "company_car": {
+        "list_price_pence": 4000000,
+        "co2_g_km": 160,
+        "diesel_non_euro_6d": true
+      }
+    },
+    "source": "ITEPA 2003 ss 121, 132, 139 (FA 2023 s11(5)), 141, 143, 144, 149-152",
+    "working": "s139(3): 21 % + 17 = 38 %, capped at 37 %; s141 Step 3: + 4 points, capped at 37 %: 37 %, £14,800.00",
+    "company_car_percent": 37,
+    "company_car_benefit_36500ths_pence": 54020000000
+  },
+  {
+    "name": "Company car, electric, capital contribution over the cap, 73 days unavailable, payments",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "company_car": {
+        "list_price_pence": 3000000,
+        "capital_contributions_pence": 600000,
+        "days_unavailable": 73,
+        "private_use_payments_pence": 50000,
+        "fuel_provided": true
+      }
+    },
+    "source": "ITEPA 2003 ss 121, 132, 139 (FA 2023 s11(5)), 141, 143, 144, 149-152",
+    "working": "£30,000 less contributions capped at £5,000 (s132(3)) = £25,000; × 4 % = £1,000; less 73/365 for unavailability (s143) = £800; less £500 payments (s144) = £300.00; no fuel benefit for a car that cannot emit CO2 (s149(4))",
+    "company_car_percent": 4,
+    "company_car_benefit_36500ths_pence": 1095000000,
+    "car_fuel_benefit_36500ths_pence": 0
+  },
+  {
+    "name": "TV licence",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "tv_licence": {}
+    },
+    "source": "SI 2004/692 Sch 1 Part 1 para 2",
+    "working": "£180.00",
+    "tv_licence_pence": 18000
+  },
+  {
+    "name": "TV licence, blind licence holder",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "tv_licence": {
+        "blind": true
+      }
+    },
+    "source": "SI 2004/692 reg 5",
+    "working": "50 % of £180.00 = £90.00",
+    "tv_licence_pence": 9000
+  },
+  {
+    "name": "TV licence, 75 or over with Pension Credit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "tv_licence": {
+        "over_75_with_pension_credit": true
+      }
+    },
+    "source": "Communications Act 2003 ss 365(1A), 365A; the BBC's over-75 concession",
+    "working": "nothing to pay",
+    "tv_licence_pence": 0
   }
 ]
