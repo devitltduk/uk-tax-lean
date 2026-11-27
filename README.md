@@ -1179,3 +1179,69 @@ proofs and the axiom guard, runs the golden cases, regenerates the cliff map and
 comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs,
 non-means-tested benefits, Pension Credit, Housing Benefit, council tax, CGT and
 SDLT, with 1,000 random cases each; reliefs and allowances).
+
+## In the browser (WebAssembly prototype)
+
+A prototype: `web/` is a static page that runs the model in the browser, with no
+server, from a WebAssembly build of `uktax`. Enter pay, savings, dividends,
+children and childcare, where you live and a few benefit inputs; it shows
+take-home pay with its breakdown and a take-home-against-pay chart swept live
+by the model, with each cliff found to the penny. It has a button to run the
+golden cases in the page.
+
+**Route: Lean → C → Emscripten** (`wasm/build.sh`). `lake build` leaves the
+model's C in `.lake/build/ir`. Toolchains ship no C for the Lean core modules,
+so the ones `Main` needs (`Init`, `Lean.Data.Json` and what they import, 727
+modules) are compiled to C with the toolchain's own `lean -c` from the sources
+it ships. The Lean runtime is built for wasm32 from the Lean source at the
+toolchain's version, single-threaded (so no cross-origin isolation headers are
+needed), with two small fixes in `wasm/lean-runtime-emscripten.patch`. A C shim
+(`wasm/shim.c`) exports `uktax_run`: JSON in, JSON out, through the same `run`
+function and `Json.compress` as the CLI, so `Main.lean` is compiled unchanged.
+In JavaScript, `web/model.js` wraps it (`calculate`, `calculateText`).
+
+Build (needs elan, git, cmake, make, python3; Emscripten 7.0.1 is used from
+`PATH` or installed into `.wasm-build/`, where all downloads and build output
+stay):
+
+```sh
+wasm/build.sh                     # writes web/dist/uktax.mjs and uktax.wasm
+python3 -m http.server -d . -b 127.0.0.1 8000  # serve the repository root, locally only
+# open http://localhost:8000/web/
+```
+
+Serve the repository root, not `web/`, so the page's golden-case check can read
+`tests/golden.json`.
+
+**Equivalence with the native binary**: `node wasm/equivalence.mjs --random
+1000` runs the golden inputs, 1,000 random variations of them (every whole
+number in an input rescaled, so some are rejected) and 1,000 random households
+through both builds and requires identical JSON text, and the same error message
+where the model rejects an input. It runs in CI (the `wasm` job). On 2026-11-27:
+2,215 inputs, 0 mismatches. In Chrome, the golden inputs give output whose
+SHA-256 equals the native binary's.
+
+**Measured** (2026-11-27, `-O2`, a desktop machine, Chrome and Node 26):
+
+| | |
+|---|---|
+| `uktax.wasm` | 1.96 MB, 338 KB gzipped |
+| `uktax.mjs` (Emscripten's loader) | 61 KB, 17 KB gzipped |
+| load (fetch, compile, initialise) | about 105–120 ms from localhost |
+| one calculation | about 1 ms in Chrome (median of 200), 0.3 ms warm in Node; native 0.2 ms |
+| the chart's sweep, 601 cases in one call | about 0.7 s in Chrome on first draw |
+| build from nothing | about 4 minutes on 6 cores, then about 2 minutes after a model change |
+
+`WASM_OPT=-Oz wasm/build.sh` gives 0.89 MB (252 KB gzipped) and runs about 1.6
+times slower.
+
+**Limits.** It is a prototype for trying the model, not a product. It uses the
+built-in 2026-27 figures: every call in `web/model.js` takes a `params`
+argument, and anything other than the built-in set is refused until the model
+takes a parameter set as JSON. The page asks only for the inputs above; the rest
+of the model (self-employment, disability and carer benefits, Pension Credit,
+Housing Benefit, council tax, CGT, the land taxes and so on) is reachable through
+`calculate` with the CLI's JSON but has no form. Upstream Lean does not test its
+Emscripten build (the job is switched off in its CI), so a toolchain upgrade may
+need the patch updated; the equivalence check is what tells us the build is
+still right.
