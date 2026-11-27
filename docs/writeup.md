@@ -354,9 +354,12 @@ raise the rate limits. PolicyEngine documents the non-taxpayer case
 page). The deduction is worth the same for a taxpayer outside Scotland with no
 savings or dividends whose taxable pay covers the contribution; elsewhere it
 differs both ways: £400 less relief on £12,000 of pay and £2,000 gross, £234 less
-on £15,000 and £3,600, 19 % instead of 20 % at the Scottish starter rate, £700.22
-less where the raised limits would move £10,000 of dividends down a band, and
-£286 more where the deduction frees starting-rate band for savings. Draft issue,
+on £15,000 and £3,600, 19 % instead of 20 % at the Scottish starter rate, and
+£286 more where the deduction frees starting-rate band for savings. Where the
+income above the basic rate limit is dividends alone (£15,000 of pay, £60,000 of
+dividends, £10,000 gross) the answer depends on the reading of s192(4): on its
+wording no higher rate tax is chargeable, the limits stay and PolicyEngine gives
+£1,799.78 more; on HMRC's PTM056120 the limits rise and it gives £700.22 less. Draft issue,
 asking to close the documented gap:
 [`drafts/issues/02-relief-at-source-non-taxpayers.md`](drafts/issues/02-relief-at-source-non-taxpayers.md).
 

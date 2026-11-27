@@ -491,14 +491,19 @@ relief-at-source contributions.
   pound). `esa_total_gain`: pension plus new style ESA keeps at least half of
   any rise in pension.
 - `pc_total_succ`, `pc_total_gain`, `sc_step`, `deemed_step` (`UkTax/Pension.lean`):
-  income plus Pension Credit never falls as income rises, except by at most a
-  penny a week where amount B's rounding steps; above the minimum guarantee it
-  keeps at least 60 % of a rise; and each £500 of capital above £10,000 is exactly
+  income plus Pension Credit never falls as income rises (with qualifying income
+  rising by the same amount, as it does unless the rise is in income reg 9 leaves
+  out of qualifying income), except by at most a penny a week where amount B's
+  rounding steps; above the minimum guarantee it keeps at least 60 % of such a
+  rise; and each £500 of capital above £10,000 is exactly
   £1 a week of deemed income.
 - `hb_total_gain`, `hb_passport`, `hb_capital_cliff`, `nonDep_mono`
-  (`UkTax/HousingBenefit.lean`): income plus Housing Benefit keeps at least 35 % of
-  any rise; with the guarantee credit it is the maximum whatever the income and
-  capital; without it, a penny over £16,000 of capital loses all of it; and a
+  (`UkTax/HousingBenefit.lean`): on the 65 % taper (`hbTaper`, the same maximum
+  and applicable amount), income plus Housing Benefit keeps at least 35 % of any
+  rise, which does not cover a rise that moves the claim between routes
+  (guarantee credit, savings credit, capital limit) in `housingBenefit`; with the
+  guarantee credit it is the maximum whatever the income and capital; without it,
+  a penny over £16,000 of capital loses all of it; and a
   non-dependant's deduction never falls as their income rises.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
@@ -509,9 +514,11 @@ relief-at-source contributions.
   more gains never lower Capital Gains Tax and each penny adds at most 24p; each
   penny less of unused band adds at most 6p; gains up to £3,000 are tax-free.
 - `sdlt_succ`, `ftb_cliff`, `higher_cliff` (`UkTax/Sdlt.lean`): a penny more
-  consideration never lowers SDLT except at two cliffs: first-time buyers' relief
-  ends at £500,000 (£10,000 of tax, then £15,000.0005), and the higher rates start
-  at £40,000 (nil, then £2,000).
+  consideration never lowers SDLT, for every kind of transaction including the
+  higher rates' start; the theorem leaves out only the first-time buyer's penny
+  from £500,000. Both cliffs are jumps up: first-time buyers' relief ends at
+  £500,000 (£10,000 of tax, then £15,000.0005), and the higher rates start at
+  £40,000 (nil, then £2,000).
 - `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
