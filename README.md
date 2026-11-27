@@ -481,6 +481,24 @@ Not modelled: sideways loss relief (s64) and the s24A cap, more than one propert
 business or finance costs brought forward, defined benefit input amounts, member
 contributions and the relief cap.
 
+### Student loans and the Winter Fuel Payment (`UkTax/StudentLoans.lean`)
+
+Input `student_loan` (`plans`: any of `plan_1`, `plan_2`, `plan_4`, `plan_5`,
+`postgraduate`), on the case's own income; input `winter_fuel_payment` (England
+and Wales: `over_80`, `relevant_benefit`, `partner_over_80`,
+`with_entitled_under_80`, `with_entitled_80`, `residential_care`,
+`partner_paid_benefit`), charged on the case's total income.
+
+| Programme | Rule | Source |
+|---|---|---|
+| Student loan repayments | 9 % of income above the lowest threshold held among plans 1 (£26,900), 2 (£29,385), 4 (£33,795) and 5 (£25,000), and 6 % above £21,000 for a Postgraduate loan, concurrently; income is total income with property, savings and dividend income left out unless together over £2,000 | SI 2009/470 reg 29, Sch 1A |
+| Winter Fuel Payment | £200 under 80 (£100 living with another person entitled or in a care home, unless paid a relevant benefit); £300 at 80, or on a relevant benefit with a partner of 80 (£200 or £150 sharing, by the other person's age); none for the partner of someone paid a relevant benefit | SI 2025/969 regs 2-4 |
+| Winter fuel payment charge | the whole payment where total income exceeds £35,000, unless entitled to a relevant benefit in the qualifying week | ITEPA 2003 s681I (FA 2026 Sch 10) |
+
+Not modelled: the outstanding balance as a cap, PAYE's pay-period deductions, the
+other reg 29(4) adjustments (losses, incapacity benefit, ESA, pension relief not
+already in total income), and Scotland's Pension Age Winter Heating Payment.
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -733,6 +751,14 @@ relief-at-source contributions.
   allowance stays between £10,000 and £60,000; the finance cost reduction is at
   most 20 % of the costs and never more than the tax. `net_drop_only_at_steps` now
   holds with Step 2 reliefs (gifts of shares) as well.
+- `threshold_le`, `sl_unearned_cliff`, `sl_unearned_cliff_size`,
+  `sl_succ_earned`, `wfpAmount_le`, `wfp_charge_cliff`, `wfp_charge_benefit`
+  (`UkTax/StudentLoans.lean`): the threshold is the lowest of the plans held;
+  £2,000 of unearned income adds nothing to student loan income and £2,000.01 adds
+  all of it, £180.0009 more of repayments above the threshold; otherwise a penny
+  more earned income adds 0 to 0.15p; the Winter Fuel Payment is at most £300; a
+  penny of total income above £35,000 charges the whole payment, and a relevant
+  benefit removes the charge at any income.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1125,6 +1151,16 @@ charge). PolicyEngine deducts gifts of shares as an allowance rather than from n
 income, so it does not lift the personal allowance or the pension taper: 168
 households with gifts and net income above £100,000 are counted, not compared
 (findings #39).
+
+### Student loans and the Winter Fuel Payment against PolicyEngine
+
+`uv run python compare_p9a.py` compares borrowers on each plan with pay, pension
+income, savings and dividends, and households of pensioners in England and Wales
+(couples, single people and others sharing the home, some with Pension Credit).
+Latest local run: 730 of 730 repayments agree (617 repaying) and 2,068 of 2,068
+people's payment and charge agree (662 charged). PolicyEngine counts unearned
+income of £2,000 or less, which reg 29(4)(c) leaves out: 295 such borrowers are
+counted, not compared, up to £180 a year apart (findings #40).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

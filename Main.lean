@@ -299,6 +299,10 @@ structure Case where
   land : Option (Nat × LandKind × Nat × Bool × List Nat × Bool) := none
   /-- One individual's income with the area 6 reliefs. -/
   reliefs : Option ReliefsIn := none
+  /-- The borrower's student loan plans (P9a). -/
+  studentLoan : Option Loans := none
+  /-- The Winter Fuel Payment case (P9a). -/
+  wfp : Option WfpCase := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -683,6 +687,30 @@ def parseCase (j : Json) : Except String Case := do
         throw "reliefs: not with the marriage allowance or the married couple's allowance"
       pure (some r)
     | none => pure none
+  let studentLoan ← match obj "student_loan" with
+    | some o => do
+      let plans ← match o.getObjValAs? (List String) "plans" with
+        | .ok ps => pure ps
+        | .error _ => throw "student_loan.plans must be a list of plan_1, plan_2, plan_4, plan_5 and postgraduate"
+      for q in plans do
+        if !["plan_1", "plan_2", "plan_4", "plan_5", "postgraduate"].contains q then
+          throw s!"student_loan.plans: unknown plan {q}"
+      let has (q : String) : Bool := plans.contains q
+      let lo : Loans := { plan1 := has "plan_1", plan2 := has "plan_2", plan4 := has "plan_4",
+                          plan5 := has "plan_5", postgraduate := has "postgraduate" }
+      pure (some lo)
+    | none => pure none
+  let wfp ← match obj "winter_fuel_payment" with
+    | some o => do
+      if scottish then
+        throw "winter_fuel_payment: Scotland pays the Pension Age Winter Heating Payment instead"
+      let w : WfpCase := { over80 := subB o "over_80", relevantBenefit := subB o "relevant_benefit",
+                           partnerOver80 := subB o "partner_over_80",
+                           withEntitledUnder80 := subB o "with_entitled_under_80",
+                           withEntitled80 := subB o "with_entitled_80", residentialCare := subB o "residential_care",
+                           partnerPaidBenefit := subB o "partner_paid_benefit" }
+      pure (some w)
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -732,7 +760,8 @@ def parseCase (j : Json) : Except String Case := do
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
-    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs }
+    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
+    studentLoan := studentLoan, wfp := wfp }
   return res
 
 def result (c : Case) : Json :=
@@ -927,6 +956,20 @@ def result (c : Case) : Json :=
          ("reliefs_aa_charge_ten_thousandths_pence", toJson (aaCharge (r.regime rg) r.income r.chargeable)),
          ("reliefs_net_income_pence", toJson r.netIncome),
          ("reliefs_class_4_exact_ten_thousandths_pence", toJson (class4Exact c.period r.pay r.tradeProfit))]
+      | none => [])
+    ++ (match c.studentLoan with
+      | some l =>
+        -- unearned income (reg 29(5)): property profits, savings and dividends
+        let unearned := c.propertyProfit + i.savings + i.dividends
+        let earned := i.nonSavings - c.propertyProfit
+        [("student_loan_repayment_ten_thousandths_pence", toJson (slRepayment l earned unearned)),
+         ("student_loan_income_pence", toJson (slIncome earned unearned))]
+      | none => [])
+    ++ (match c.wfp with
+      | some w =>
+        let total := i.nonSavings + i.savings + i.dividends
+        [("winter_fuel_payment_pence", toJson (wfpAmount w)),
+         ("winter_fuel_payment_charge_pence", toJson (wfpCharge total (wfpAmount w) w.relevantBenefit))]
       | none => [])
     ++ (match c.land with
       | some (tax, kind, p, nr, rents, resi) =>

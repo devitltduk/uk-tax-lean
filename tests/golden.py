@@ -28,6 +28,10 @@ assert len(results) == len(cases), f"expected {len(cases)} results, got {len(res
 # Each case states the outputs it was worked for; every one it states is checked.
 CHECKED = (
     "liability_pence",
+    "student_loan_repayment_ten_thousandths_pence",
+    "student_loan_income_pence",
+    "winter_fuel_payment_pence",
+    "winter_fuel_payment_charge_pence",
     "tax_exact_ten_thousandths_pence",
     "adjusted_net_income_pence",
     "personal_allowance_pence",

@@ -837,6 +837,46 @@ ss 274A, 274AA(5)): the property basic rate, for 2026-27 the basic rate, 20 %
 (the separate property rates start in 2027-28, FA 2026 Sch 1). -/
 def financeCostRate : Nat := 2_000
 
+/-! ## Student loan repayments and the Winter Fuel Payment, 2026-27 (P9a)
+
+Checked 2026-11-27. -/
+
+/-- Repayment thresholds for 2026-27 (SI 2009/470 reg 3 and Sch 1A): plan 1
+£26,900 and plan 2 £29,385 (paras 1, 2: the previous year's threshold times the
+repayment threshold variable of reg 8B, rounded up to £5; the amounts published on
+GOV.UK, "Repaying your student loan: what you pay"); plan 4 £33,795 (para 4: the
+Education (Student Loans) (Scotland) Regulations 2000 reg 2; GOV.UK, as above);
+plan 5 £25,000 (para 5(1)(a), the year to 5 April 2027); plan 3 (Postgraduate)
+£21,000 (para 3). Rates (reg 29(3)): 9 % for plans 1, 2, 4 and 5, 6 % for plan 3,
+concurrently (reg 29(3A)); with more than one of plans 1, 2, 4 and 5, the lowest
+threshold (reg 29(5A)). Unearned income counts only if it exceeds £2,000 (reg
+29(4)(c)). Plan 5 repayments are due from 6 April 2026 (reg 15(2BA), (2BB)). -/
+def slPlan1 : Nat := 2_690_000
+def slPlan2 : Nat := 2_938_500
+def slPlan4 : Nat := 3_379_500
+def slPlan5 : Nat := 2_500_000
+def slPostgraduate : Nat := 2_100_000
+def slRate : Nat := 900
+def slPostgraduateRate : Nat := 600
+def slUnearnedLimit : Nat := 200_000
+
+/-- Winter Fuel Payment, pence (SI 2025/969 reg 3, unchanged since made): under
+80, £200 (reg 3(1)), or £100 for someone not paid a relevant benefit who lives with
+another person entitled or is in residential care (reg 3(2)); £300 at 80 or over
+(reg 3(4)), or for someone paid a relevant benefit whose partner is 80 (reg 3(3));
+at 80 or over without a relevant benefit, £200 living with an entitled person
+under 80 (reg 3(5)) and £150 living with one 80 or over or in residential care
+(reg 3(6)). -/
+def wfpLower : Nat := 20_000
+def wfpLowerShared : Nat := 10_000
+def wfpHigher : Nat := 30_000
+def wfpHigherSharedWithUnder80 : Nat := 20_000
+def wfpHigherSharedWith80 : Nat := 15_000
+
+/-- The winter fuel payment charge (ITEPA 2003 s681I(1)(b), inserted by FA 2026
+Sch 10): total income for the tax year exceeding £35,000. -/
+def wfpChargeThreshold : Nat := 3_500_000
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

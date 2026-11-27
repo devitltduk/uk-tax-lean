@@ -36,7 +36,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
 | P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
 | P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a; SDLT **done**, P8b; LBTT, LTT, leases and non-residents **done**, P8c; reliefs **done**, area 6) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
-| P9 | The rest | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
+| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
 ## Taxes on income
 
@@ -60,7 +60,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Rent-a-room relief | `rent_a_room_relief`, `rent_a_room_income_tax` | ITTOIA 2005 ss 784-802 | **done** (P2, Part 3 receipts; findings #13) |
 | Company car and car fuel benefits | `company_car_benefit`, `car_fuel_benefit`, `ni_class_1a` | ITEPA 2003 ss 114-153 | planned (P9: the cash equivalent; Class 1A on it is done in P3) |
 | Employment expenses and deductions | `employment_deductions`, `employment_expenses` | ITEPA 2003 Part 5 | **done** (area 6, as an input: off the earnings for income tax, not for NICs) |
-| Winter fuel payment charge | `winter_fuel_payment_charge` | Finance Act 2026 s57 and Sch 10 (inserting ITEPA 2003 Part 10 Ch 9) | planned (P9) |
+| Winter fuel payment charge | `winter_fuel_payment_charge` | Finance Act 2026 Sch 10 (inserting ITEPA 2003 Part 10 Ch 9, s681I) | **done** (P9a: the whole payment above £35,000 of total income, none on a relevant benefit) |
 | ISA cash-interest charge (from 2027-28) | `isa_cash_interest_flat_rate_charge` | Budget 2026; from 6 April 2027 | out of scope: starts after 2026-27 |
 
 ## National Insurance
@@ -102,7 +102,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Bereavement, industrial injuries, war pensions, Armed Forces Compensation | budget terms only (inputs) | various | out of scope: PolicyEngine takes them as inputs |
 | State Pension (new and basic, additional, age addition) | `state_pension`, `new_state_pension`, `basic_state_pension`, `additional_state_pension` | Pensions Act 2014 ss 2-5; SI 2015/173 regs 1A, 13; SSCBA 1992 ss 44, 79 | **done** as far as the statute fixes it (P6): an input, as in PolicyEngine, since the transitional rate comes from each person's record; the reduced rate for someone with no pre-2016 year and the full rates are modelled (findings #25) |
 | Pension Credit (guarantee and savings credit) | `pension_credit`, `guarantee_credit`, `savings_credit`, `minimum_guarantee` | State Pension Credit Act 2002 ss 2, 3, 15; SI 2002/1792 regs 6, 7, 9, 15, 17, Schs IIA, VI | **done** (P6: the additional amounts as inputs, income net of tax, the earnings disregards, deemed income from capital, savings credit with the reg 7(4) rounding; findings #22-#24) |
-| Winter Fuel Payment | `winter_fuel_payment` | Social Fund Winter Fuel Payment Regulations 2025 (SI 2025/969) | planned (P9) |
+| Winter Fuel Payment | `winter_fuel_payment` | Social Fund Winter Fuel Payment Regulations 2025 (SI 2025/969); NISR 2025/142 (the same amounts) | **done** (P9a: regs 2-4, England and Wales; custody and long hospital stays left to the caller) |
 
 ## Childcare
 
@@ -156,7 +156,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Vehicle Excise Duty | `vehicle_excise_duty` | Vehicle Excise and Registration Act 1994 Sch 1 | planned (P9) |
 | Gambling duties | `gambling_duty` | Betting and Gaming Duties Act 1981; Finance Act 1997; Finance Act 2014 | out of scope: duty bases attributed to households by proxy |
 | TV licence | `tv_licence` | Communications Act 2003 s363; SI 2004/692 | planned (P9) |
-| Student loan repayments | `student_loan_repayment` | SI 2009/470 | planned (P9) |
+| Student loan repayments | `student_loan_repayment` | SI 2009/470 reg 29, Sch 1A | **done** (P9a: plans 1, 2, 4, 5 and Postgraduate, more than one at once, the £2,000 unearned income rule; the balance cap and PAYE periods not modelled; findings #40) |
 | ISA subscription limits, Lifetime ISA bonus and charge | `isa_subscriptions_above_limit`, `lifetime_isa_bonus` | SI 1998/1870 | planned (P9) |
 | National Minimum Wage | `minimum_wage` | National Minimum Wage Act 1998; SI 2015/621 | planned (P9; already used for the childcare test) |
 
