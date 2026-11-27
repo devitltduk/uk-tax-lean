@@ -140,7 +140,10 @@ reg 3).
   2 6/7 % of the week's income above £321 (single, no child) or £479; due instead
   of reg 13 where it is greater (regs 13(4), 14(1)(b)).
 * **Not on UC** (regs 38, 50, 57, 63; Sch 1, Sch 3): the Housing Benefit personal
-  allowances and premiums with £109.85 for each child and no family premium; net
+  allowances and premiums with £109.85 for each child and no family premium (the
+  transitional family premium of reg 98, £20.22 or £22.20 a week for someone
+  entitled to the 2016 transitional premium on 31 March 2022 until a new
+  application or no child, turns on the claim's history and is not modelled); net
   earnings less the Sch 3 disregards (with the £17.10 step), other income, and
   tariff income of £1 a week for each £250 or part above £6,000.
 * **On UC** (regs 42, 43, 49, 57(1)(p), 63(1)(a), 78; an award above nil): Scotland

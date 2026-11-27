@@ -76,9 +76,11 @@ Optional fields:
   income): its receipts less expenses, less the tax and Class 4 on it, are
   self-employed earnings (reg 57, nil for a loss; `UkTax/UcSelfEmployed.lean`).
   `uc.minimum_income_floor`: `{"expected_hours": 35, "partner_expected_hours": 35,
-  "whole_pounds": true}` applies the floor of reg 62 (the caller has found the
-  claimant in gainful self-employment, subject to all work-related requirements
-  and outside a start-up period); outputs `uc_earned_income_ten_thousandths_pence`
+  "age": 21, "partner_age": 21, "whole_pounds": true}` applies the floor of reg 62
+  (the caller has found the claimant in gainful self-employment, subject to all
+  work-related requirements and outside a start-up period), each member's
+  threshold at the minimum wage for their age (reg 90(2); the ages default to 21,
+  and any age of 21 or over gives the same); outputs `uc_earned_income_ten_thousandths_pence`
   (before the floor) and `uc_minimum_income_floor_ten_thousandths_pence` (the net
   individual threshold);
 * National Insurance beyond employee Class 1 (`UkTax/Nics.lean`):
@@ -314,7 +316,7 @@ structure Case where
   ucProfit : Int := 0
   /-- The minimum income floor: whole pounds, the claimant's and the partner's
   expected hours. -/
-  mif : Option (Bool × Nat × Nat) := none
+  mif : Option (Bool × Nat × Nat × Nat × Nat) := none
   hbWa : Option HbWaClaim := none
   /-- Working-age CTR: the bill, the household, the band (0 = A, ..., 7 = H; 8 if not
   given) and the second adult rebate (council tax due, rate in tenths of a percent). -/
@@ -591,14 +593,14 @@ def parseCase (j : Json) : Except String Case := do
     throw "property and rent-a-room income are not modelled with Universal Credit yet"
   let mif ← match (j.getObjVal? "uc").toOption.bind (fun u => (u.getObjVal? "minimum_income_floor").toOption) with
     | some m => do
-      let h (k : String) : Except String Nat :=
+      let h (k : String) (d : Nat) : Except String Nat :=
         match m.getObjVal? k with
         | .ok _ => match m.getObjValAs? Nat k with
           | .ok v => .ok v
-          | .error _ => .error s!"uc.minimum_income_floor.{k} must be a whole number of hours"
-        | .error _ => .ok 35
-      pure (some ((m.getObjValAs? Bool "whole_pounds").toOption.getD true, ← h "expected_hours",
-        ← h "partner_expected_hours"))
+          | .error _ => .error s!"uc.minimum_income_floor.{k} must be a whole number"
+        | .error _ => .ok d
+      pure (some ((m.getObjValAs? Bool "whole_pounds").toOption.getD true, ← h "expected_hours" 35,
+        ← h "partner_expected_hours" 35, ← h "age" 21, ← h "partner_age" 21))
     | none => pure none
   let income : Income :=
     { income with nonSavings := income.nonSavings - netPay + profits }
@@ -1012,11 +1014,11 @@ def result (c : Case) : Json :=
       earnedWithTrade c.period rg c.employment c.tradeProfit c.ucProfit
     else earned c.period rg i.savings i.dividends c.employment
   -- the minimum income floor (reg 62): a lower bound on the claimant's earned income
-  let mifF : Option Int := c.mif.map fun (w, h, _) => mifNetYear P rg.scottish w h
-  let floor : Option Int := c.mif.map fun (w, h, ph) =>
-    let F := mifNetYear P rg.scottish w h
+  let mifF : Option Int := c.mif.map fun (w, h, _, a, _) => mifNetYear P rg.scottish w a h
+  let floor : Option Int := c.mif.map fun (w, h, ph, a, pa) =>
+    let F := mifNetYear P rg.scottish w a h
     if c.claims.couple then
-      min F (F + mifNetYear P rg.scottish w ph - 10_000 * (c.claims.partnerEarned : Int))
+      min F (F + mifNetYear P rg.scottish w pa ph - 10_000 * (c.claims.partnerEarned : Int))
     else F
   [
     ("liability_pence", toJson (finalLiability rg i)),

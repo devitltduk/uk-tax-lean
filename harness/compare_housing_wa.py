@@ -30,10 +30,12 @@ gives more are counted.
 
 PolicyEngine also caps the year's total, at the annual limit unrounded; the law caps
 each benefit week (reg 75G) at the limit ÷ 52 rounded to the penny (reg 75CA(1)).
-Where the award crosses the cap at 5 October the two differ, so for the
-comparison the model's uncapped rates are weighted by PolicyEngine's day shares and
-capped PolicyEngine's way; the law's weekly cap gives up to 8p a year less where it
-binds all year, more where it binds only part of it (findings #34).
+The model's own award, its weekly cap included, is compared. Where the model's cap
+binds and the two differ, the case counts as the capping method only if the model's
+uncapped rates, weighted by PolicyEngine's day shares and capped PolicyEngine's way,
+give PolicyEngine's figure; the count and the largest gap are reported. The law's
+weekly cap gives about 8p a year less where it binds all year, more where it binds
+only from October (findings #34).
 
 Whether the £17.10 additional disregard's conditions (Sch 4 para 17(2): hours of
 work) are met is read from PolicyEngine
@@ -168,13 +170,22 @@ def main() -> int:
         after = r["housing_benefit_wa_rate_from_october_millionths_pence"] / MICRO
         return before * 182 / 365 + after * 183 / 365 if c["acc"] != "general" else before
 
+    def capped_by_model(r: dict) -> bool:
+        """The model's benefit cap takes something off in at least one part of the year."""
+        return (r["housing_benefit_wa_rate_before_millionths_pence"] < r["housing_benefit_wa_uncapped_before_millionths_pence"]
+                or r["housing_benefit_wa_rate_from_october_millionths_pence"]
+                < r["housing_benefit_wa_uncapped_from_october_millionths_pence"])
+
     law = run(args.binary, payload_for(True))
     pe_basis = run(args.binary, payload_for(False))
     rows, bad, worst, paid, passported, kids, gap, gap_max, capped = [], 0, 0.0, 0, 0, 0, 0.0, 0.0, 0
+    cap_method, cap_gap_max = 0, 0.0
     for c, r, rl, hb, uc, cb in zip(cs, pe_basis, law, pe["housing_benefit"], pe["universal_credit"],
                                     pe["child_benefit"]):
-        mine, in_law = pe_year(c, r, cb), year(c, rl)
-        if c["acc"] == "specified" and not c["kids"] and in_law > year(c, r) + 1:
+        # The model's own award (its weekly benefit cap included), on PolicyEngine's basis
+        # (no child amount; specified accommodation run as temporary), and in law.
+        mine, in_law, pe_way = year(c, r), year(c, rl), pe_year(c, r, cb)
+        if c["acc"] == "specified" and not c["kids"] and in_law > mine + 1:
             capped += 1
         if c["kids"]:
             kids += 1
@@ -182,8 +193,18 @@ def main() -> int:
             gap_max = max(gap_max, in_law - mine)
         theirs = hb * 100
         st = step(max(c["rent"] * 52, c["pay"]))
-        ok = abs(theirs - mine) <= args.steps * st + 0.4
-        worst = max(worst, abs(theirs - mine) / st)
+        tol = args.steps * st + 0.4
+        ok = abs(theirs - mine) <= tol
+        cap_binds = capped_by_model(r)
+        if not ok and cap_binds and abs(theirs - pe_way) <= tol:
+            # The cap binds and PolicyEngine caps the year's total where the law caps each
+            # week (reg 75G, 75CA(1)): the model's uncapped rates capped PolicyEngine's way
+            # give PolicyEngine's figure, so the gap is the capping method alone.
+            cap_method += 1
+            cap_gap_max = max(cap_gap_max, abs(theirs - mine))
+            ok = True
+        else:
+            worst = max(worst, abs(theirs - mine) / st)
         paid += mine > 0
         passported += uc > 0
         bad += not ok
@@ -195,6 +216,8 @@ def main() -> int:
           f"worst {worst:.2f} float32 steps); {kids} families with children, where the law's £87.88 child amount "
           f"adds £{gap / 100:,.2f} in all, up to £{gap_max / 100:,.2f} a year; {capped} in specified accommodation "
           "capped on PolicyEngine's basis and not in law")
+    print(f"  {sum(capped_by_model(r_) for r_ in pe_basis)} capped by the model; {cap_method} differ "
+          f"only by the capping method (each week in law, the year in PolicyEngine), up to £{cap_gap_max / 100:,.2f} a year")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))

@@ -1,10 +1,13 @@
 """Compare Scotland's devolved benefits with PolicyEngine UK, 2026-27 (P9b).
 
 * Scottish Child Payment: single parents and couples in Scotland with one to four
-  children under 16, at random pay, on Universal Credit worked out by each side.
-  The payment must agree to the penny. Where the two sides' UC awards sit either
-  side of nil (within the float32 tolerance of compare_uc.py) the qualifying test
-  can flip: those are counted as precision.
+  children under 16 of random ages, at random pay, on Universal Credit worked out
+  by each side from the same inputs: the model is given PolicyEngine's Child
+  Benefit (counted by the benefit cap) and whether the eldest child was born before
+  6 April 2017 (the higher first child element). The payment must agree to the
+  penny. Only where the two UC awards agree within the float32 tolerance of
+  compare_uc.py and sit either side of nil (one nil, the other not) can the
+  qualifying test flip: those are counted as precision.
 * Carer Support Payment and the Scottish Carer Supplement: carers in Scotland with
   pay and net pay pension contributions, around the £204 earnings limit and at
   random. Must agree within --steps float32 steps; a case whose weekly net earnings
@@ -46,10 +49,8 @@ def scp(binary: pathlib.Path, rng: random.Random, n: int, steps: float, rows: li
 
     cs = [{"couple": rng.random() < 0.4, "kids": rng.randint(1, 4),
            "pay": rng.choice([0, rng.randint(0, 3_000_000), rng.randint(0, 8_000_000)])} for _ in range(n)]
-    ln = run(binary, [{"non_savings_pence": c["pay"], "employment_pence": c["pay"], "savings_pence": 0,
-                       "dividends_pence": 0, "country": "scotland",
-                       "uc": {"couple": c["couple"], "children": c["kids"]},
-                       "scottish_child_payment": {"children_under_16": c["kids"]}} for c in cs])
+    for c in cs:
+        c["ages"] = [rng.randint(0, 15) for _ in range(c["kids"])]
     people, bus, hhs = {}, {}, {}
     for i, c in enumerate(cs):
         members = [f"a{i}"]
@@ -58,8 +59,8 @@ def scp(binary: pathlib.Path, rng: random.Random, n: int, steps: float, rows: li
             people[f"a{i}"]["marriage_allowance"] = {YEAR: 0}
             people[f"b{i}"] = {"age": {YEAR: 30}}
             members.append(f"b{i}")
-        for k in range(c["kids"]):
-            people[f"c{i}_{k}"] = {"age": {YEAR: rng.randint(0, 15)}, "would_claim_scp": {YEAR: True}}
+        for k, age in enumerate(c["ages"]):
+            people[f"c{i}_{k}"] = {"age": {YEAR: age}, "would_claim_scp": {YEAR: True}}
             members.append(f"c{i}_{k}")
         bus[f"u{i}"] = {"members": members}
         hhs[f"h{i}"] = {"members": members, "region": {YEAR: "SCOTLAND"}}
@@ -67,19 +68,35 @@ def scp(binary: pathlib.Path, rng: random.Random, n: int, steps: float, rows: li
     pe_scp = sim.calculate("scottish_child_payment", YEAR, map_to="benunit")
     pe_uc = sim.calculate("universal_credit", YEAR)
     pe_max = sim.calculate("uc_maximum_amount", YEAR)
+    pe_cb = sim.calculate("child_benefit", YEAR)
+    # The model is given what PolicyEngine works out from the children's ages: whether the
+    # eldest was born before 6 April 2017 (the higher first child element) and the Child
+    # Benefit, which the benefit cap counts.
+    pre = dict(zip(people, (bool(x) for x in sim.calculate("uc_is_child_born_before_child_limit", YEAR))))
+    for i, (c, b) in enumerate(zip(cs, pe_cb)):
+        c["pre_2017"] = any(pre[f"c{i}_{k}"] for k in range(c["kids"]))
+        c["cb"] = round(float(b) * 100)
+    ln = run(binary, [{"non_savings_pence": c["pay"], "employment_pence": c["pay"], "savings_pence": 0,
+                       "dividends_pence": 0, "country": "scotland", "child_benefit_pence": c["cb"],
+                       "uc": {"couple": c["couple"], "children": c["kids"], "first_child_pre_2017": c["pre_2017"]},
+                       "scottish_child_payment": {"children_under_16": c["kids"]}} for c in cs])
     bad = flips = 0
     for c, r, s, u, m in zip(cs, ln, pe_scp, pe_uc, pe_max):
         mine, theirs = r["scottish_child_payment_pence"], round(float(s) * 100, 2)
         ok = abs(mine - theirs) < 0.5
-        lean_uc = r["uc_millionths_pence"] / MICRO
-        if not ok and min(lean_uc, float(u) * 100) <= steps * step(max(float(m) * 100, c["pay"])):
+        lean_uc, pe_uc_p = r["uc_millionths_pence"] / MICRO, float(u) * 100
+        # Precision only where both sides' UC agree within the tolerance of compare_uc.py
+        # and sit either side of nil, so one side pays the Scottish Child Payment and the
+        # other does not.
+        tol = steps * step(max(float(m) * 100, c["pay"]))
+        if not ok and abs(lean_uc - pe_uc_p) <= tol and min(lean_uc, pe_uc_p) <= 0 < max(lean_uc, pe_uc_p):
             flips += 1
             ok = True
         bad += not ok
-        rows.append({"area": "scp", "case": f"couple {c['couple']} kids {c['kids']} pay {c['pay']}",
+        rows.append({"area": "scp", "case": f"couple {c['couple']} ages {c['ages']} pay {c['pay']}",
                      "lean_pence": mine, "pe_pence": theirs, "ok": ok})
         if not ok and bad <= 10:
-            print(f"  SCP {c}: lean {mine} pe {theirs} (UC lean {lean_uc:.2f} pe {float(u) * 100:.2f})")
+            print(f"  SCP {c}: lean {mine} pe {theirs} (UC lean {lean_uc:.2f} pe {pe_uc_p:.2f})")
     print(f"Scottish Child Payment: {n - bad}/{n} agree ({sum(r['lean_pence'] > 0 for r in rows if r['area'] == 'scp')} paid; "
           f"{flips} at the end of UC, precision)")
     return bad
