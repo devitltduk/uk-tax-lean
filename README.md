@@ -227,14 +227,24 @@ Weekly rates from 6 April 2026 (checked against legislation.gov.uk and GOV.UK on
   the pay alone, primary Class 1 and half the net pay pension contributions,
   over 52 weeks, a fraction of a penny disregarded. The allowance is taxable
   (ITEPA 2003 s660), so `net_income_carer_ten_thousandths_pence` adds it to
-  non-savings income for income tax (no NICs). Not with Universal Credit, where
-  it would be unearned income, yet.
+  non-savings income for income tax (no NICs). With Universal Credit
+  (`UkTax/CarerUc.lean`) it is unearned income deducted in full
+  ([reg 66(1)(b)(iii)](https://www.legislation.gov.uk/uksi/2013/376/regulation/66),
+  52 weeks a year by [reg 73(2)(a)](https://www.legislation.gov.uk/uksi/2013/376/regulation/73)),
+  the carer element is due with or without it
+  ([reg 30(1)(a)](https://www.legislation.gov.uk/uksi/2013/376/regulation/30)),
+  and earned income is pay less the tax on the pay alone, the pay being the
+  lowest slice (reg 55(5)(b) does not say how to split the tax; PolicyEngine does
+  the same).
 - **Maternity Allowance**, **new style JSA and ESA** and the **Sure Start
   Maternity Grant** as weekly amounts (or the grant) from the inputs above.
 
 The Carer's Allowance limit is a cliff: with pay only, £10,608.51 a year keeps
 the whole £4,495.40; £10,608.52 (£204.01 a week) loses it, and net income falls by
-£3,988.61 (the allowance less the income tax on it).
+£3,988.61 (the allowance less the income tax on it). On Universal Credit the
+cliff turns round: UC makes up the allowance penny for penny, so at the limit net
+income rises by the tax the allowance carried (£506.79 for a lone parent of two
+on £10,608.52, against £10,608.51).
 
 ### State Pension and Pension Credit (`UkTax/Pension.lean`)
 
@@ -314,8 +324,11 @@ charges, and the LHA itself (an input).
 Inputs `capital_gains_pence` and `badr_gains_pence` (gains after losses); the unused
 basic rate band is the basic rate limit, raised by Gift Aid and relief-at-source
 contributions, less Step 3 income. Carried interest is charged to income tax from 6
-April 2026 (Finance Act 2026 s58) and is not modelled; nor are investors' relief and
-Scottish taxpayers.
+April 2026 (Finance Act 2026 s58) and is not modelled; nor is investors' relief. A
+Scottish taxpayer's gains are banded on the UK basic rate band: s1I applies "as if
+the individual is not a Scottish or Welsh taxpayer"
+([s1J(6)](https://www.legislation.gov.uk/ukpga/1992/12/section/1J)), whatever the
+Scottish rates on their income.
 
 ### Stamp Duty Land Tax (`UkTax/Sdlt.lean`)
 
@@ -484,6 +497,11 @@ relief-at-source contributions.
   allowance taxed as income, a penny more pay lowers net income only where net
   earnings cross the limit, or, with the allowance unchanged, at a step of
   `net_drop_only_at_steps` at total income including it.
+- `ucAward_withCa`, `carer_uc_net`, `carer_uc_cliff` (`UkTax/CarerUc.lean`): while
+  UC is in payment, each penny of Carer's Allowance takes a penny off it, so for a
+  carer on UC the allowance changes net income only by the income tax and HICBC
+  it brings, never for the better; at the earnings limit losing it raises net
+  income by that tax.
 - `ma_threshold_cliff`, `ma_mono`: Maternity Allowance is nil 1p below £30 of
   average weekly earnings and £27 at £30, and never falls above it.
   `jsa_total_succ`: earnings plus new style JSA never fall by more than 9p as
@@ -508,6 +526,7 @@ relief-at-source contributions.
 - `cgt_succ_other`, `cgt_succ_badr`, `cgt_band`, `cgt_exempt` (`UkTax/Cgt.lean`):
   more gains never lower Capital Gains Tax and each penny adds at most 24p; each
   penny less of unused band adds at most 6p; gains up to £3,000 are tax-free.
+  `cgtBand_scottish`: a Scottish taxpayer's band is the UK one (s1J(6)).
 - `sdlt_succ`, `ftb_cliff`, `higher_cliff` (`UkTax/Sdlt.lean`): a penny more
   consideration never lowers SDLT except at two cliffs: first-time buyers' relief
   ends at £500,000 (£10,000 of tax, then £15,000.0005), and the higher rates start
@@ -594,7 +613,9 @@ and the LHA cap. For council tax: a band in each nation (Wales's band I), the
 single person discount, and the pensioner reduction's taper over 365 days, a
 non-dependant band, Wales's £256 allowance and a Scottish non-dependant. For CGT:
 gains within and across the band, BADR taking the band first, the exempt amount,
-and Gift Aid extending the band. For SDLT: each kind, both cliffs and the top band.
+Gift Aid extending the band, and a Scottish higher-rate taxpayer with gains inside
+the UK band. For Carer's Allowance with UC: the allowance deducted from UC, and
+1p either side of the limit. For SDLT: each kind, both cliffs and the top band.
 
 ### Where earning more lowers net income
 
@@ -781,8 +802,11 @@ PolicyEngine issue).
 `uv run python compare_disability.py` compares every combination of PIP, DLA and
 Attendance Allowance rates, Carer's Allowance for a carer with pay and net pay
 pension contributions (edge cases 1p either side of the limit and random pay),
-and Child Benefit for 1 to 4 children. Latest local run: 324 of 324 rate
-combinations and 1,007 of 1,007 carers (508 paid) agree within 2 float32 steps.
+the same carers on Universal Credit with 0 to 3 children, and Child Benefit for 1
+to 4 children. Latest local run: 324 of 324 rate combinations, 1,007 of 1,007
+carers (508 paid) and 1,012 of 1,012 carers on UC (880 with UC paid, 519 with both)
+agree within 2 float32 steps (on UC plus 55 % of PolicyEngine's 0.32p NIC gap,
+findings #1, above the primary threshold).
 Child Benefit agrees on the weekly rate and differs by one week a year:
 PolicyEngine pays 52 weeks, the law 53 in 2026-27 (findings #19, a draft issue).
 Maternity Allowance, new style JSA and ESA and the Sure Start Maternity Grant are
@@ -819,10 +843,11 @@ pays up to £9.75 a year more (findings #27, a draft issue).
 
 ### Capital Gains Tax against PolicyEngine
 
-`uv run python compare_cgt.py` compares taxpayers outside Scotland with pay,
-savings, dividends, Gift Aid, gains and BADR gains, with edge cases at the exempt
-amount and the basic rate limit. Latest local run: 1,009 of 1,009 agree within 2
-float32 steps (worst 0.37).
+`uv run python compare_cgt.py` compares taxpayers, a third of them Scottish, with
+pay, savings, dividends, Gift Aid, gains and BADR gains, with edge cases at the
+exempt amount and the basic rate limit, and Scottish higher-rate taxpayers inside
+the UK band. Latest local run: 1,014 of 1,014 (341 Scottish) agree within 2
+float32 steps (worst 0.39).
 
 ### Stamp Duty Land Tax against PolicyEngine
 

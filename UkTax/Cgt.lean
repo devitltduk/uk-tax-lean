@@ -21,8 +21,12 @@ The unused basic rate band is the basic rate limit (raised by Gift Aid and
 relief-at-source pension contributions: ITA 2007 s414(2), FA 2004 s192(4))
 less the income charged to income tax (Step 3 income). Carried interest, charged to
 income tax from 6 April 2026 (Finance Act 2026 s58, ITTOIA 2005 s23I), and
-investors' relief are not modelled; nor are Scottish taxpayers, for whom the
-basic rate band used was not checked.
+investors' relief are not modelled.
+
+A Scottish taxpayer's gains are banded the same way: s1J(6) applies s1I "as if
+the individual is not a Scottish or Welsh taxpayer", so the UK basic rate limit,
+raised by Gift Aid and relief at source as for anyone else, less Step 3 income,
+whatever the Scottish rates on their income (`cgtBand_scottish`).
 
 Tax is in 1/10 000 of a penny (rates in basis points), as for income tax.
 -/
@@ -42,6 +46,12 @@ by the reliefs) less Step 3 income. -/
 def Income.cgtBand (rg : Regime) (i : Income) : Nat := rg.brl - i.step3 rg
 
 /-! ## Proved properties -/
+
+/-- **Scottish taxpayers' gains use the UK band** (s1J(6)): the band, and so the
+tax, is the same whether or not the taxpayer is Scottish. -/
+theorem cgtBand_scottish (rg : Regime) (i : Income) :
+    i.cgtBand { rg with scottish := true } = i.cgtBand { rg with scottish := false } := by
+  rfl
 
 /-- More gains never lower Capital Gains Tax, and each penny of gains adds at most
 24p in the pound. -/
