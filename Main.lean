@@ -324,6 +324,8 @@ structure Case where
   mw : Option (Nat × Bool) := none
   /-- The Warm Home Discount: in England or Wales, qualifying benefit, bill holder (P9e). -/
   whdIn : Option (Bool × Bool × Bool) := none
+  /-- A car for Vehicle Excise Duty (P9f). -/
+  vedCar : Option VedCar := none
   /-- Carer Support Payment: weekly overlapping benefits and additional cared for
   people (P9b). -/
   csp : Option (Nat × Nat) := none
@@ -772,6 +774,16 @@ def parseCase (j : Json) : Except String Case := do
     | some o => pure (some (england || (j.getObjValAs? String "country").toOption == some "wales",
         subB o "qualifying_benefit", (o.getObjValAs? Bool "bill_holder").toOption.getD true))
     | none => pure none
+  let vedCar ← match obj "vehicle_excise_duty" with
+    | some o => match o.getObjValAs? String "registered" with
+      | .ok "from_april_2017" => pure (some (VedCar.modern (← sub o "co2_g_km") (subB o "diesel_non_rde2")
+          (subB o "zero_emission") (subB o "registered_before_april_2025") (← sub o "list_price_pence")
+          (← sub o "licence_year")))
+      | .ok "march_2001_to_march_2017" => pure (some (VedCar.graduated (← sub o "co2_g_km")
+          (subB o "registered_before_23_march_2006")))
+      | .ok "before_march_2001" => pure (some (VedCar.old (subB o "engine_over_1549cc")))
+      | _ => throw "vehicle_excise_duty.registered must be from_april_2017, march_2001_to_march_2017 or before_march_2001"
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -824,7 +836,7 @@ def parseCase (j : Json) : Except String Case := do
     ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
     studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp,
     targetedOther := (j.getObjValAs? Bool "targeted_other_benefit").toOption.getD false,
-    car := car, tv := tv, isa := isa, mw := mw, whdIn := whdIn }
+    car := car, tv := tv, isa := isa, mw := mw, whdIn := whdIn, vedCar := vedCar }
   return res
 
 def result (c : Case) : Json :=
@@ -1052,6 +1064,9 @@ def result (c : Case) : Json :=
       | none => [])
     ++ (match c.tv with
       | some (req, blind, aged) => [("tv_licence_pence", toJson (tvLicence req blind aged))]
+      | none => [])
+    ++ (match c.vedCar with
+      | some v => [("vehicle_excise_duty_pounds", toJson (ved v))]
       | none => [])
     ++ (match c.isa with
       | some (age, subs, lp) =>

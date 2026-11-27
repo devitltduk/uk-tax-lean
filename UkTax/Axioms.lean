@@ -23,6 +23,7 @@ import UkTax.Devolved
 import UkTax.Targeted
 import UkTax.CompanyCar
 import UkTax.Misc
+import UkTax.Ved
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -501,3 +502,19 @@ today, so any change to it is seen.
 /-- info: 'UkTax.minimumWage_mono' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.minimumWage_mono
+
+/-- info: 'UkTax.ved_supplement_cliff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.ved_supplement_cliff
+
+/-- info: 'UkTax.vedFirst_top' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.vedFirst_top
+
+/-- info: 'UkTax.vedFirst_mono_lt' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.vedFirst_mono_lt
+
+/-- info: 'UkTax.vedFirst_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.vedFirst_mono

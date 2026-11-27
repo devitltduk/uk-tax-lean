@@ -966,6 +966,42 @@ are set by the 2026-27 eligibility statement (reg 10): Pension Credit,
 income-related ESA, Housing Benefit, Universal Credit. -/
 def whdRebate : Nat := 15_000
 
+/-! ## Vehicle Excise Duty for cars, 2026-27 (P9f)
+
+Vehicle Excise and Registration Act 1994 Sch 1 Parts 1A (pre-2001 light vehicles),
+1AA (cars registered 1 March 2001 to 31 March 2017, graduated by CO2) and 1AB (cars
+registered from 1 April 2017), with the rates for licences taken out from 1 April
+2026 as published on GOV.UK, "Vehicle tax rate tables" (checked 2026-11-27): a
+twelve-month licence, single payment, pounds. -/
+
+/-- First licence of a car registered from 1 April 2017, by CO2 band upper limits
+0, 50, 75, 90, 100, 110, 130, 150, 170, 190, 225, 255 g/km, then above 255
+(Sch 1 Part 1AB para 1J): petrol, RDE2 diesel, alternative fuel and zero emission;
+and other diesel cars. -/
+def vedFirstYear : List Nat := [10, 115, 135, 280, 365, 405, 455, 560, 1410, 2270, 3420, 4850, 5690]
+def vedFirstYearDiesel : List Nat := [10, 135, 280, 365, 405, 455, 560, 1410, 2270, 3420, 4850, 5690, 5690]
+def vedFirstYearLimits : List Nat := [0, 50, 75, 90, 100, 110, 130, 150, 170, 190, 225, 255]
+
+/-- Later licences: £200, and £440 more in the second to sixth licence years where
+the list price exceeded £40,000 (£50,000 for a zero emission car; none for a zero
+emission car registered before 1 April 2025) (Sch 1 Part 1AB paras 1K, 1L). -/
+def vedStandard : Nat := 200
+def vedSupplement : Nat := 440
+def vedPriceThreshold : Nat := 4_000_000
+def vedPriceThresholdZev : Nat := 5_000_000
+
+/-- Bands A to M for cars registered 1 March 2001 to 31 March 2017, by upper
+limits 100, 110, 120, 130, 140, 150, 165, 175, 185, 200, 225, 255 g/km, then above
+(Sch 1 Part 1AA): £20, 20, 35, 170, 200, 225, 275, 325, 360, 410, 445, 760, 790;
+a car registered before 23 March 2006 pays no more than band K. -/
+def vedGraduated : List Nat := [20, 20, 35, 170, 200, 225, 275, 325, 360, 410, 445, 760, 790]
+def vedGraduatedLimits : List Nat := [100, 110, 120, 130, 140, 150, 165, 175, 185, 200, 225, 255]
+
+/-- Cars registered before 1 March 2001: £230 with an engine of 1,549cc or less,
+£375 above (Sch 1 Part 1A). -/
+def vedSmallEngine : Nat := 230
+def vedLargeEngine : Nat := 375
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

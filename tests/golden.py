@@ -45,6 +45,7 @@ CHECKED = (
     "lifetime_isa_bonus_quarter_pence",
     "minimum_wage_pence",
     "warm_home_discount_pence",
+    "vehicle_excise_duty_pounds",
     "tax_exact_ten_thousandths_pence",
     "adjusted_net_income_pence",
     "personal_allowance_pence",

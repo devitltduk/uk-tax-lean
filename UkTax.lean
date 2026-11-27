@@ -25,4 +25,5 @@ import UkTax.Devolved
 import UkTax.Targeted
 import UkTax.CompanyCar
 import UkTax.Misc
+import UkTax.Ved
 import UkTax.Axioms

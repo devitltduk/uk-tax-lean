@@ -554,6 +554,16 @@ Schedule para 1), in quarter pence; the minimum wage is £12.71 an hour from 21,
 2026/357); the Warm Home Discount is £150 (SI 2026/389) for a household on Pension
 Credit, income-related ESA, Housing Benefit or Universal Credit.
 
+### Vehicle Excise Duty for cars (`UkTax/Ved.lean`)
+
+Input `vehicle_excise_duty`: `registered` (`from_april_2017`,
+`march_2001_to_march_2017` or `before_march_2001`) with `co2_g_km`,
+`diesel_non_rde2`, `zero_emission`, `registered_before_april_2025`,
+`list_price_pence`, `licence_year` (0 for the first licence),
+`registered_before_23_march_2006` or `engine_over_1549cc`; output
+`vehicle_excise_duty_pounds`, the twelve-month single payment (VERA 1994 Sch 1
+Parts 1A, 1AA, 1AB, rates from 1 April 2026 as on GOV.UK).
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -835,6 +845,10 @@ relief-at-source contributions.
   Lifetime ISA bonus is at most £1,000 a year and stops at 50 (£1,000 on £4,000 at
   49, nothing at 50); the minimum wage never falls with age outside
   apprenticeships.
+- `ved_supplement_cliff`, `vedFirst_top`, `vedFirst_mono` (`UkTax/Ved.lean`): a
+  penny over a £40,000 list price costs £440 a year in licence years 2 to 6; the
+  first licence never costs less as CO2 rises (checked gram by gram to 260 g/km,
+  constant above 255).
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1261,6 +1275,12 @@ Latest local run: 1,033 of 1,033 and 16 of 16 agree (findings #43).
 around the limits at ages 16 to 60, the minimum wage at 15 to 30 with and without
 an apprenticeship, and the Warm Home Discount in England, Wales and Scotland on
 each qualifying benefit. Latest local run: 1,036 of 1,036 agree (findings #44).
+
+### Vehicle Excise Duty against PolicyEngine
+
+`uv run python compare_p9f.py` compares cars first registered from 1995 to March
+2027 in every fuel type, at each CO2 band edge, around the list price thresholds
+and either side of 1,549cc. Latest local run: 1,297 of 1,297 agree (findings #45).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

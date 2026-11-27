@@ -4192,5 +4192,153 @@
     "source": "SI 2026/389 reg 2; WHD eligibility statement 2026-27; Scotland has its own scheme",
     "working": "the England and Wales scheme does not apply: nil",
     "warm_home_discount_pence": 0
+  },
+  {
+    "name": "VED, new petrol car at 120 g/km, first licence",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "from_april_2017",
+        "co2_g_km": 120,
+        "list_price_pence": 3000000
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "111-130 g/km: £455",
+    "vehicle_excise_duty_pounds": 455
+  },
+  {
+    "name": "VED, new diesel not meeting RDE2 at 120 g/km, first licence",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "from_april_2017",
+        "co2_g_km": 120,
+        "diesel_non_rde2": true,
+        "list_price_pence": 3000000
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "the diesel table, 111-130 g/km: £560",
+    "vehicle_excise_duty_pounds": 560
+  },
+  {
+    "name": "VED, petrol car, list price £45,000, third licence",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "from_april_2017",
+        "co2_g_km": 120,
+        "list_price_pence": 4500000,
+        "licence_year": 2
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "£200 standard rate plus £440 for a list price over £40,000 in licence years 2 to 6: £640",
+    "vehicle_excise_duty_pounds": 640
+  },
+  {
+    "name": "VED, the same car in its seventh licence",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "from_april_2017",
+        "co2_g_km": 120,
+        "list_price_pence": 4500000,
+        "licence_year": 6
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "the supplement is for five years only: £200",
+    "vehicle_excise_duty_pounds": 200
+  },
+  {
+    "name": "VED, electric car registered before April 2025, £60,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "from_april_2017",
+        "zero_emission": true,
+        "registered_before_april_2025": true,
+        "list_price_pence": 6000000,
+        "licence_year": 3
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "£200; no supplement for a zero emission car registered before 1 April 2025",
+    "vehicle_excise_duty_pounds": 200
+  },
+  {
+    "name": "VED, electric car registered from April 2025, £60,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "from_april_2017",
+        "zero_emission": true,
+        "list_price_pence": 6000000,
+        "licence_year": 1
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "£200 plus £440 (list price over £50,000): £640",
+    "vehicle_excise_duty_pounds": 640
+  },
+  {
+    "name": "VED, 2004 car at 240 g/km",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "march_2001_to_march_2017",
+        "co2_g_km": 240,
+        "registered_before_23_march_2006": true
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "registered before 23 March 2006: band K at most, £445 (band L would be £760)",
+    "vehicle_excise_duty_pounds": 445
+  },
+  {
+    "name": "VED, 2010 car at 240 g/km",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "march_2001_to_march_2017",
+        "co2_g_km": 240
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "band L, 226-255 g/km: £760",
+    "vehicle_excise_duty_pounds": 760
+  },
+  {
+    "name": "VED, 1999 car, 1,600cc",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "vehicle_excise_duty": {
+        "registered": "before_march_2001",
+        "engine_over_1549cc": true
+      }
+    },
+    "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
+    "working": "over 1,549cc: £375",
+    "vehicle_excise_duty_pounds": 375
   }
 ]

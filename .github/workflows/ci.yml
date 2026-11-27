@@ -141,6 +141,9 @@ jobs:
       - name: Compare ISAs, the minimum wage and the Warm Home Discount
         working-directory: harness
         run: uv run --frozen python compare_p9e.py --binary ../bin/uktax --random 1000
+      - name: Compare Vehicle Excise Duty
+        working-directory: harness
+        run: uv run --frozen python compare_p9f.py --binary ../bin/uktax --random 1000
       - name: Compare council tax and Council Tax Reduction
         working-directory: harness
         run: uv run --frozen python compare_council_tax.py --binary ../bin/uktax --random 1000
@@ -176,5 +179,6 @@ jobs:
             harness/out/compare_p9b.csv
             harness/out/compare_p9d.csv
             harness/out/compare_p9e.csv
+            harness/out/compare_p9f.csv
             harness/out/compare_cgt.csv
             harness/out/compare_sdlt.csv
