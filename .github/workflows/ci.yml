@@ -39,6 +39,11 @@ jobs:
           git status --porcelain -- docs
           git diff --exit-code -- docs
           test -z "$(git status --porcelain -- docs)"
+      # The synthetic population (statistics, not proved): calibration meets the
+      # published targets, reruns are identical, and two reforms have the
+      # direction and size worked out by hand.
+      - name: Synthetic population tests
+        run: uv run --project population --frozen python -m unittest discover -s population/tests -v
       - uses: actions/upload-artifact@v4
         with:
           name: uktax
