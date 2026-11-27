@@ -1002,6 +1002,64 @@ def vedGraduatedLimits : List Nat := [100, 110, 120, 130, 140, 150, 165, 175, 18
 def vedSmallEngine : Nat := 230
 def vedLargeEngine : Nat := 375
 
+/-! ## Student support in England, 2026-27 academic year (P9g)
+
+The Education (Student Support) Regulations 2011 (SI 2011/1986), with the sums
+substituted for academic years from 1 August 2026 by SI 2026/130 Sch (checked on
+legislation.gov.uk, 2026-11-27). Loans for living costs of a 2016 cohort student
+(began on or after 1 August 2016) with full entitlement: regs 80A (standard),
+80B (would qualify for a special support grant but for reg 61(A1): the
+"entitled to benefits" schedule) and 80C (aged 60 or over). Categories (reg 90):
+A living with parents, B London, C overseas, D elsewhere. Each list is
+A, B, C, D. Loans in pounds; incomes in pence; tapers in tenths of a penny per
+pound of loan ("£1 for every complete £6.54": 6540). -/
+
+/-- Household income above which the loans taper: £25,000 (regs 80A(2), 80B(2), 80C(2)). -/
+def sfeThreshold : Nat := 2_500_000
+/-- The second stage of reg 80B: £42,875. -/
+def sfeHigherThreshold : Nat := 4_287_500
+
+/-- Reg 80A(2) X, academic years other than a final year: £9,118, £14,135, £12,403, £10,830. -/
+def ml80aMax : List Nat := [9_118, 14_135, 12_403, 10_830]
+/-- Reg 80A(3) X, a final year: £8,579, £13,096, £11,103, £10,242. -/
+def ml80aMaxFinal : List Nat := [8_579, 13_096, 11_103, 10_242]
+/-- Reg 80A(2), (3) Y and reg 80B Z: £1 for every complete £6.54, £6.36, £6.41, £6.47. -/
+def mlTaper : List Nat := [6_540, 6_360, 6_410, 6_470]
+/-- Reg 80B(2) X: £10,757, £15,415, £13,806, £12,345. -/
+def ml80bMax : List Nat := [10_757, 15_415, 13_806, 12_345]
+/-- Reg 80B(4) X, a final year: £10,255, £14,447, £12,597, £11,800. -/
+def ml80bMaxFinal : List Nat := [10_255, 14_447, 12_597, 11_800]
+/-- Reg 80B(2) Y, £25,000 to £42,875: £1 for every complete £4.088, £4.37, £4.265, £4.179. -/
+def ml80bTaper1 : List Nat := [4_088, 4_370, 4_265, 4_179]
+/-- Reg 80B(4) Y, a final year: £4.054, £4.295, £4.174, £4.137. -/
+def ml80bTaper1Final : List Nat := [4_054, 4_295, 4_174, 4_137]
+/-- The minimum level (reg 105(6A), (6C)): £4,013, £7,039, £5,996, £5,048. -/
+def mlMin : List Nat := [4_013, 7_039, 5_996, 5_048]
+/-- The minimum level in a final year (reg 105(6B), (6D)): £3,687, £6,413, £5,210, £4,693. -/
+def mlMinFinal : List Nat := [3_687, 6_413, 5_210, 4_693]
+/-- Reg 80C(2), (3): £4,582 less £1 for every complete £4.16 over £25,000; nil if
+less than £50. -/
+def ml80cMax : Nat := 4_582
+def ml80cTaper : Nat := 4_160
+def ml80cMinimum : Nat := 50
+
+/-- Sch 4 para 3(3): £1,130 off household income for each dependent child (other
+than the student); para 5(2)(c), 7(1)(c): £1,130 off the residual income of a
+parent (or parent's partner) who is a student or holds a statutory award. -/
+def sfeChildDeduction : Nat := 113_000
+
+/-- Adult Dependants' Grant (regs 44(3)(a), 47(1A)-(1B)): £3,545, less half the
+excess of the dependants' income over £8,746; nil over £15,835.98. -/
+def adgBasic : Nat := 354_500
+def adgThreshold : Nat := 874_600
+def adgNilAbove : Nat := 1_583_598
+/-- Parents' Learning Allowance (regs 46(2), 47(3A)-(3B), (6)): £2,024, less half
+the excess over £14,910; at least £50 once £0.01 or more; nil over £18,957.98. -/
+def plaBasic : Nat := 202_400
+def plaThreshold : Nat := 1_491_000
+def plaNilAbove : Nat := 1_895_798
+def plaMinimum : Nat := 5_000
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

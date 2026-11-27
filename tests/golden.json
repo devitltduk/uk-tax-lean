@@ -4340,5 +4340,243 @@
     "source": "VERA 1994 Sch 1 Parts 1A, 1AA, 1AB; GOV.UK vehicle tax rate tables, from 1 April 2026",
     "working": "over 1,549cc: £375",
     "vehicle_excise_duty_pounds": 375
+  },
+  {
+    "name": "Maintenance loan, away from home outside London, household income £30,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "D",
+        "household_income_pence": 3000000
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80A(2), category D: £10,830 less £1 for every complete £6.47 over £25,000: £5,000 / £6.47 = 772.8, 772 complete; £10,830 - £772 = £10,058",
+    "maintenance_loan_pounds": 10058
+  },
+  {
+    "name": "Maintenance loan, living with parents, one complete £6.54 over £25,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "A",
+        "household_income_pence": 2500654
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80A(2), category A: £9,118 less £1 for one complete £6.54 = £9,117",
+    "maintenance_loan_pounds": 9117
+  },
+  {
+    "name": "Maintenance loan, living with parents, £6.53 over £25,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "A",
+        "household_income_pence": 2500653
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80A(2): £6.53 is not a complete £6.54, so no reduction: £9,118",
+    "maintenance_loan_pounds": 9118
+  },
+  {
+    "name": "Maintenance loan, London, final year, household income £40,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "B",
+        "final_year": true,
+        "household_income_pence": 4000000
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80A(3), category B: £13,096 less £15,000 / £6.36 = 2,358.5, 2,358 complete; £13,096 - £2,358 = £10,738",
+    "maintenance_loan_pounds": 10738
+  },
+  {
+    "name": "Maintenance loan, studying overseas (category C), household income £35,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "C",
+        "household_income_pence": 3500000
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80A(2), category C: £12,403 less £10,000 / £6.41 = 1,560.1, 1,560 complete; £12,403 - £1,560 = £10,843",
+    "maintenance_loan_pounds": 10843
+  },
+  {
+    "name": "Maintenance loan entitled to benefits, away outside London, household income £45,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "schedule": "benefits",
+        "category": "D",
+        "household_income_pence": 4500000
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80B(2), category D: Y = £17,875 / £4.179 = 4,277.3, 4,277; Z = £2,125 / £6.47 = 328.4, 328; £12,345 - (4,277 + 328) = £7,740 (as GOV.UK's 2026-27 table at £45,000)",
+    "maintenance_loan_pounds": 7740
+  },
+  {
+    "name": "Maintenance loan entitled to benefits, living with parents, household income £45,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "schedule": "benefits",
+        "category": "A",
+        "household_income_pence": 4500000
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80B(2), category A: Y = £17,875 / £4.088 = 4,372.6, 4,372; Z = £2,125 / £6.54 = 324.9, 324; £10,757 - 4,696 = £6,061 (GOV.UK's table: £6,061)",
+    "maintenance_loan_pounds": 6061
+  },
+  {
+    "name": "Maintenance loan, household income from two parents and a sibling, down to the minimum",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "D",
+        "residual_incomes": [
+          {
+            "taxable_income_pence": 6000000,
+            "pension_contributions_pence": 300000
+          },
+          {
+            "taxable_income_pence": 1500000
+          }
+        ],
+        "dependent_children": 1
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "Sch 4 paras 3, 5(2)(a): parent 1 £60,000 less £3,000 pension contributions = £57,000; parent 2 £15,000; less £1,130 for the student's sibling: £70,870. reg 80A(2): £45,870 / £6.47 = 7,089.6, 7,089; £10,830 - £7,089 = £3,741, below the minimum level £5,048 (reg 105(6A)(d)), so £5,048",
+    "student_household_income_pence": 7087000,
+    "maintenance_loan_pounds": 5048
+  },
+  {
+    "name": "Maintenance loan, student's term-time pay and a parent who is a student",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "A",
+        "residual_incomes": [
+          {
+            "taxable_income_pence": 800000,
+            "term_time_earnings_pence": 500000
+          },
+          {
+            "taxable_income_pence": 3000000,
+            "student_or_award_holder": true
+          }
+        ]
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "Sch 4 para 4(1)(a): the student's £8,000 less £5,000 paid for work in the academic year = £3,000; para 5(2)(c): the parent's £30,000 less £1,130 = £28,870; household income £31,870. reg 80A(2), category A: £6,870 / £6.54 = 1,050.5, 1,050; £9,118 - £1,050 = £8,068",
+    "student_household_income_pence": 3187000,
+    "maintenance_loan_pounds": 8068
+  },
+  {
+    "name": "Loan for living costs at 60 or over, £43,857.27",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "schedule": "over_60",
+        "household_income_pence": 4385727
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80C(2): £18,857.27 / £4.16 = 4,532.99, 4,532 complete; £4,582 - £4,532 = £50, not less than £50",
+    "maintenance_loan_pounds": 50
+  },
+  {
+    "name": "Loan for living costs at 60 or over, £43,857.28",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "schedule": "over_60",
+        "household_income_pence": 4385728
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80C(2): £18,857.28 / £4.16 = 4,533 exactly; £4,582 - £4,533 = £49, less than £50, so nil (reg 80C(3))",
+    "maintenance_loan_pounds": 0
+  },
+  {
+    "name": "Maintenance loan for an eligible care leaver, household income £80,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "D",
+        "care_leaver": true,
+        "household_income_pence": 8000000
+      }
+    },
+    "source": "SI 2011/1986 regs 80A, 80B, 80C, 105, Sch 4 para 3; sums from SI 2026/130 Sch (2026-27 academic year)",
+    "working": "reg 80A(5): for an eligible care leaver the formula is read as X: £10,830",
+    "maintenance_loan_pounds": 10830
+  },
+  {
+    "name": "Adult Dependants' Grant and Parents' Learning Allowance, dependants' income £12,000",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "D",
+        "household_income_pence": 0,
+        "dependants_income_pence": 1200000
+      }
+    },
+    "source": "SI 2011/1986 regs 44(3), 46(2), 47(1A)-(1B), (3A)-(3B), (6)",
+    "working": "reg 47(1A): £3,545 - (£12,000 - £8,746) / 2 = £3,545 - £1,627 = £1,918 (383,600 half pence); reg 47(3AA): £12,000 does not exceed £14,910, so the basic £2,024 (404,800 half pence)",
+    "adult_dependants_grant_half_pence": 383600,
+    "parents_learning_allowance_half_pence": 404800
+  },
+  {
+    "name": "Parents' Learning Allowance at its £50 minimum, dependants' income £18,950",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "student_support": {
+        "category": "D",
+        "household_income_pence": 0,
+        "dependants_income_pence": 1895000
+      }
+    },
+    "source": "SI 2011/1986 regs 44(3), 46(2), 47(1A)-(1B), (3A)-(3B), (6)",
+    "working": "reg 47(3A): £2,024 - (£18,950 - £14,910) / 2 = £4; reg 47(6): £0.01 or more but less than £50, so £50 (10,000 half pence). reg 47(1B): over £15,835.98, no Adult Dependants' Grant",
+    "adult_dependants_grant_half_pence": 0,
+    "parents_learning_allowance_half_pence": 10000
   }
 ]

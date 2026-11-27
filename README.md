@@ -564,6 +564,26 @@ Input `vehicle_excise_duty`: `registered` (`from_april_2017`,
 `vehicle_excise_duty_pounds`, the twelve-month single payment (VERA 1994 Sch 1
 Parts 1A, 1AA, 1AB, rates from 1 April 2026 as on GOV.UK).
 
+### Student support in England (`UkTax/StudentSupport.lean`)
+
+Input `student_support`: `schedule` (`standard`, reg 80A; `benefits`, reg 80B, a
+student who would qualify for a special support grant; `over_60`, reg 80C),
+`category` (`A` living with parents, `B` London, `C` overseas, `D` elsewhere; reg
+90), `final_year`, `care_leaver`, and either `household_income_pence` or
+`residual_incomes` (each with `taxable_income_pence`,
+`pension_contributions_pence`, `term_time_earnings_pence`,
+`student_or_award_holder`) with `dependent_children`; optionally
+`dependants_income_pence`. Outputs `student_household_income_pence` (Sch 4 para
+3: the residual incomes less £1,130 a dependent child), `maintenance_loan_pounds`
+(the maximum loan for living costs for a 2016 cohort student, 2026-27 academic
+year: the maximum less £1 for every complete £6.54, £6.36, £6.41 or £6.47 over
+£25,000, two stages for reg 80B, not below the reg 105 minimum; at 60 or over
+£4,582 less £1 per complete £4.16, nil below £50) and, with dependants' income,
+`adult_dependants_grant_half_pence` and `parents_learning_allowance_half_pence`
+(reg 47: half the excess over £8,746 or £14,910 off £3,545 or £2,024; the
+allowance at least £50). Sums from SI 2026/130 Sch. The Part 8 contribution and
+the Childcare Grant are not modelled.
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -849,6 +869,13 @@ relief-at-source contributions.
   penny over a £40,000 list price costs £440 a year in licence years 2 to 6; the
   first licence never costs less as CO2 rises (checked gram by gram to 260 g/km,
   constant above 255).
+- `ml80a_anti`, `ml80b_anti`, `ml80a_d_bounds`, `ml80c_cliff`, `pla_cliff`,
+  `adg_no_cliff` (`UkTax/StudentSupport.lean`): more household income never
+  raises the maintenance loan, on either schedule, in any category or year; away
+  from home outside London it stays between £5,048 and £10,830, the full amount up
+  to £25,000; at 60 or over £50 at £43,857.27 and nothing a penny higher; the
+  Parents' Learning Allowance drops from £50 to nothing at £18,957.99, while the
+  Adult Dependants' Grant tapers to a penny before it stops.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1281,6 +1308,19 @@ each qualifying benefit. Latest local run: 1,036 of 1,036 agree (findings #44).
 `uv run python compare_p9f.py` compares cars first registered from 1995 to March
 2027 in every fuel type, at each CO2 band edge, around the list price thresholds
 and either side of 1,549cc. Latest local run: 1,297 of 1,297 agree (findings #45).
+
+### Student support against PolicyEngine
+
+`uv run python compare_p9g.py` compares the maintenance loan on each schedule and
+living arrangement for given household incomes (band edges and random), the
+household income of families with pension contributions, a younger sibling and a
+student with term-time pay, and the Adult Dependants' Grant and Parents' Learning
+Allowance across their tapers. Every difference must fall in a class of findings
+#46 or the run fails. Latest local run: maintenance loan 505 of 1,140 agree to the
+pound, 406 £1 or £2 apart (complete steps), 119 up to £6 apart (the minimum), 110
+up to £55 apart (the over-60 cut-off); household income 44 of 200 agree, the rest
+exactly the deductions PolicyEngine leaves out; grants 150 and 178 of 214 agree,
+the rest inside the reg 47 tapers.
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 
