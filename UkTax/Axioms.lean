@@ -18,6 +18,7 @@ import UkTax.CtrWorkingAge
 import UkTax.CtrEnglandLocal
 import UkTax.LandTax
 import UkTax.Reliefs
+import UkTax.StudentLoans
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -396,3 +397,31 @@ today, so any change to it is seen.
 /-- info: 'UkTax.financeReduction_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.financeReduction_le
+
+/-- info: 'UkTax.threshold_le' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.threshold_le
+
+/-- info: 'UkTax.sl_unearned_cliff' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.sl_unearned_cliff
+
+/-- info: 'UkTax.sl_unearned_cliff_size' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.sl_unearned_cliff_size
+
+/-- info: 'UkTax.sl_succ_earned' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.sl_succ_earned
+
+/-- info: 'UkTax.wfpAmount_le' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.wfpAmount_le
+
+/-- info: 'UkTax.wfp_charge_cliff' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.wfp_charge_cliff
+
+/-- info: 'UkTax.wfp_charge_benefit' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.wfp_charge_benefit

@@ -3469,5 +3469,199 @@
     "working": "savings £10,000, dividends £20,000, shares given £15,000: net income £15,000; the gift and the £12,570 allowance (£27,570) go against all the dividends and £7,570 of savings, leaving £2,430 of savings within the £5,000 starting rate band: nil (against savings first, £2,430 of dividends would pay 10.75 % of £1,930 = £207.48)",
     "reliefs_tax_exact_ten_thousandths_pence": 0,
     "reliefs_net_income_pence": 1500000
+  },
+  {
+    "name": "Student loan, plans 1 and 2: the lowest threshold (GOV.UK example)",
+    "input": {
+      "non_savings_pence": 3840000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 3840000,
+      "student_loan": {
+        "plans": [
+          "plan_1",
+          "plan_2"
+        ]
+      }
+    },
+    "source": "SI 2009/470 reg 29, Sch 1A; GOV.UK, Repaying your student loan: what you pay (the plans 1 and 2 example); reg 29(5A)",
+    "working": "income £38,400; the lowest threshold is plan 1's £26,900: 9 % of £11,500 = £1,035.00 (GOV.UK's monthly example: 9 % of £959 a month)",
+    "student_loan_repayment_ten_thousandths_pence": 1035000000
+  },
+  {
+    "name": "Student loan, plan 2 and a Postgraduate loan, concurrently",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 4000000,
+      "student_loan": {
+        "plans": [
+          "plan_2",
+          "postgraduate"
+        ]
+      }
+    },
+    "source": "SI 2009/470 reg 29, Sch 1A; GOV.UK, Repaying your student loan: what you pay; reg 29(3), (3A)",
+    "working": "pay £40,000: plan 2, 9 % of (£40,000 - £29,385) = £955.35; Postgraduate, 6 % of (£40,000 - £21,000) = £1,140.00; together £2,095.35",
+    "student_loan_repayment_ten_thousandths_pence": 2095350000
+  },
+  {
+    "name": "Student loan, plan 5: £2,000 of savings interest left out",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 200000,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "student_loan": {
+        "plans": [
+          "plan_5"
+        ]
+      }
+    },
+    "source": "SI 2009/470 reg 29, Sch 1A; GOV.UK, Repaying your student loan: what you pay; reg 29(4)(c), (5), Sch 1A para 5",
+    "working": "pay £30,000, savings £2,000 (unearned, not over £2,000, so excluded): 9 % of (£30,000 - £25,000) = £450.00",
+    "student_loan_repayment_ten_thousandths_pence": 450000000,
+    "student_loan_income_pence": 3000000
+  },
+  {
+    "name": "Student loan, plan 5: £2,000.01 of savings interest counted in full",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 200001,
+      "dividends_pence": 0,
+      "employment_pence": 3000000,
+      "student_loan": {
+        "plans": [
+          "plan_5"
+        ]
+      }
+    },
+    "source": "SI 2009/470 reg 29, Sch 1A; GOV.UK, Repaying your student loan: what you pay; reg 29(4)(c)",
+    "working": "pay £30,000, savings £2,000.01 (over £2,000, so all of it counts): 9 % of (£32,000.01 - £25,000) = £630.0009",
+    "student_loan_repayment_ten_thousandths_pence": 630000900,
+    "student_loan_income_pence": 3200001
+  },
+  {
+    "name": "Student loan, plan 4 with dividends",
+    "input": {
+      "non_savings_pence": 3000000,
+      "savings_pence": 0,
+      "dividends_pence": 500000,
+      "employment_pence": 3000000,
+      "student_loan": {
+        "plans": [
+          "plan_4"
+        ]
+      }
+    },
+    "source": "SI 2009/470 reg 29, Sch 1A; GOV.UK, Repaying your student loan: what you pay; reg 29(4)(c)",
+    "working": "pay £30,000, dividends £5,000 (over £2,000): 9 % of (£35,000 - £33,795) = £108.45",
+    "student_loan_repayment_ten_thousandths_pence": 108450000
+  },
+  {
+    "name": "Winter Fuel Payment, under 80, alone, total income £35,000: kept",
+    "input": {
+      "non_savings_pence": 3500000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "winter_fuel_payment": {}
+    },
+    "source": "SI 2025/969 regs 2-4; ITEPA 2003 s681I",
+    "working": "reg 3(1): £200; total income does not exceed £35,000 (s681I(1)(b)): no charge",
+    "winter_fuel_payment_pence": 20000,
+    "winter_fuel_payment_charge_pence": 0
+  },
+  {
+    "name": "Winter Fuel Payment, under 80, alone, total income £35,000.01: charged in full",
+    "input": {
+      "non_savings_pence": 3500001,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "winter_fuel_payment": {}
+    },
+    "source": "SI 2025/969 regs 2-4; ITEPA 2003 s681I",
+    "working": "reg 3(1): £200; total income exceeds £35,000, no relevant benefit: the charge is the whole £200 (s681I(3))",
+    "winter_fuel_payment_pence": 20000,
+    "winter_fuel_payment_charge_pence": 20000
+  },
+  {
+    "name": "Winter Fuel Payment, 80, living with an entitled partner under 80",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "winter_fuel_payment": {
+        "over_80": true,
+        "with_entitled_under_80": true
+      }
+    },
+    "source": "SI 2025/969 regs 2-4; ITEPA 2003 s681I",
+    "working": "reg 3(5): £200; total income £40,000: charged £200",
+    "winter_fuel_payment_pence": 20000,
+    "winter_fuel_payment_charge_pence": 20000
+  },
+  {
+    "name": "Winter Fuel Payment, under 80 on Pension Credit with a partner of 82",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "winter_fuel_payment": {
+        "relevant_benefit": true,
+        "partner_over_80": true
+      }
+    },
+    "source": "SI 2025/969 regs 2-4; ITEPA 2003 s681I",
+    "working": "reg 3(3): £300 (a relevant benefit paid to P, partner 80 or over); s681I(4): no charge on a relevant benefit whatever the income",
+    "winter_fuel_payment_pence": 30000,
+    "winter_fuel_payment_charge_pence": 0
+  },
+  {
+    "name": "Winter Fuel Payment, partner of a Pension Credit claimant: not entitled",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "winter_fuel_payment": {
+        "partner_paid_benefit": true
+      }
+    },
+    "source": "SI 2025/969 regs 2-4; ITEPA 2003 s681I",
+    "working": "reg 4(2)(a): P's partner has reached pensionable age and is paid a relevant benefit: reg 2 does not apply, nothing paid",
+    "winter_fuel_payment_pence": 0,
+    "winter_fuel_payment_charge_pence": 0
+  },
+  {
+    "name": "Winter Fuel Payment, 80, living with entitled people under and over 80",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "winter_fuel_payment": {
+        "over_80": true,
+        "with_entitled_under_80": true,
+        "with_entitled_80": true
+      }
+    },
+    "source": "SI 2025/969 regs 2-4; ITEPA 2003 s681I",
+    "working": "reg 3(5) is subject to reg 3(6): living with an entitled person of 80 or over gives £150",
+    "winter_fuel_payment_pence": 15000,
+    "winter_fuel_payment_charge_pence": 0
+  },
+  {
+    "name": "Winter Fuel Payment, under 80, in a care home, no relevant benefit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "winter_fuel_payment": {
+        "residential_care": true
+      }
+    },
+    "source": "SI 2025/969 regs 2-4; ITEPA 2003 s681I",
+    "working": "reg 3(2)(b)(ii): £100",
+    "winter_fuel_payment_pence": 10000,
+    "winter_fuel_payment_charge_pence": 0
   }
 ]
