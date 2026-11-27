@@ -60,6 +60,7 @@ CHECKED = (
     "housing_benefit_twentieths_pence",
     "council_tax_1440ths_pence",
     "council_tax_reduction_7280ths_pence",
+    "cgt_exact_ten_thousandths_pence",
 )
 
 failures = 0

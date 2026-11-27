@@ -657,4 +657,20 @@ amount is £109.85 (SSI 2012/319 Sch 1 para 3); Wales keeps the family premium,
 three (Sch 2 Part 4; SSI 2012/319 Sch 1 para 13). -/
 def ctrChildScotland : Nat := 10_985
 
+/-! ## Capital Gains Tax, 2026-27
+
+TCGA 1992 as amended by Finance Act 2025 ss 7-8 and Finance Act 2023 s8. -/
+
+/-- Main rates (s1H(2)-(3), FA 2025 s7, from 30 October 2024): 18 % within the
+unused basic rate band, 24 % above it; residential property gains the same. -/
+def cgtBasicRate : Nat := 1_800
+def cgtHigherRate : Nat := 2_400
+
+/-- Business Asset Disposal Relief rate for disposals from 6 April 2026: 18 %
+(s169N(3), FA 2025 s8). -/
+def cgtBadrRate : Nat := 1_800
+
+/-- Annual exempt amount: £3,000 (s1K(2), FA 2023 s8). -/
+def cgtExemptAmount : Nat := 300_000
+
 end UkTax

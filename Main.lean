@@ -125,6 +125,10 @@ Optional fields:
   "disabled_children": 0, "carers": 0}`, Housing Benefit for pensioners
   (`UkTax/HousingBenefit.lean`); output `housing_benefit_twentieths_pence` for the
   year (52 weeks), and the weekly maximum and applicable amount;
+* `capital_gains_pence` and `badr_gains_pence`: the year's gains after losses, other
+  and qualifying for Business Asset Disposal Relief (within the lifetime limit);
+  output `cgt_exact_ten_thousandths_pence` (`UkTax/Cgt.lean`), banded against this
+  taxpayer's income. Not for Scottish taxpayers yet;
 * `council_tax`: `{"band": "A" .. "H" (or "I" in Wales), "band_d_pence": n,
   "single_person_discount": false}` (by `country`; output `council_tax_1440ths_pence`
   for the year, `UkTax/CouncilTax.lean`);
@@ -193,6 +197,7 @@ structure Case where
   ctr : Option (Nat × HbClaim) := none
   ct : Option Nat := none
   nation : Nation := .england
+  cgt : Option (Nat × Nat) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -451,6 +456,12 @@ def parseCase (j : Json) : Except String Case := do
         throw "council_tax_reduction: Northern Ireland has rates, not council tax"
       pure (some (← sub o "council_tax_pence", ← parseHb o))
     | none => pure none
+  let cgtIn ← match (j.getObjVal? "capital_gains_pence").toOption, (j.getObjVal? "badr_gains_pence").toOption with
+    | none, none => pure none
+    | _, _ => do
+      if scottish then
+        throw "capital_gains_pence: Capital Gains Tax for a Scottish taxpayer is not modelled yet"
+      pure (some (← optField "badr_gains_pence", ← optField "capital_gains_pence"))
   let ct ← match obj "council_tax" with
     | some o => do
       let band ← match o.getObjValAs? String "band" with
@@ -474,7 +485,7 @@ def parseCase (j : Json) : Except String Case := do
     class1A := c1, class2Weeks := c2,
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
-    ctr := ctr, ct := ct, nation := nation }
+    ctr := ctr, ct := ct, nation := nation, cgt := cgtIn }
   return res
 
 def result (c : Case) : Json :=
@@ -563,6 +574,9 @@ def result (c : Case) : Json :=
             | some i => ctrWithdrawal (ctrNonDeps c.nation h) (ctrApplicable c.nation h pc) i
             | none => 7_280 * ctAmt))]
       | _, _ => [])
+    ++ (match c.cgt with
+      | some (b, o) => [("cgt_exact_ten_thousandths_pence", toJson (cgtExact (i.cgtBand rg) b o))]
+      | none => [])
     ++ (match c.ct with
       | some v => [("council_tax_1440ths_pence", toJson v)]
       | none => [])

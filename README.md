@@ -303,6 +303,20 @@ charges, and the LHA itself (an input).
   £109.85 a child. Inputs `council_tax` and `council_tax_reduction` (the year's
   bill, with the household's income in `pension_credit`).
 
+### Capital Gains Tax (`UkTax/Cgt.lean`)
+
+| Figure | 2026-27 | Source |
+|---|---|---|
+| Rates | 18 % within the unused basic rate band, 24 % above it (residential property the same) | [TCGA 1992 s1H(3)](https://www.legislation.gov.uk/ukpga/1992/12/section/1H) (FA 2025 s7) |
+| Annual exempt amount | £3,000, set against gains in the most beneficial way | [s1K(2), (5)](https://www.legislation.gov.uk/ukpga/1992/12/section/1K) |
+| Business Asset Disposal Relief | 18 %, taking the unused basic rate band first; £1m lifetime limit (the caller's) | [s169N(3)](https://www.legislation.gov.uk/ukpga/1992/12/section/169N), [s1I(4)-(6)](https://www.legislation.gov.uk/ukpga/1992/12/section/1I) |
+
+Inputs `capital_gains_pence` and `badr_gains_pence` (gains after losses); the unused
+basic rate band is the basic rate limit, raised by Gift Aid and relief-at-source
+contributions, less Step 3 income. Carried interest is charged to income tax from 6
+April 2026 (Finance Act 2026 s58) and is not modelled; nor are investors' relief and
+Scottish taxpayers.
+
 ### Tax-Free Childcare and the funded hours (England)
 
 A parent is eligible when they, and their partner if they have one, each expect
@@ -479,6 +493,9 @@ relief-at-source contributions.
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
   non-dependants the reduction is the whole bill; the single person discount is
   exactly a quarter.
+- `cgt_succ_other`, `cgt_succ_badr`, `cgt_band`, `cgt_exempt` (`UkTax/Cgt.lean`):
+  more gains never lower Capital Gains Tax and each penny adds at most 24p; each
+  penny less of unused band adds at most 6p; gains up to £3,000 are tax-free.
 - `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
@@ -528,7 +545,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 152 cases with the expected figures worked out by hand
+`tests/golden.json` holds 157 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -559,7 +576,9 @@ For Housing Benefit: the passport, the 65 % taper with tax deducted, the pre-202
 allowance, a non-dependant band, the capital limit 1p over, savings credit only,
 and the LHA cap. For council tax: a band in each nation (Wales's band I), the
 single person discount, and the pensioner reduction's taper over 365 days, a
-non-dependant band, Wales's £256 allowance and a Scottish non-dependant.
+non-dependant band, Wales's £256 allowance and a Scottish non-dependant. For CGT:
+gains within and across the band, BADR taking the band first, the exempt amount,
+and Gift Aid extending the band.
 
 ### Where earning more lowers net income
 
@@ -782,6 +801,13 @@ income). Latest local run: council tax 1,000 of 1,000; the reduction 1,024 of
 at 52 weeks instead of 365/7, so it withdraws 364/365 of the law's amount and
 pays up to £9.75 a year more (findings #27, a draft issue).
 
+### Capital Gains Tax against PolicyEngine
+
+`uv run python compare_cgt.py` compares taxpayers outside Scotland with pay,
+savings, dividends, Gift Aid, gains and BADR gains, with edge cases at the exempt
+amount and the basic rate limit. Latest local run: 1,009 of 1,009 agree within 2
+float32 steps (worst 0.37).
+
 ### Funded hours against PolicyEngine
 
 `uv run python compare_childcare.py` compares the funded hours' yearly value for a
@@ -808,5 +834,5 @@ GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
 comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs,
-non-means-tested benefits, Pension Credit, Housing Benefit and council tax, with
-1,000 random cases each; reliefs and allowances).
+non-means-tested benefits, Pension Credit, Housing Benefit, council tax and CGT,
+with 1,000 random cases each; reliefs and allowances).

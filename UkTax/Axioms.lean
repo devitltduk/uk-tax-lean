@@ -8,6 +8,7 @@ import UkTax.Disability
 import UkTax.Pension
 import UkTax.HousingBenefit
 import UkTax.CouncilTax
+import UkTax.Cgt
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -214,3 +215,19 @@ today, so any change to it is seen.
 /-- info: 'UkTax.councilTax_discount' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.councilTax_discount
+
+/-- info: 'UkTax.cgt_succ_other' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.cgt_succ_other
+
+/-- info: 'UkTax.cgt_succ_badr' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.cgt_succ_badr
+
+/-- info: 'UkTax.cgt_band' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.cgt_band
+
+/-- info: 'UkTax.cgt_exempt' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.cgt_exempt
