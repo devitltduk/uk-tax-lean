@@ -274,7 +274,7 @@ today, so any change to it is seen.
 #guard_msgs in
 #print axioms UkTax.carer_uc_net
 
-/-- info: 'UkTax.carer_uc_cliff' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'UkTax.carer_uc_cliff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.carer_uc_cliff
 
@@ -342,7 +342,11 @@ today, so any change to it is seen.
 #guard_msgs in
 #print axioms UkTax.scotTotal_bounds
 
-/-- info: 'UkTax.scot_capital_cliff' does not depend on any axioms -/
+/-- info: 'UkTax.scotTotal_le_bill' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.scotTotal_le_bill
+
+/-- info: 'UkTax.scot_capital_cliff' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.scot_capital_cliff
 
@@ -354,9 +358,9 @@ today, so any change to it is seen.
 #guard_msgs in
 #print axioms UkTax.localYear_taper
 
-/-- info: 'UkTax.oxford_cliff_480' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'UkTax.oxford_cliffs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms UkTax.oxford_cliff_480
+#print axioms UkTax.oxford_cliffs
 
 /-- info: 'UkTax.oxfordPct_anti' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
@@ -393,6 +397,10 @@ today, so any change to it is seen.
 /-- info: 'UkTax.aaCharge_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.aaCharge_le
+
+/-- info: 'UkTax.aaCharge_le_y2026' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.aaCharge_le_y2026
 
 /-- info: 'UkTax.aaTax_slice' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -521,6 +529,18 @@ today, so any change to it is seen.
 /-- info: 'UkTax.vedFirst_mono' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.vedFirst_mono
+
+/-- info: 'UkTax.vedFirstDiesel_top' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.vedFirstDiesel_top
+
+/-- info: 'UkTax.vedFirstDiesel_mono_lt' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.vedFirstDiesel_mono_lt
+
+/-- info: 'UkTax.vedFirstCar_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.vedFirstCar_mono
 
 /-- info: 'UkTax.ml80a_anti' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in

@@ -772,21 +772,39 @@ Only figures can change, not structure (the £1-per-£2 taper and its rounding, 
 1 % HICBC steps, three UK and six Scottish bands). Figures outside the set (benefit
 amounts, the Marriage Allowance and married couple's allowance, Class 4 and
 employer NICs, CGT, property taxes, council tax, student loans and support, cars,
-VED and the rest) stay 2026-27, so the 92 theorems about them are **proved for
+VED and the rest) stay 2026-27, so the 96 theorems about them are **proved for
 2026-27 only**; [`docs/parametric.md`](docs/parametric.md) lists every theorem in
 the axiom guard with its status. Mathlib is still not needed: products of
 symbolic rates and amounts are handled by three small lemmas and `omega`.
 
 ### Proved for 2026-27 (and, where marked above, for any figures)
 
-In `UkTax/Proofs.lean` and `UkTax/Optimal.lean`, with no `sorry`.
-`UkTax/Axioms.lean` fails the build if any of these theorems ever depends on more
-than Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`). Nothing
-is assumed about the income: every result below holds for every income, and the
-figures quoted are those of 2026-27.
+The theorems are in the model's own files (`UkTax/Proofs.lean`,
+`UkTax/Optimal.lean`, `UkTax/Cliffs.lean`, `UkTax/Benefits.lean` and one file per
+area, named in each entry below), with no `sorry`. `UkTax/Axioms.lean` lists every
+one and fails the build if any of them ever depends on more than Lean's standard
+axioms (`propext`, `Classical.choice`, `Quot.sound`).
 
-Every result holds for every regime: rUK or Scottish, with any Gift Aid and
-relief-at-source contributions.
+What they say, and what they do not:
+
+- **They are about the model, not the law.** Each says that one of the model's
+  functions has a property: it never falls, it stays within a bound, it jumps by a
+  stated amount. Whether the model follows the legislation is what the golden
+  cases and the PolicyEngine comparison test; no theorem proves it.
+- **Most hold for every input they name** (every income, pay, price or capital).
+  Where a result needs a **side condition**, the entry says so ("while UC is in
+  payment", "without the £17.10 disregard"); the condition is a hypothesis of the
+  theorem.
+- **Some are checks at one point**, marked *(one point)*: they evaluate the model
+  either side of a named edge (for example `lbtt_ads_cliff`, at £39,999.99 and
+  £40,000) and so give the size of that jump. They do not show there is no other
+  jump; where that is proved it is a separate theorem (`lbtt_succ`).
+- **The figures are 2026-27's.** The results marked in the previous section hold
+  for any figures meeting `TaxParams.Valid`; [`docs/parametric.md`](docs/parametric.md)
+  gives each theorem's status.
+
+The income tax results hold for every regime: rUK or Scottish, with any Gift Aid
+and relief-at-source contributions.
 
 - `isLeastTax_taxExact`: the search finds the least tax. For every income, the
   allowance share the model picks gives the least Step 4 tax over every legal
@@ -839,9 +857,10 @@ relief-at-source contributions.
   with one more kind of step: adjusted net income going over £100,000. The
   minimum earnings test adds no step: reaching it gains Tax-Free Childcare and the
   working-parent hours.
-- `caYear_cliff`, `caYear_anti`, `caYear_change` (`UkTax/Disability.lean`): more
-  net earnings never give more Carer's Allowance, it changes only where a week's
-  net earnings pass £204, and there the whole allowance goes at once.
+- `caYear_cliff` *(one point: the limit)*, `caYear_anti`, `caYear_change`
+  (`UkTax/Disability.lean`): more net earnings never give more Carer's Allowance,
+  it changes only where a week's net earnings pass £204, and there the whole
+  allowance goes at once.
   `netCarer_drop_only_at_steps` extends the cliff theorem to a carer: with the
   allowance taxed as income, a penny more pay lowers net income only where net
   earnings cross the limit, or, with the allowance unchanged, at a step of
@@ -852,12 +871,15 @@ relief-at-source contributions.
   rises (each penny is kept in full); with the floor, earned income plus UC never
   falls as earned income rises.
 - `ucAward_withCa`, `carer_uc_net`, `carer_uc_cliff` (`UkTax/CarerUc.lean`): while
-  UC is in payment, each penny of Carer's Allowance takes a penny off it, so for a
-  carer on UC the allowance changes net income only by the income tax and HICBC
-  it brings, never for the better; at the earnings limit losing it raises net
-  income by that tax.
-- `ma_threshold_cliff`, `ma_mono`: Maternity Allowance is nil 1p below £30 of
-  average weekly earnings and £27 at £30, and never falls above it.
+  UC is in payment (a side condition of all three), each penny of Carer's
+  Allowance takes a penny off it, so for a carer on UC the allowance changes net
+  income only by the income tax and HICBC it brings, never for the better; and
+  where a penny more pay takes net earnings over the limit, net income at the
+  higher pay is net income at the lower pay plus what the penny does without the
+  allowance plus that tax and HICBC, so losing the allowance is a gain.
+- `ma_threshold_cliff` *(one point)*, `ma_mono`: Maternity Allowance is nil 1p
+  below £30 of average weekly earnings and £27 at £30, and never falls as earnings
+  rise.
   `jsa_total_succ`: earnings plus new style JSA never fall by more than 9p as
   earnings rise (the 10p minimum of reg 52; otherwise the deduction is pound for
   pound). `esa_total_gain`: pension plus new style ESA keeps at least half of
@@ -873,11 +895,13 @@ relief-at-source contributions.
   `hbWa_cap_bounds`, `hbWa_cap_specified`, `hbWa_abolition`
   (`UkTax/HousingBenefitWa.lean`): working-age Housing Benefit is the maximum on a
   passporting benefit and nil a penny over £16,000; the £17.10 additional disregard
-  is a step at which more earnings lower the income counted (HB rises); otherwise
-  more earnings never give more HB and income plus HB keeps 35 % of a rise; the cap
-  never raises HB or takes it below 50p a week, and in specified accommodation
-  takes nothing unless the other benefits alone exceed it; an award ending on 1
-  July 2026 pays 86/364 of the year.
+  is a step at which more earnings lower the income counted (HB rises); for a claim
+  without that disregard (`hbWa_earnings_gain` assumes it is not due, so it says
+  nothing across the step) more earnings never give more HB and income plus HB
+  keeps 35 % of a rise; the cap never raises HB or takes it below 50p a week, and
+  in specified accommodation takes nothing unless the other benefits alone exceed
+  it; an award in general accommodation with no ESA protection ends on 1 July 2026
+  and pays 86/364 of the year.
 - `hb_total_gain`, `hb_passport`, `hb_capital_cliff`, `nonDep_mono`
   (`UkTax/HousingBenefit.lean`): on the 65 % taper (`hbTaper`, the same maximum
   and applicable amount), income plus Housing Benefit keeps at least 35 % of any
@@ -887,32 +911,38 @@ relief-at-source contributions.
   a penny over £16,000 of capital loses all of it; and a
   non-dependant's deduction never falls as their income rises.
 - `ctrWalesUc_excess`, `ctrWaYear_bounds` (`UkTax/CtrWorkingAge.lean`): for a UC
-  claimant in Wales the excess income is the household's earned income less 55 %
+  claimant in Wales (while UC is in payment and the benefit cap does not apply) the
+  excess income is the household's earned income less 55 %
   of it above the work allowance, whatever the maximum amount, unearned income,
   Carer's Allowance or childcare element (they cancel while UC is in payment), so
   the reduction depends on earnings alone; a reduction never exceeds the bill and
   each unit of excess costs at most 73/364 of it.
 - `scotBandsEH_le_main`, `scotBandsEH_floor`, `scotTotal_bounds`,
-  `scot_capital_cliff` (`UkTax/CtrWorkingAge.lean`): in Scotland the bands E to H
-  reduction adds nothing while income is at most the applicable amount; up to £321
-  or £479 a week it is the whole band-rise share less the deductions, however far
-  income is above the applicable amount; the entitlement is at least each part and
-  at most the bill; a penny of capital over £16,000 ends all of it.
-- `newham_at_most_70`, `localYear_taper`, `oxford_cliff_480`, `oxfordPct_anti`,
-  `oxford_mono` (`UkTax/CtrEnglandLocal.lean`): Newham never pays a working-age
-  applicant more than 70 % of the bill; on a council's taper more income never
-  raises the reduction and each unit costs at most the taper for 365/7 weeks;
-  Oxford's reduction never rises with income, and a penny a week above £480.00
-  (likewise £530, £580, £660) costs a quarter of the bill.
-- `bandsTax_add`, `sdlt_nonResident`, `lbtt_ads_cliff`, `ltt_higher_cliff`,
-  `lbtt_succ`, `ltt_succ` (`UkTax/LandTax.lean`): adding 2 % to every rate adds
+  `scotTotal_le_bill`, `scot_capital_cliff` (`UkTax/CtrWorkingAge.lean`): in
+  Scotland the bands E to H reduction adds nothing while income is at most the
+  applicable amount; up to £321 or £479 a week it is the whole band-rise share less
+  the deductions, however far income is above the applicable amount; the
+  entitlement is at least each part, and at most the bill (the larger of the bill
+  and the tax the second adult rebate is reckoned on), for any income, band and
+  capital; without UC, at £16,000 of capital it is the full entitlement and a penny
+  more ends all of it, under the model's own capital test (`ctrCapitalOk`).
+- `newham_at_most_70`, `localYear_taper`, `oxford_cliffs` *(one point at each
+  step)*, `oxfordPct_anti`, `oxford_mono` (`UkTax/CtrEnglandLocal.lean`): Newham
+  never pays a working-age applicant more than 70 % of the bill; on a council's
+  taper more income never raises the reduction and each unit costs at most the
+  taper for 365/7 weeks; Oxford's reduction never rises with income, and, with no
+  non-dependants, a penny a week above £480.00, £530.00, £580.00 or £660.00 costs a
+  quarter of the bill.
+- `bandsTax_add`, `sdlt_nonResident`, `lbtt_ads_cliff` *(one point)*,
+  `ltt_higher_cliff` *(one point)*, `lbtt_succ`, `ltt_succ` (`UkTax/LandTax.lean`): adding 2 % to every rate adds
   exactly 2 % of the whole price, so the SDLT non-resident surcharge is 2 % of the
   consideration for every residential kind; Scotland's supplement and Wales's higher
   rates start at £40,000 (nil, then £3,200 and £2,000); a penny more never lowers
   LBTT or LTT.
-- `aaCharge_le`, `aaTax_slice`, `allowance_bounds`, `financeReduction_le`
-  (`UkTax/Reliefs.lean`): the annual allowance charge is never more than 48 % of
-  the excess (45 % outside Scotland) and more excess never lowers it; the tapered
+- `aaCharge_le`, `aaCharge_le_y2026`, `aaTax_slice`, `allowance_bounds`,
+  `financeReduction_le` (`UkTax/Reliefs.lean`): the annual allowance charge is
+  never more than the top rate on the excess (for any figures meeting `Valid`; for
+  2026-27, 45 % outside Scotland and 48 % in it) and more excess never lowers it; the tapered
   allowance stays between £10,000 and £60,000; the finance cost reduction is at
   most 20 % of the costs and never more than the tax. `net_drop_only_at_steps` now
   holds with Step 2 reliefs (gifts of shares) as well.
@@ -920,39 +950,41 @@ relief-at-source contributions.
   `sl_succ_earned`, `wfpAmount_le`, `wfp_charge_cliff`, `wfp_charge_benefit`
   (`UkTax/StudentLoans.lean`): the threshold is the lowest of the plans held;
   £2,000 of unearned income adds nothing to student loan income and £2,000.01 adds
-  all of it, £180.0009 more of repayments above the threshold; otherwise a penny
-  more earned income adds 0 to 0.15p; the Winter Fuel Payment is at most £300; a
-  penny of total income above £35,000 charges the whole payment, and a relevant
-  benefit removes the charge at any income.
-- `wfpAmount_eq`, `scp_cliff`, `csp_cliff`, `pawhpAmount_le`
-  (`UkTax/Devolved.lean`): the Winter Fuel Payment and the Scottish payment are one
+  all of it *(one point, any earned income)*, £180.0009 more of repayments where
+  earned income is at least the threshold and there is no Postgraduate loan; a
+  penny more earned income adds 0 to 0.15p; the Winter Fuel Payment is at most
+  £300; a penny of total income above £35,000 charges the whole payment *(one
+  point)*, and a relevant benefit removes the charge at any income.
+- `wfpAmount_eq`, `scp_cliff`, `csp_cliff` *(one point, no overlapping
+  benefit)*, `pawhpAmount_le` (`UkTax/Devolved.lean`): the Winter Fuel Payment and the Scottish payment are one
   rule with two sets of amounts; when a family's Universal Credit ends, £1,466.40 a
   year of Scottish Child Payment goes for each child; a penny a week of net earnings
   above £204 takes away Carer Support Payment, the supplement and the additional
   person payments together (£5,103.80 a year, and £540.80 for each additional
   person); the heating payment is at most £316.70.
-- `targeted_cliff`, `targetedValue_two`, `targetedExtra_working`
-  (`UkTax/Targeted.lean`): a penny of earned income a year past £15,400.08 takes
+- `targeted_cliff` *(one point)*, `targetedValue_two` *(one case)*,
+  `targetedExtra_working` (`UkTax/Targeted.lean`): a penny of earned income a year past £15,400.08 takes
   away a 2-year-old's targeted hours, £5,073 at the DfE rate, for a family without
   the working-parent hours; with them the targeted hours add nothing.
-- `carPct_bounds`, `carPct_mono`, `carPct_range`, `car_50g_step`
-  (`UkTax/CompanyCar.lean`): the appropriate percentage stays between 4 % and
+- `carPct_bounds`, `carPct_mono`, `carPct_range`, `car_50g_step` *(one point: a
+  130-mile hybrid)* (`UkTax/CompanyCar.lean`): the appropriate percentage stays between 4 % and
   37 %, never falls as CO2 rises or rises as the electric range grows, and jumps
   from 4 % to 17 % between 50 and 51 g/km for a long-range hybrid (£5,200 more
   benefit on a £40,000 car).
-- `lisaBonus_le`, `lisa_age_cliff`, `minimumWage_mono` (`UkTax/Misc.lean`): the
-  Lifetime ISA bonus is at most £1,000 a year and stops at 50 (£1,000 on £4,000 at
+- `lisaBonus_le`, `lisa_age_cliff` *(one point: £4,000 paid in)*,
+  `minimumWage_mono` (`UkTax/Misc.lean`): the Lifetime ISA bonus is at most £1,000 a year and stops at 50 (£1,000 on £4,000 at
   49, nothing at 50); the minimum wage never falls with age outside
   apprenticeships.
-- `ved_supplement_cliff`, `vedFirst_top`, `vedFirst_mono` (`UkTax/Ved.lean`): a
-  penny over a £40,000 list price costs £440 a year in licence years 2 to 6; the
-  first licence never costs less as CO2 rises (checked gram by gram to 260 g/km,
-  constant above 255).
-- `ml80a_anti`, `ml80b_anti`, `ml80a_d_bounds`, `ml80c_cliff`, `pla_cliff`,
-  `adg_no_cliff` (`UkTax/StudentSupport.lean`): more household income never
+- `ved_supplement_cliff` *(one point, any CO2)*, `vedFirst_top`, `vedFirst_mono`,
+  `vedFirstCar_mono` (`UkTax/Ved.lean`): for a petrol car (being diesel changes only
+  the first licence), a penny over a £40,000 list price costs £440 a year in licence years 2 to 6; the
+  first licence never costs less as CO2 rises, for petrol, diesel and zero
+  emission cars alike (checked gram by gram to 260 g/km, constant above 255).
+- `ml80a_anti`, `ml80b_anti`, `ml80a_d_bounds`, `ml80c_cliff` *(one point)*,
+  `pla_cliff` *(one point)*, `adg_no_cliff` *(one point)* (`UkTax/StudentSupport.lean`): more household income never
   raises the maintenance loan, on either schedule, in any category or year; away
-  from home outside London it stays between £5,048 and £10,830, the full amount up
-  to £25,000; at 60 or over £50 at £43,857.27 and nothing a penny higher; the
+  from home outside London (not a final year) it stays between £5,048 and £10,830,
+  the full amount up to £25,000; at 60 or over £50 at £43,857.27 and nothing a penny higher; the
   Parents' Learning Allowance drops from £50 to nothing at £18,957.99, while the
   Adult Dependants' Grant tapers to a penny before it stops.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
@@ -964,7 +996,8 @@ relief-at-source contributions.
   more gains never lower Capital Gains Tax and each penny adds at most 24p; each
   penny less of unused band adds at most 6p; gains up to £3,000 are tax-free.
   `cgtBand_scottish`: a Scottish taxpayer's band is the UK one (s1J(6)).
-- `sdlt_succ`, `ftb_cliff`, `higher_cliff` (`UkTax/Sdlt.lean`): a penny more
+- `sdlt_succ`, `ftb_cliff` *(one point)*, `higher_cliff` *(one point)*
+  (`UkTax/Sdlt.lean`): a penny more
   consideration never lowers SDLT, for every kind of transaction including the
   higher rates' start; the theorem leaves out only the first-time buyer's penny
   from £500,000. Both cliffs are jumps up: first-time buyers' relief ends at
@@ -1493,7 +1526,12 @@ server, from a WebAssembly build of `uktax`. Enter pay, savings, dividends,
 children and childcare, where you live and a few benefit inputs; it shows
 take-home pay with its breakdown and a take-home-against-pay chart swept live
 by the model, with the cliffs from the model's cliff map. It has a button to run
-the golden cases in the page.
+the golden cases in the page. Every figure comes from the model except two, which
+the page labels as worked out on the page: the monthly take-home (the year ÷ 12)
+and the chart tooltip's share of each extra £1 kept (from neighbouring points). The
+model is the one the proofs are about; the proofs cover the properties listed in
+[What is proved](#what-is-proved), not agreement with the law. The cliff table
+says "No cliffs in this range" only where the list is proved complete.
 
 **Your own figures.** The "Figures" panel loads the 2026-27 rates and thresholds
 from the model (personal allowance and its taper threshold, the rate limits, the

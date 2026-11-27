@@ -25,10 +25,11 @@ A carer who gets Carer's Allowance and claims Universal Credit:
   plus the allowance, as in `netCarer`.
 
 Proved: `ucAward_withCa` (while UC is in payment, every penny of Carer's Allowance
-takes a penny off UC) and `carer_uc_net` (so for a carer on UC, Carer's Allowance
+takes a penny off UC), `carer_uc_net` (so for a carer on UC, Carer's Allowance
 changes net income only by the income tax and High Income Child Benefit Charge it
-brings: the household is never better off for it, and the Carer's Allowance
-earnings-limit cliff of `caYear_cliff` turns into a gain of that tax).
+brings: the household is never better off for it) and `carer_uc_cliff` (where a
+penny more pay crosses the earnings limit, the cliff of `caYear_cliff` turns into a
+gain of that tax and charge).
 -/
 
 namespace UkTax
@@ -105,19 +106,37 @@ theorem carer_uc_net (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) 
   push_cast
   omega
 
-/-- The same at the Carer's Allowance earnings limit: where a penny more pay loses
-the allowance and UC is in payment with it, net income before the penny is net
-income at the same pay without the allowance, less the tax and HICBC the allowance
-brought. -/
-theorem carer_uc_cliff (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (ent : Bool)
+/-- Net income of a carer on Universal Credit with pay `g` and no Carer's Allowance,
+1/1 000 000 pence. -/
+def netNoCaUc (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (g : Nat) : Int :=
+  100 * netCa p cb rg 0 0 0 g + ucAward rg.params (c.withCa 0) (earned p rg 0 0 g)
+
+/-- **The Carer's Allowance cliff on UC is a gain.** Where a penny more pay leaves a
+carer's net earnings over the limit (`caThreshold`), in particular the penny that
+takes them over it, and UC was in payment with the allowance at the lower pay, net
+income at the higher pay is net income at the lower pay, plus what
+the penny does without the allowance (`netNoCaUc`), plus the income tax and HICBC
+the allowance brought: losing the allowance never lowers net income beyond the
+penny's own effect. -/
+theorem carer_uc_cliff (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims)
     (ov g : Nat) (hc : 0 < c.carers)
-    (h : 0 < ucAward rg.params (c.withCa (caYear ent ov (caEarnings p rg g))) (earned p rg 0 0 g)) :
-    netCarerUc p cb rg c ent ov g
-      = 100 * netCa p cb rg 0 0 0 g + ucAward rg.params (c.withCa 0) (earned p rg 0 0 g)
-        - 100 * ((finalTaxExact rg ⟨g + caYear ent ov (caEarnings p rg g), 0, 0⟩ : Int)
+    (hhi : caThreshold ≤ caEarnings p rg (g + 1))
+    (h : 0 < ucAward rg.params (c.withCa (caYear true ov (caEarnings p rg g))) (earned p rg 0 0 g)) :
+    netCarerUc p cb rg c true ov (g + 1)
+      = netCarerUc p cb rg c true ov g + (netNoCaUc p cb rg c (g + 1) - netNoCaUc p cb rg c g)
+        + 100 * ((finalTaxExact rg ⟨g + caYear true ov (caEarnings p rg g), 0, 0⟩ : Int)
             - finalTaxExact rg ⟨g, 0, 0⟩)
-        - micro * ((hicbc rg.params (g + caYear ent ov (caEarnings p rg g) - rg.step2 - rg.relief) cb : Int)
-            - hicbc rg.params (g - rg.step2 - rg.relief) cb) :=
-  carer_uc_net p cb rg c _ g hc h
+        + micro * ((hicbc rg.params (g + caYear true ov (caEarnings p rg g) - rg.step2 - rg.relief) cb : Int)
+            - hicbc rg.params (g - rg.step2 - rg.relief) cb) := by
+  have h0 : caYear true ov (caEarnings p rg (g + 1)) = 0 := by
+    have : caEarningsOk (caEarnings p rg (g + 1)) = false := by
+      cases hk : caEarningsOk (caEarnings p rg (g + 1))
+      · rfl
+      · exact absurd ((caEarningsOk_iff _).1 hk) (by omega)
+    unfold caYear; simp [this]
+  have hn := carer_uc_net p cb rg c _ g hc h
+  unfold netCarerUc netNoCaUc
+  simp only [h0]
+  omega
 
 end UkTax
