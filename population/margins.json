@@ -1,0 +1,1022 @@
+{
+ "dwp": {
+  "carers_allowance_in_payment": 1088000.0,
+  "carers_allowance_spend": 4989735600.746407,
+  "child_benefit_spend": 13713166959.785244,
+  "pension_credit_caseload": 1349000.0,
+  "state_pension_caseload": 13252000.0,
+  "state_pension_caseload_abroad": 1084000.0,
+  "state_pension_spend": 154360465886.52747,
+  "tax_free_childcare_spend": 589092444.6605047,
+  "uc_carer_element": 1163000.0,
+  "uc_households": 6743000.0,
+  "uc_housing_element": 4375000.0,
+  "uc_housing_element_spend": 25633281970.929237,
+  "uc_lcwra": 2794000.0,
+  "uc_spend": 86368184543.47627
+ },
+ "hmrc": {
+  "child_benefit_children_by_age_aug_2025": {
+   "0": 446265.0,
+   "1": 499555.0,
+   "2": 514875.0,
+   "3": 549135.0,
+   "4": 554760.0,
+   "5": 576155.0,
+   "6": 602215.0,
+   "7": 623920.0,
+   "8": 648010.0,
+   "9": 670530.0,
+   "10": 673440.0,
+   "11": 677790.0,
+   "12": 696090.0,
+   "13": 721200.0,
+   "14": 724780.0,
+   "15": 716575.0,
+   "16": 704790.0,
+   "17": 555640.0,
+   "18": 479675.0,
+   "19": 95335.0
+  },
+  "child_benefit_in_payment_aug_2025": {
+   "england": {
+    "children": 9936445.0,
+    "children_by_age": {
+     "0_4": 2172185.0,
+     "11_15": 2989175.0,
+     "16_plus": 1566755.0,
+     "5_10": 3208330.0
+    },
+    "families": 5802610.0,
+    "one": 2830555.0,
+    "three_plus": 843120.0,
+    "two": 2128935.0
+   },
+   "london": {
+    "children": 1435440.0,
+    "children_by_age": {
+     "0_4": 303350.0,
+     "11_15": 432365.0,
+     "16_plus": 240935.0,
+     "5_10": 458790.0
+    },
+    "families": 832925.0,
+    "one": 419880.0,
+    "three_plus": 132070.0,
+    "two": 280975.0
+   },
+   "northern_ireland": {
+    "children": 391770.0,
+    "children_by_age": {
+     "0_4": 85640.0,
+     "11_15": 115355.0,
+     "16_plus": 63670.0,
+     "5_10": 127105.0
+    },
+    "families": 216810.0,
+    "one": 94740.0,
+    "three_plus": 39975.0,
+    "two": 82095.0
+   },
+   "scotland": {
+    "children": 831580.0,
+    "children_by_age": {
+     "0_4": 184035.0,
+     "11_15": 258505.0,
+     "16_plus": 114620.0,
+     "5_10": 274420.0
+    },
+    "families": 510220.0,
+    "one": 265250.0,
+    "three_plus": 58800.0,
+    "two": 186165.0
+   },
+   "uk": {
+    "children": 11730730.0,
+    "children_by_age": {
+     "0_4": 2564595.0,
+     "11_15": 3536430.0,
+     "16_plus": 1835435.0,
+     "5_10": 3794265.0
+    },
+    "families": 6867695.0,
+    "one": 3356385.0,
+    "three_plus": 987265.0,
+    "two": 2524055.0
+   },
+   "wales": {
+    "children": 556375.0,
+    "children_by_age": {
+     "0_4": 119710.0,
+     "11_15": 168860.0,
+     "16_plus": 88355.0,
+     "5_10": 179450.0
+    },
+    "families": 329110.0,
+    "one": 161115.0,
+    "three_plus": 44295.0,
+    "two": 123705.0
+   }
+  },
+  "child_benefit_opted_out_aug_2025": {
+   "children": 999680.0,
+   "children_by_age": {
+    "0_4": 109315.0,
+    "11_15": 420155.0,
+    "16_plus": 144230.0,
+    "5_10": 325980.0
+   },
+   "families": 684635.0,
+   "one": 407255.0,
+   "three_plus": 34105.0,
+   "two": 243275.0
+  },
+  "income_sources_by_range_2023_24": [
+   {
+    "dividends": {
+     "amount": 175000000.0,
+     "n": 115000.0
+    },
+    "employment": {
+     "amount": 16900000000.0,
+     "n": 1360000.0
+    },
+    "interest": {
+     "amount": 274000000.0,
+     "n": 1250000.0
+    },
+    "lower": 12570,
+    "other": {
+     "amount": 6000000.0,
+     "n": 7000.0
+    },
+    "other_pensions": {
+     "amount": 4350000000.0,
+     "n": 1070000.0
+    },
+    "property": {
+     "amount": 670000000.0,
+     "n": 101000.0
+    },
+    "self_employment": {
+     "amount": 4810000000.0,
+     "n": 444000.0
+    },
+    "state_pension": {
+     "amount": 11800000000.0,
+     "n": 1140000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 855000000.0,
+     "n": 372000.0
+    },
+    "employment": {
+     "amount": 48600000000.0,
+     "n": 3100000.0
+    },
+    "interest": {
+     "amount": 1370000000.0,
+     "n": 2840000.0
+    },
+    "lower": 15000,
+    "other": {
+     "amount": 33000000.0,
+     "n": 25000.0
+    },
+    "other_pensions": {
+     "amount": 13600000000.0,
+     "n": 2140000.0
+    },
+    "property": {
+     "amount": 1690000000.0,
+     "n": 232000.0
+    },
+    "self_employment": {
+     "amount": 8030000000.0,
+     "n": 651000.0
+    },
+    "state_pension": {
+     "amount": 22200000000.0,
+     "n": 2050000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 3330000000.0,
+     "n": 843000.0
+    },
+    "employment": {
+     "amount": 172000000000.0,
+     "n": 7470000.0
+    },
+    "interest": {
+     "amount": 3130000000.0,
+     "n": 5250000.0
+    },
+    "lower": 20000,
+    "other": {
+     "amount": 157000000.0,
+     "n": 58000.0
+    },
+    "other_pensions": {
+     "amount": 30200000000.0,
+     "n": 2660000.0
+    },
+    "property": {
+     "amount": 3820000000.0,
+     "n": 431000.0
+    },
+    "self_employment": {
+     "amount": 15700000000.0,
+     "n": 961000.0
+    },
+    "state_pension": {
+     "amount": 24900000000.0,
+     "n": 2320000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 4700000000.0,
+     "n": 667000.0
+    },
+    "employment": {
+     "amount": 170000000000.0,
+     "n": 5370000.0
+    },
+    "interest": {
+     "amount": 2530000000.0,
+     "n": 3690000.0
+    },
+    "lower": 30000,
+    "other": {
+     "amount": 190000000.0,
+     "n": 50000.0
+    },
+    "other_pensions": {
+     "amount": 24900000000.0,
+     "n": 1450000.0
+    },
+    "property": {
+     "amount": 3800000000.0,
+     "n": 364000.0
+    },
+    "self_employment": {
+     "amount": 12600000000.0,
+     "n": 595000.0
+    },
+    "state_pension": {
+     "amount": 12300000000.0,
+     "n": 1160000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 8400000000.0,
+     "n": 627000.0
+    },
+    "employment": {
+     "amount": 139000000000.0,
+     "n": 3500000.0
+    },
+    "interest": {
+     "amount": 1870000000.0,
+     "n": 2370000.0
+    },
+    "lower": 40000,
+    "other": {
+     "amount": 216000000.0,
+     "n": 44000.0
+    },
+    "other_pensions": {
+     "amount": 16900000000.0,
+     "n": 779000.0
+    },
+    "property": {
+     "amount": 3780000000.0,
+     "n": 325000.0
+    },
+    "self_employment": {
+     "amount": 8730000000.0,
+     "n": 359000.0
+    },
+    "state_pension": {
+     "amount": 6020000000.0,
+     "n": 568000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 12500000000.0,
+     "n": 643000.0
+    },
+    "employment": {
+     "amount": 174000000000.0,
+     "n": 3430000.0
+    },
+    "interest": {
+     "amount": 2340000000.0,
+     "n": 2230000.0
+    },
+    "lower": 50000,
+    "other": {
+     "amount": 377000000.0,
+     "n": 65000.0
+    },
+    "other_pensions": {
+     "amount": 17400000000.0,
+     "n": 643000.0
+    },
+    "property": {
+     "amount": 5400000000.0,
+     "n": 397000.0
+    },
+    "self_employment": {
+     "amount": 8220000000.0,
+     "n": 311000.0
+    },
+    "state_pension": {
+     "amount": 4660000000.0,
+     "n": 441000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 9440000000.0,
+     "n": 336000.0
+    },
+    "employment": {
+     "amount": 118000000000.0,
+     "n": 1640000.0
+    },
+    "interest": {
+     "amount": 1620000000.0,
+     "n": 1070000.0
+    },
+    "lower": 70000,
+    "other": {
+     "amount": 415000000.0,
+     "n": 52000.0
+    },
+    "other_pensions": {
+     "amount": 9470000000.0,
+     "n": 259000.0
+    },
+    "property": {
+     "amount": 3770000000.0,
+     "n": 226000.0
+    },
+    "self_employment": {
+     "amount": 5360000000.0,
+     "n": 143000.0
+    },
+    "state_pension": {
+     "amount": 1890000000.0,
+     "n": 176000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 6870000000.0,
+     "n": 222000.0
+    },
+    "employment": {
+     "amount": 82300000000.0,
+     "n": 791000.0
+    },
+    "interest": {
+     "amount": 1260000000.0,
+     "n": 489000.0
+    },
+    "lower": 100000,
+    "other": {
+     "amount": 455000000.0,
+     "n": 46000.0
+    },
+    "other_pensions": {
+     "amount": 5430000000.0,
+     "n": 109000.0
+    },
+    "property": {
+     "amount": 2550000000.0,
+     "n": 137000.0
+    },
+    "self_employment": {
+     "amount": 4980000000.0,
+     "n": 85000.0
+    },
+    "state_pension": {
+     "amount": 847000000.0,
+     "n": 74000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 3450000000.0,
+     "n": 92000.0
+    },
+    "employment": {
+     "amount": 39200000000.0,
+     "n": 264000.0
+    },
+    "interest": {
+     "amount": 650000000.0,
+     "n": 146000.0
+    },
+    "lower": 150000,
+    "other": {
+     "amount": 322000000.0,
+     "n": 27000.0
+    },
+    "other_pensions": {
+     "amount": 1810000000.0,
+     "n": 29000.0
+    },
+    "property": {
+     "amount": 1150000000.0,
+     "n": 54000.0
+    },
+    "self_employment": {
+     "amount": 3650000000.0,
+     "n": 40000.0
+    },
+    "state_pension": {
+     "amount": 265000000.0,
+     "n": 21000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 3700000000.0,
+     "n": 75000.0
+    },
+    "employment": {
+     "amount": 36600000000.0,
+     "n": 180000.0
+    },
+    "interest": {
+     "amount": 733000000.0,
+     "n": 111000.0
+    },
+    "lower": 200000,
+    "other": {
+     "amount": 499000000.0,
+     "n": 26000.0
+    },
+    "other_pensions": {
+     "amount": 1570000000.0,
+     "n": 20000.0
+    },
+    "property": {
+     "amount": 1050000000.0,
+     "n": 41000.0
+    },
+    "self_employment": {
+     "amount": 4390000000.0,
+     "n": 34000.0
+    },
+    "state_pension": {
+     "amount": 179000000.0,
+     "n": 14000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 3430000000.0,
+     "n": 49000.0
+    },
+    "employment": {
+     "amount": 29000000000.0,
+     "n": 93000.0
+    },
+    "interest": {
+     "amount": 673000000.0,
+     "n": 68000.0
+    },
+    "lower": 300000,
+    "other": {
+     "amount": 642000000.0,
+     "n": 22000.0
+    },
+    "other_pensions": {
+     "amount": 1120000000.0,
+     "n": 10000.0
+    },
+    "property": {
+     "amount": 765000000.0,
+     "n": 23000.0
+    },
+    "self_employment": {
+     "amount": 4840000000.0,
+     "n": 21000.0
+    },
+    "state_pension": {
+     "amount": 96000000.0,
+     "n": 8000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 3820000000.0,
+     "n": 32000.0
+    },
+    "employment": {
+     "amount": 23100000000.0,
+     "n": 44000.0
+    },
+    "interest": {
+     "amount": 653000000.0,
+     "n": 38000.0
+    },
+    "lower": 500000,
+    "other": {
+     "amount": 744000000.0,
+     "n": 17000.0
+    },
+    "other_pensions": {
+     "amount": 640000000.0,
+     "n": 4000.0
+    },
+    "property": {
+     "amount": 474000000.0,
+     "n": 13000.0
+    },
+    "self_employment": {
+     "amount": 6670000000.0,
+     "n": 15000.0
+    },
+    "state_pension": {
+     "amount": 43000000.0,
+     "n": 3000.0
+    }
+   },
+   {
+    "dividends": {
+     "amount": 11100000000.0,
+     "n": 19000.0
+    },
+    "employment": {
+     "amount": 35500000000.0,
+     "n": 21000.0
+    },
+    "interest": {
+     "amount": 1240000000.0,
+     "n": 21000.0
+    },
+    "lower": 1000000,
+    "other": {
+     "amount": 1790000000.0,
+     "n": 13000.0
+    },
+    "other_pensions": {
+     "amount": 370000000.0,
+     "n": 2000.0
+    },
+    "property": {
+     "amount": 439000000.0,
+     "n": 7000.0
+    },
+    "self_employment": {
+     "amount": 19500000000.0,
+     "n": 11000.0
+    },
+    "state_pension": {
+     "amount": 20000000.0,
+     "n": 2000.0
+    }
+   }
+  ],
+  "ready_reckoner": {
+   "basic_rate_1p": {
+    "2026_27": 6900000000.0,
+    "2027_28": 8250000000.0
+   },
+   "personal_allowance_100": {
+    "2026_27": 810000000.0,
+    "2027_28": 1050000000.0
+   }
+  },
+  "receipts_2025_26": {
+   "child_benefit_paid": 13439000000.0,
+   "class1_employee": 49404000000.0,
+   "class1_employer": 143903000000.0,
+   "income_tax": 326932000000.0,
+   "nics": 200829000000.0,
+   "sa_class2_4": 2617000000.0
+  },
+  "taxpayers_all_ranges_2026_27": {
+   "liability": 347000000000.0,
+   "taxpayers": 40800000.0,
+   "total_income": 1830000000000.0
+  },
+  "taxpayers_by_country_2026_27": {
+   "england": 34300000.0,
+   "london": 5320000.0,
+   "northern_ireland": 1020000.0,
+   "scotland": 3310000.0,
+   "wales": 1810000.0
+  },
+  "taxpayers_by_range_2026_27": [
+   {
+    "liability": 651000000.0,
+    "lower": 12570,
+    "taxpayers": 2900000.0,
+    "total_income": 40000000000.0,
+    "upper": 15000
+   },
+   {
+    "liability": 4640000000.0,
+    "lower": 15000,
+    "taxpayers": 5520000.0,
+    "total_income": 95900000000.0,
+    "upper": 20000
+   },
+   {
+    "liability": 23200000000.0,
+    "lower": 20000,
+    "taxpayers": 10100000.0,
+    "total_income": 254000000000.0,
+    "upper": 30000
+   },
+   {
+    "liability": 61400000000.0,
+    "lower": 30000,
+    "taxpayers": 12700000.0,
+    "total_income": 490000000000.0,
+    "upper": 50000
+   },
+   {
+    "liability": 93700000000.0,
+    "lower": 50000,
+    "taxpayers": 7490000.0,
+    "total_income": 492000000000.0,
+    "upper": 100000
+   },
+   {
+    "liability": 41900000000.0,
+    "lower": 100000,
+    "taxpayers": 1190000.0,
+    "total_income": 142000000000.0,
+    "upper": 150000
+   },
+   {
+    "liability": 21900000000.0,
+    "lower": 150000,
+    "taxpayers": 373000.0,
+    "total_income": 63900000000.0,
+    "upper": 200000
+   },
+   {
+    "liability": 44000000000.0,
+    "lower": 200000,
+    "taxpayers": 395000.0,
+    "total_income": 116000000000.0,
+    "upper": 500000
+   },
+   {
+    "liability": 19700000000.0,
+    "lower": 500000,
+    "taxpayers": 71000.0,
+    "total_income": 48300000000.0,
+    "upper": 1000000
+   },
+   {
+    "liability": 12500000000.0,
+    "lower": 1000000,
+    "taxpayers": 23000.0,
+    "total_income": 30700000000.0,
+    "upper": 2000000
+   },
+   {
+    "liability": 23400000000.0,
+    "lower": 2000000,
+    "taxpayers": 11000.0,
+    "total_income": 59200000000.0,
+    "upper": null
+   }
+  ],
+  "taxpayers_by_rate_2026_27": {
+   "65_plus": 10200000.0,
+   "additional": 1290000.0,
+   "all": 40800000.0,
+   "basic": 31400000.0,
+   "higher": 7700000.0,
+   "savers": 415000.0,
+   "state_pension_age": 9580000.0,
+   "under_65": 30600000.0
+  }
+ },
+ "note": "Extracted by population/fetch.py from published open statistics. Do not edit by hand.",
+ "ons": {
+  "families_2025": {
+   "all_couple_families": 16694000.0,
+   "dependent_children": {
+    "all": {
+     "one": 3828000.0,
+     "three_plus": 1198000.0,
+     "two": 3486000.0
+    },
+    "lone_parent": {
+     "one": 1081000.0,
+     "three_plus": 264000.0,
+     "two": 601000.0
+    }
+   },
+   "households": 29003000.0,
+   "living_alone_65_plus": 4254000.0,
+   "lone_parent_families": 3186000.0,
+   "one_person_households": 8570000.0
+  },
+  "population_mid_2025": {
+   "england": {
+    "16_plus": 48295062.0,
+    "66_plus": 10577079.0,
+    "all": 58834812.0,
+    "under_16": 10539750.0
+   },
+   "london": {
+    "16_plus": 7494593.0,
+    "66_plus": 1071701.0,
+    "all": 9122909.0,
+    "under_16": 1628316.0
+   },
+   "northern_ireland": {
+    "16_plus": 1549679.0,
+    "66_plus": 334057.0,
+    "all": 1928446.0,
+    "under_16": 378767.0
+   },
+   "scotland": {
+    "16_plus": 4667501.0,
+    "66_plus": 1091934.0,
+    "all": 5545500.0,
+    "under_16": 877999.0
+   },
+   "uk": {
+    "16_plus": 57153485.0,
+    "66_plus": 12667542.0,
+    "all": 69483939.0,
+    "by_age": {
+     "0": 658357.0,
+     "1": 679232.0,
+     "2": 696010.0,
+     "3": 735292.0,
+     "4": 723859.0,
+     "5": 745129.0,
+     "6": 760014.0,
+     "7": 769509.0,
+     "8": 787460.0,
+     "9": 809503.0,
+     "10": 803655.0,
+     "11": 807635.0,
+     "12": 826159.0,
+     "13": 846319.0,
+     "14": 846673.0,
+     "15": 835648.0,
+     "16": 830051.0,
+     "17": 838767.0,
+     "18": 805501.0,
+     "19": 799140.0,
+     "20": 809710.0,
+     "21": 815351.0,
+     "22": 829112.0,
+     "23": 850587.0,
+     "24": 859066.0,
+     "25": 878294.0,
+     "26": 899795.0,
+     "27": 910463.0,
+     "28": 928165.0,
+     "29": 912159.0,
+     "30": 921893.0,
+     "31": 942467.0,
+     "32": 943519.0,
+     "33": 967520.0,
+     "34": 980041.0,
+     "35": 977787.0,
+     "36": 970026.0,
+     "37": 979892.0,
+     "38": 956299.0,
+     "39": 950530.0,
+     "40": 944644.0,
+     "41": 913450.0,
+     "42": 912459.0,
+     "43": 904912.0,
+     "44": 911488.0,
+     "45": 910519.0,
+     "46": 872117.0,
+     "47": 809290.0,
+     "48": 793310.0,
+     "49": 809581.0,
+     "50": 823599.0,
+     "51": 832680.0,
+     "52": 864322.0,
+     "53": 895701.0,
+     "54": 928388.0,
+     "55": 905358.0,
+     "56": 925161.0,
+     "57": 922023.0,
+     "58": 925933.0,
+     "59": 920309.0,
+     "60": 923648.0,
+     "61": 909945.0,
+     "62": 886691.0,
+     "63": 862366.0,
+     "64": 828752.0,
+     "65": 793162.0,
+     "66": 769335.0,
+     "67": 744472.0,
+     "68": 709158.0,
+     "69": 678202.0,
+     "70": 647019.0,
+     "71": 640769.0,
+     "72": 624218.0,
+     "73": 597946.0,
+     "74": 594382.0,
+     "75": 593090.0,
+     "76": 597826.0,
+     "77": 618460.0,
+     "78": 654369.0,
+     "79": 488313.0,
+     "80": 459118.0,
+     "81": 442097.0,
+     "82": 394652.0,
+     "83": 337400.0,
+     "84": 285849.0,
+     "85": 279201.0,
+     "86": 258833.0,
+     "87": 232807.0,
+     "88": 201867.0,
+     "89": 172816.0,
+     "90": 645343.0
+    },
+    "under_16": 12330454.0
+   },
+   "wales": {
+    "16_plus": 2641243.0,
+    "66_plus": 664472.0,
+    "all": 3175181.0,
+    "under_16": 533938.0
+   }
+  },
+  "tenure_census_2021_england_wales": {
+   "all": 24783199.0,
+   "owned": 15499215.0,
+   "private_rented": 5056228.0,
+   "social_rented": 4227756.0
+  }
+ },
+ "sources": {
+  "census_tenure": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Office for National Statistics (Nomis)",
+   "retrieved": "2026-11-27",
+   "sha256": "5dad67ea7c75e6e145a38f1d83d7fca85ebe6c6d36a91c31bf6d45cb23b97909",
+   "title": "Census 2021 TS054 Tenure, England and Wales (Nomis API, no key)",
+   "url": "https://www.nomisweb.co.uk/api/v01/dataset/NM_2072_1.data.csv?date=latest&geography=2092957703&measures=20100&select=geography_name,c2021_tenure_9_name,obs_value"
+  },
+  "dwp_bect": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Department for Work and Pensions",
+   "retrieved": "2026-11-27",
+   "sha256": "7f40d9d8a81fa4056af98978f434ab75d496a2520f4f59052b251490d60a7f9c",
+   "title": "Benefit expenditure and caseload tables: autumn 2026",
+   "url": "https://assets.publishing.service.gov.uk/media/6b0061d507e86cba56db977a/Benefit-Expenditure-and-Caseloads-Tables-Autumn-2026..ods"
+  },
+  "hmrc_cb": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "c610f9509901f21efc28b76d24fae01c43d281b6867a14f28b6847d0e16cc69d",
+   "title": "Child Benefit Statistics: annual release, data at August 2025, main tables",
+   "url": "https://assets.publishing.service.gov.uk/media/6a8d696901bbff0bf8f97903/Child_Benefit_August_2025_Main_Tables.ods"
+  },
+  "hmrc_receipts": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "485a2fef86fbdc1339547253e401029e49a9cae781210affdebd1fa87caddc22",
+   "title": "HMRC tax receipts and National Insurance contributions for the UK: statistics table (November 2026)",
+   "url": "https://assets.publishing.service.gov.uk/media/6af706889be17c68c69ca800/NS_Table.ods"
+  },
+  "hmrc_t2_1": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "caca39aca5c041081a56cf685a438769a6fbcbfe5b3f8ec8d498ec0afc2c9ed1",
+   "title": "Table 2.1 Number of individual Income Tax payers (projections to 2026 to 2027, July 2026)",
+   "url": "https://assets.publishing.service.gov.uk/media/6a54e2a9a4890e65cce64dd3/Table_2.1_Number_of_individual_Income_Tax_Payers.ods"
+  },
+  "hmrc_t2_2": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "2600284dea42b30d671f97c74c31f7019d3efae9b58504e33a8b22f91f0c4956",
+   "title": "Table 2.2 Number of Income Tax payers by country (projections to 2026 to 2027, July 2026)",
+   "url": "https://assets.publishing.service.gov.uk/media/6a54e2b01228eb26a4cab84c/Table_2.2_Number_of_Income_Tax_payers_by_country.ods"
+  },
+  "hmrc_t2_5": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "d7e9b36cb585824bf69a3a60b32099b4a2fe213e53ea538401ae3acfaf5fb68c",
+   "title": "Table 2.5 Income Tax liabilities by income range (projections to 2026 to 2027, July 2026)",
+   "url": "https://assets.publishing.service.gov.uk/media/6a5a4b987eb057103bd946a5/Table_2.5_Income_Tax_liabilites_by_income_range.ods"
+  },
+  "hmrc_t3_6": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "ff7f78984c5ddae1a24f2b136d0be7340eb33a46475eb7f3d5f205378b09eac8",
+   "title": "Table 3.6 Profit, employment and pension income, 2023 to 2024",
+   "url": "https://assets.publishing.service.gov.uk/media/69f20fa8c42061e837e3ac67/Table_3.6_2324.ods"
+  },
+  "hmrc_t3_7": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "1ed783117a79635f0659642f2e014b4044b3e5a91a36579fa724ef63d4f39a5c",
+   "title": "Table 3.7 Property, interest, dividend and other income, 2023 to 2024",
+   "url": "https://assets.publishing.service.gov.uk/media/69f20fe2b8ce27acfa096850/Table_3.7_2324.ods"
+  },
+  "hmrc_trr": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "HM Revenue & Customs",
+   "retrieved": "2026-11-27",
+   "sha256": "1201953391d6201d1df8df4d60288c9094b43e0679ebf285e82ad3c912d476c1",
+   "title": "Direct effects of illustrative tax changes (ready reckoner), June 2025",
+   "url": "https://assets.publishing.service.gov.uk/media/68552862b46781eacfd71d71/June_2025_TRR_ODS__1_.ods"
+  },
+  "ons_families": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Office for National Statistics",
+   "retrieved": "2026-11-27",
+   "sha256": "a89eaa3d7f519bfa949c7cfa12f531b8c7a86c704adcb70e81f49567ae724a91",
+   "title": "Families and households in the UK: 2025 (dataset)",
+   "url": "https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/birthsdeathsandmarriages/families/datasets/familiesandhouseholdsfamiliesandhouseholds/current/familiesandhouseholdsuk2025.xlsx"
+  },
+  "ons_mye": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Office for National Statistics",
+   "retrieved": "2026-11-27",
+   "sha256": "8ae244e3341257ecccaee55f4973fe12f46afe6656ead6c1a9ed3f4f8585e40f",
+   "title": "Population estimates for the UK, mid-2025 (MYE2, persons by single year of age)",
+   "url": "https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland/mid2025/mye25tablesuk.xlsx"
+  },
+  "private_rent_london_monthly_oct_2026": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Office for National Statistics",
+   "retrieved": "2026-11-27",
+   "sha256": null,
+   "title": "Average rent was highest in London (\u00a32,350) and lowest in the North East (\u00a3793) in October 2026.",
+   "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/privaterentandhousepricesuk/latest"
+  },
+  "private_rent_uk_monthly_oct_2026": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Office for National Statistics",
+   "retrieved": "2026-11-27",
+   "sha256": null,
+   "title": "The average monthly private rent in the UK was \u00a31,411 in October 2026.",
+   "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/bulletins/privaterentandhousepricesuk/latest"
+  },
+  "social_rent_weekly_england_2025_26": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Regulator of Social Housing",
+   "retrieved": "2026-11-27",
+   "sha256": null,
+   "title": "Average general needs net rent \u00a3121.72 per week",
+   "url": "https://www.gov.uk/government/statistics/private-registered-provider-social-housing-stock-and-rents-in-england-2025-to-2026/private-registered-providers-stock-and-rents-in-england-summary-key-facts"
+  },
+  "uc_share_with_children_aug_2026": {
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "publisher": "Department for Work and Pensions",
+   "retrieved": "2026-11-27",
+   "sha256": null,
+   "title": "Households with children accounted for 44.1% of households on Universal Credit with a payment in August 2026.",
+   "url": "https://www.gov.uk/government/statistics/universal-credit-statistics-29-april-2013-to-13-august-2026/universal-credit-quarterly-statistics-29-april-2013-to-13-august-2026"
+  }
+ },
+ "text": {
+  "private_rent_london_monthly_oct_2026": 2350,
+  "private_rent_uk_monthly_oct_2026": 1411,
+  "social_rent_weekly_england_2025_26": 121.72,
+  "uc_share_with_children_aug_2026": 0.441
+ }
+}

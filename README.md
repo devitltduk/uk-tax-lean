@@ -1247,6 +1247,33 @@ What it finds, for 2026-27:
   Childcare is smooth because the household takes the larger.
 - No other drops, for any household of this form.
 
+## A synthetic population (rough, not proved)
+
+[`docs/population.md`](docs/population.md) runs `uktax` over a synthetic population
+of UK benefit units for 2026-27 to give rough national figures: how many households
+sit near each cliff, and the cost and winners and losers of a change to the
+figures (any parameter set, e.g. `--set personal_allowance_pence=1357000`).
+
+- **Synthetic, not real households.** The households are invented by rules in
+  `population/model.py` and weighted to published totals. No survey or
+  administrative microdata is used (no Family Resources Survey, no Survey of
+  Personal Incomes records, nothing from the UK Data Service).
+- **Open data only.** HMRC, DWP and ONS tables under the Open Government Licence,
+  downloaded without an account by `population/fetch.py`; each file's URL, licence
+  and SHA-256 is in `population/margins.json`.
+- **Rough.** Totals match the published ones they are weighted to; others (income
+  tax, NICs, Universal Credit spending) are within a few to about 20 per cent, and
+  counts of small groups near a cliff are an order of magnitude. Every figure is
+  labelled a synthetic estimate.
+- **Only the per-household calculation is proved.** The population layer (which
+  households, their incomes, the weights, the totals) is ordinary Python, not Lean.
+
+```sh
+lake build uktax
+uv run --project population population/run.py                       # summary
+uv run --project population population/run.py --set basic_rate_bp=2100  # a change
+```
+
 ## Comparing with PolicyEngine UK
 
 ```sh
@@ -1621,7 +1648,8 @@ compares the output with the Act and says whether it is worth extending.
 
 GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
-(failing if `docs/` no longer matches the model), then runs the PolicyEngine
+(failing if `docs/` no longer matches the model), runs the synthetic population's
+tests, then runs the PolicyEngine
 comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs,
 non-means-tested benefits, Pension Credit, Housing Benefit, council tax, CGT and
 SDLT, with 1,000 random cases each; reliefs and allowances).

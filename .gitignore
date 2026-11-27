@@ -9,3 +9,7 @@ __pycache__/
 /web/dist/
 /docs/drafts/
 /.drafts-local/
+/population/raw/
+/population/.venv/
+/population/out/
+/.scratch/
