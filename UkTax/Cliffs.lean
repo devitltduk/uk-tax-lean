@@ -194,8 +194,8 @@ theorem G_succ_le {rg : Regime} {A T x w : Nat} (hxw : x ≤ w) (hwT : w ≤ T) 
 
 /-- The Step 3 allowances move only with the s35 personal allowance. -/
 theorem personalAllowance_congr {rg : Regime} {n s d : Nat}
-    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
-      = personalAllowanceFor (n + s + d - rg.relief)) :
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.step2 - rg.relief)) :
     Income.personalAllowance rg ⟨n + 1, s, d⟩ = Income.personalAllowance rg ⟨n, s, d⟩ := by
   unfold Income.personalAllowance Income.ani Income.total
   rw [hPA]
@@ -216,8 +216,8 @@ def Income.step3 (rg : Regime) (i : Income) : Nat := i.total - i.allowanceUsed r
 changes neither the personal allowance nor the personal savings allowance, it adds
 at most 0.686p of income tax (with s25(2) placement on both sides). -/
 theorem taxExact_succ_le {rg : Regime} {n s d : Nat}
-    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
-      = personalAllowanceFor (n + s + d - rg.relief))
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.step2 - rg.relief))
     (hPSA : Income.psa rg ⟨n + 1, s, d⟩ = Income.psa rg ⟨n, s, d⟩) :
     taxExact rg ⟨n + 1, s, d⟩ ≤ taxExact rg ⟨n, s, d⟩ + rg.maxStep := by
   have hopt := (isLeastTax_taxExact rg ⟨n + 1, s, d⟩).2
@@ -293,8 +293,8 @@ theorem mcaReduction_succ (rg : Regime) (n s d : Nat) :
 more non-savings income adds at most `rg.maxStep + rg.mcaStep` to the liability
 after Step 6. -/
 theorem finalTaxExact_succ_le {rg : Regime} {n s d : Nat}
-    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
-      = personalAllowanceFor (n + s + d - rg.relief))
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.step2 - rg.relief))
     (hPSA : Income.psa rg ⟨n + 1, s, d⟩ = Income.psa rg ⟨n, s, d⟩)
     (hMA : Income.maReduction rg ⟨n + 1, s, d⟩ = Income.maReduction rg ⟨n, s, d⟩) :
     finalTaxExact rg ⟨n + 1, s, d⟩ ≤ finalTaxExact rg ⟨n, s, d⟩ + rg.maxStep + rg.mcaStep := by
@@ -352,11 +352,11 @@ theorem maStep_above_limit {rg : Regime} {n s d : Nat}
   intro hle
   have hmono : Income.step3 rg ⟨n, s, d⟩ ≤ Income.step3 rg ⟨n + 1, s, d⟩ := by
     unfold Income.step3 Income.allowanceUsed Income.total
-    have := personalAllowanceFor_anti (x := n + s + d - rg.relief) (x' := n + 1 + s + d - rg.relief)
+    have := personalAllowanceFor_anti (x := n + s + d - rg.step2 - rg.relief) (x' := n + 1 + s + d - rg.step2 - rg.relief)
       (by omega)
     unfold Income.personalAllowance Income.ani Income.total
-    generalize personalAllowanceFor (n + s + d - rg.relief) = A at *
-    generalize personalAllowanceFor (n + 1 + s + d - rg.relief) = A' at *
+    generalize personalAllowanceFor (n + s + d - rg.step2 - rg.relief) = A at *
+    generalize personalAllowanceFor (n + 1 + s + d - rg.step2 - rg.relief) = A' at *
     generalize (if rg.maTransfer = true then maTransferable else 0) = m
     generalize (if rg.blind = true then blindPersonsAllowance else 0) = b
     dsimp only at *
@@ -378,7 +378,7 @@ Gift Aid and pension contributions, being fixed, are left out: they move net
 income by a constant. -/
 def net (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d g : Nat) : Int :=
   10_000 * ((g + s + d : Nat) : Int) + 10_000 * (cb : Int) - (finalTaxExact rg ⟨g, s, d⟩ : Int)
-    - (nicExact p (g + rg.netPay) : Int) - 10_000 * (hicbc (g + s + d - rg.relief) cb : Int)
+    - (nicExact p (g + rg.netPay) : Int) - 10_000 * (hicbc (g + s + d - rg.step2 - rg.relief) cb : Int)
 
 theorem nicExact_succ_le (p : EarningsPeriod) (g : Nat) : nicExact p (g + 1) ≤ nicExact p g + 800 := by
   unfold nicExact nicMainRate nicAdditionalRate
@@ -397,11 +397,11 @@ theorem Regime.minGain_eq (rg : Regime) : rg.minGain + rg.maxStep + rg.mcaStep =
 /-- Between steps, net income never falls: if a penny more pay changes neither
 allowance nor the charge, net income rises by at least `rg.minGain`. -/
 theorem net_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {s d g : Nat}
-    (hPA : personalAllowanceFor (g + 1 + s + d - rg.relief)
-      = personalAllowanceFor (g + s + d - rg.relief))
+    (hPA : personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (g + s + d - rg.step2 - rg.relief))
     (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
     (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
-    (hC : hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb) :
+    (hC : hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb) :
     net p cb rg s d g + rg.minGain ≤ net p cb rg s d (g + 1) := by
   have h1 := finalTaxExact_succ_le hPA hPSA hMA
   have h2 := nicExact_succ_le p (g + rg.netPay)
@@ -439,8 +439,8 @@ theorem hicbc_succ (t cb : Nat) : hicbc (t + 1) cb = hicbc t cb ∨ HicbcStep t 
     omega
 
 theorem psa_succ {rg : Regime} {n s d : Nat}
-    (hPA : personalAllowanceFor (n + 1 + s + d - rg.relief)
-      = personalAllowanceFor (n + s + d - rg.relief)) :
+    (hPA : personalAllowanceFor (n + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (n + s + d - rg.step2 - rg.relief)) :
     Income.psa rg ⟨n + 1, s, d⟩ = Income.psa rg ⟨n, s, d⟩ ∨
       Income.step3 rg ⟨n, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨n, s, d⟩ = rg.hrl := by
   have hPA' : Income.personalAllowance rg ⟨n + 1, s, d⟩
@@ -469,8 +469,8 @@ def MaStep (rg : Regime) (s d g : Nat) : Prop :=
 reliefs exceed income) leaves it at nil. Either way the allowance and the charge
 change only at a step of adjusted net income. -/
 theorem ani_succ (rg : Regime) (t : Nat) :
-    t + 1 - rg.relief = (t - rg.relief) + 1 ∨
-      (t + 1 - rg.relief = 0 ∧ t - rg.relief = 0) := by
+    t + 1 - rg.step2 - rg.relief = (t - rg.step2 - rg.relief) + 1 ∨
+      (t + 1 - rg.step2 - rg.relief = 0 ∧ t - rg.step2 - rg.relief = 0) := by
   omega
 
 /-- **Where net income can fall.** If a penny more pay lowers net income, then at
@@ -483,7 +483,7 @@ contributions relieved at source. This holds for every pay, savings, dividends,
 Child Benefit, pay period, reliefs, and for Scottish taxpayers. -/
 theorem net_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d g : Nat)
     (h : net p cb rg s d (g + 1) < net p cb rg s d g) :
-    PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) ∨
+    PaStep (g + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.step2 - rg.relief)) ∨
       Income.step3 rg ⟨g, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g, s, d⟩ = rg.hrl ∨
       MaStep rg s d g := by
   by_cases hMA : MaStep rg s d g
@@ -492,15 +492,15 @@ theorem net_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s 
   have hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩ :=
     Classical.not_not.mp hMA
   have ht : g + 1 + s + d = (g + s + d) + 1 := by omega
-  have hA : (personalAllowanceFor (g + 1 + s + d - rg.relief)
-        = personalAllowanceFor (g + s + d - rg.relief) ∧
-      hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb) ∨
-      PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) := by
+  have hA : (personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
+        = personalAllowanceFor (g + s + d - rg.step2 - rg.relief) ∧
+      hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb) ∨
+      PaStep (g + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.step2 - rg.relief)) := by
     rw [ht]
     rcases ani_succ rg (g + s + d) with ha | ⟨ha, hb⟩
     · rw [ha]
-      rcases personalAllowanceFor_succ (g + s + d - rg.relief) with hPA | hPA
-      · rcases hicbc_succ (g + s + d - rg.relief) cb with hc | hc
+      rcases personalAllowanceFor_succ (g + s + d - rg.step2 - rg.relief) with hPA | hPA
+      · rcases hicbc_succ (g + s + d - rg.step2 - rg.relief) cb with hc | hc
         · exact Or.inl ⟨hPA, hc⟩
         · by_cases hcb : cb = 0
           · left; subst hcb; unfold hicbc; simp [hPA]

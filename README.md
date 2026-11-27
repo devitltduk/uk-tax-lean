@@ -463,6 +463,24 @@ A lease's rent, one entry a year, is taxed by its NPV at 3.5 % a year,
 `Σ rᵢ / 1.035ⁱ`, held exactly over 207ⁿ. Not modelled: premiums with rent
 (linked), multiple dwellings, rent reviews and overlap relief.
 
+### Reliefs and the annual allowance charge (`UkTax/Reliefs.lean`)
+
+Input `reliefs`: one individual's income from its sources.
+
+| Relief | Rule | Source |
+|---|---|---|
+| Employment expenses | off the earnings, not below nil; NICs still on the pay | ITEPA 2003 ss 327-336 |
+| Capital allowances, losses brought forward | off the trade's profits, for income tax and Class 4 | CAA 2001 s247; ITA 2007 s83; SSCBA 1992 Sch 2 para 3 |
+| Gifts of shares and land | at Step 2, allocated with the allowances for the greatest reduction, lowering adjusted net income | ITA 2007 ss 24, 25(2), 431 |
+| Finance costs | not deducted; a reduction of 20 % of the lowest of the costs, the property profits and adjusted total income | ITTOIA 2005 ss 272A, 274A, 274AA |
+| Annual allowance charge | £60,000, tapered by half the adjusted income above £260,000 (threshold income above £200,000; reduction rounded down to £1; not below £10,000); the excess over it and unused allowance brought forward taxed as the top slice at the non-savings rates (Scottish: the basic rate up to the basic rate limit) | FA 2004 ss 227, 228, 228ZA |
+
+The Step 2 relief is `Regime.step2` in the income tax engine: it is allocated with
+the personal allowance by the same search, and taken off adjusted net income.
+Not modelled: sideways loss relief (s64) and the s24A cap, more than one property
+business or finance costs brought forward, defined benefit input amounts, member
+contributions and the relief cap.
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -709,6 +727,12 @@ relief-at-source contributions.
   consideration for every residential kind; Scotland's supplement and Wales's higher
   rates start at £40,000 (nil, then £3,200 and £2,000); a penny more never lowers
   LBTT or LTT.
+- `aaCharge_le`, `aaTax_slice`, `allowance_bounds`, `financeReduction_le`
+  (`UkTax/Reliefs.lean`): the annual allowance charge is never more than 48 % of
+  the excess (45 % outside Scotland) and more excess never lowers it; the tapered
+  allowance stays between £10,000 and £60,000; the finance cost reduction is at
+  most 20 % of the costs and never more than the tax. `net_drop_only_at_steps` now
+  holds with Step 2 reliefs (gifts of shares) as well.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1089,6 +1113,18 @@ input. Latest local run: 1,122 of 1,122 agree (526 leases). PolicyEngine charges
 Scotland's supplement and Wales's higher rates below £40,000 (£2,400 and £1,500 on
 a £30,000 additional dwelling, where the law charges nil); those 34 purchases are
 counted, not compared (findings #38).
+
+### Reliefs and the annual allowance charge against PolicyEngine
+
+`uv run python compare_area6.py` compares individuals in England and Scotland with
+pay, employment expenses, a trade with capital allowances and losses brought
+forward, property profits with finance costs, savings, dividends, gifts of
+shares, and employer pension contributions with carry-forward. Latest local run:
+832 of 832 agree on income tax, the charge, the allowance and Class 4 (287 with a
+charge). PolicyEngine deducts gifts of shares as an allowance rather than from net
+income, so it does not lift the personal allowance or the pension taper: 168
+households with gifts and net income above £100,000 are counted, not compared
+(findings #39).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

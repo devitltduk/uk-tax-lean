@@ -78,6 +78,12 @@ CHECKED = (
     "land_tax_exact_ten_thousandths_pence",
     "land_tax_rent_scaled_ten_thousandths_pence",
     "land_tax_rent_denominator",
+    "reliefs_tax_exact_ten_thousandths_pence",
+    "reliefs_finance_reduction_ten_thousandths_pence",
+    "reliefs_aa_charge_ten_thousandths_pence",
+    "reliefs_annual_allowance_pence",
+    "reliefs_net_income_pence",
+    "reliefs_class_4_exact_ten_thousandths_pence",
 )
 
 failures = 0

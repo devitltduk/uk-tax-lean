@@ -185,10 +185,10 @@ theorem exists_dominated (rg : Regime) {i i' : Income} (h : i.Le i') {a' : Alloc
   obtain ⟨hN, hS, hD⟩ := h
   have hP : i'.personalAllowance rg ≤ i.personalAllowance rg := by
     unfold Income.personalAllowance Income.ani Income.total
-    have := personalAllowanceFor_anti (x := i.nonSavings + i.savings + i.dividends - rg.relief)
-      (x' := i'.nonSavings + i'.savings + i'.dividends - rg.relief) (by omega)
-    generalize personalAllowanceFor (i.nonSavings + i.savings + i.dividends - rg.relief) = A at *
-    generalize personalAllowanceFor (i'.nonSavings + i'.savings + i'.dividends - rg.relief) = A' at *
+    have := personalAllowanceFor_anti (x := i.nonSavings + i.savings + i.dividends - rg.step2 - rg.relief)
+      (x' := i'.nonSavings + i'.savings + i'.dividends - rg.step2 - rg.relief) (by omega)
+    generalize personalAllowanceFor (i.nonSavings + i.savings + i.dividends - rg.step2 - rg.relief) = A at *
+    generalize personalAllowanceFor (i'.nonSavings + i'.savings + i'.dividends - rg.step2 - rg.relief) = A' at *
     generalize (if rg.maTransfer = true then maTransferable else 0) = m
     generalize (if rg.blind = true then blindPersonsAllowance else 0) = b
     omega

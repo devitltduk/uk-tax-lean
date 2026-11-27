@@ -346,8 +346,8 @@ NICs and HICBC, plus Child Benefit), plus the better of Universal Credit and
 Tax-Free Childcare, plus the funded hours. -/
 def netAll (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (s d g : Nat) : Int :=
   100 * net p cb rg s d g
-    + max (ucAward c (earned p rg s d g)) (tfcTopUp c g (g + s + d - rg.relief))
-    + fundedHours c g (g + s + d - rg.relief)
+    + max (ucAward c (earned p rg s d g)) (tfcTopUp c g (g + s + d - rg.step2 - rg.relief))
+    + fundedHours c g (g + s + d - rg.step2 - rg.relief)
 
 /-! ## Proved properties -/
 
@@ -456,15 +456,15 @@ at most 55 % of that. That is 0.1053p (105,300 millionths of a penny), so an
 effective marginal rate of at most 1 − 0.45 × 0.234 = 89.47 %; for a Scottish
 taxpayer 0.0963p, at most 1 − 0.45 × 0.214 = 90.37 %. -/
 theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims} {s d g : Nat}
-    (hPA : personalAllowanceFor (g + 1 + s + d - rg.relief)
-      = personalAllowanceFor (g + s + d - rg.relief))
+    (hPA : personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (g + s + d - rg.step2 - rg.relief))
     (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
     (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
-    (hC : hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb)
-    (hLim : g + s + d - rg.relief ≠ childcareIncomeLimit) :
+    (hC : hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb)
+    (hLim : g + s + d - rg.step2 - rg.relief ≠ childcareIncomeLimit) :
     netAll p cb rg c s d g + 45 * (rg.minGain : Int) ≤ netAll p cb rg c s d (g + 1) := by
-  have hani : g + 1 + s + d - rg.relief = (g + s + d - rg.relief) + 1 ∨
-      (g + 1 + s + d - rg.relief = 0 ∧ g + s + d - rg.relief = 0) := by omega
+  have hani : g + 1 + s + d - rg.step2 - rg.relief = (g + s + d - rg.step2 - rg.relief) + 1 ∨
+      (g + 1 + s + d - rg.step2 - rg.relief = 0 ∧ g + s + d - rg.step2 - rg.relief = 0) := by omega
   have htax := finalTaxExact_succ_le hPA hPSA hMA
   have hnic := nicExact_succ_le p (g + rg.netPay)
   rw [show g + rg.netPay + 1 = g + 1 + rg.netPay by omega] at hnic
@@ -481,8 +481,8 @@ theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims
     generalize earned p rg s d (g + 1) = E' at *
     omega
   have huc := earned_plus_uc_gain c hle
-  have hEl : childcareEligible c g (g + s + d - rg.relief) = true →
-      childcareEligible c (g + 1) (g + 1 + s + d - rg.relief) = true := by
+  have hEl : childcareEligible c g (g + s + d - rg.step2 - rg.relief) = true →
+      childcareEligible c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) = true := by
     intro h1
     rcases hani with ha | ⟨ha, hb⟩
     · rw [ha]
@@ -493,49 +493,49 @@ theorem netAll_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims
       unfold childcareEligible parentTest at *
       simp only [Bool.and_eq_true, decide_eq_true_eq] at *
       exact ⟨⟨by omega, by omega⟩, h1.2⟩
-  have htfc : tfcTopUp c g (g + s + d - rg.relief)
-      ≤ tfcTopUp c (g + 1) (g + 1 + s + d - rg.relief) := by
+  have htfc : tfcTopUp c g (g + s + d - rg.step2 - rg.relief)
+      ≤ tfcTopUp c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) := by
     unfold tfcTopUp
-    by_cases h1 : childcareEligible c g (g + s + d - rg.relief) = true
+    by_cases h1 : childcareEligible c g (g + s + d - rg.step2 - rg.relief) = true
     · rw [h1, hEl h1]; simp
-    · rw [show childcareEligible c g (g + s + d - rg.relief) = false by simpa using h1]
+    · rw [show childcareEligible c g (g + s + d - rg.step2 - rg.relief) = false by simpa using h1]
       simp only [Bool.false_eq_true, ↓reduceIte]
       split <;> omega
-  have hfh : fundedHours c g (g + s + d - rg.relief)
-      ≤ fundedHours c (g + 1) (g + 1 + s + d - rg.relief) := by
+  have hfh : fundedHours c g (g + s + d - rg.step2 - rg.relief)
+      ≤ fundedHours c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief) := by
     unfold fundedHours micro
-    by_cases h1 : childcareEligible c g (g + s + d - rg.relief) = true
+    by_cases h1 : childcareEligible c g (g + s + d - rg.step2 - rg.relief) = true
     · rw [h1, hEl h1]; simp
-    · rw [show childcareEligible c g (g + s + d - rg.relief) = false by simpa using h1]
+    · rw [show childcareEligible c g (g + s + d - rg.step2 - rg.relief) = false by simpa using h1]
       simp only [Bool.false_eq_true, ↓reduceIte]
       split <;> omega
   have hsplit : ∀ g' : Nat, 100 * net p cb rg s d g'
       = 100 * earned p rg s d g' + 1_000_000 * ((s + d + cb : Nat) : Int)
-        - 1_000_000 * (hicbc (g' + s + d - rg.relief) cb : Int) := by
+        - 1_000_000 * (hicbc (g' + s + d - rg.step2 - rg.relief) cb : Int) := by
     intro g'; unfold net earned
     generalize finalTaxExact _ _ = A; generalize nicExact p _ = B; generalize hicbc _ cb = C
     omega
   clear hPA hPSA hEl htax hnic
   unfold netAll
   rw [hsplit, hsplit, hC]
-  have : max (ucAward c (earned p rg s d g)) (tfcTopUp c g (g + s + d - rg.relief))
+  have : max (ucAward c (earned p rg s d g)) (tfcTopUp c g (g + s + d - rg.step2 - rg.relief))
       + 100 * earned p rg s d g + 45 * (rg.minGain : Int)
       ≤ max (ucAward c (earned p rg s d (g + 1)))
-          (tfcTopUp c (g + 1) (g + 1 + s + d - rg.relief))
+          (tfcTopUp c (g + 1) (g + 1 + s + d - rg.step2 - rg.relief))
         + 100 * earned p rg s d (g + 1) := by
     omega
-  generalize hicbc (g + s + d - rg.relief) cb = C at *
+  generalize hicbc (g + s + d - rg.step2 - rg.relief) cb = C at *
   omega
 
 /-- Between steps, and away from £100,000, net income with benefits does not fall. -/
 theorem netAll_between_steps {p : EarningsPeriod} {cb : Nat} {rg : Regime} {c : Claims}
     {s d g : Nat}
-    (hPA : personalAllowanceFor (g + 1 + s + d - rg.relief)
-      = personalAllowanceFor (g + s + d - rg.relief))
+    (hPA : personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (g + s + d - rg.step2 - rg.relief))
     (hPSA : Income.psa rg ⟨g + 1, s, d⟩ = Income.psa rg ⟨g, s, d⟩)
     (hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩)
-    (hC : hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb)
-    (hLim : g + s + d - rg.relief ≠ childcareIncomeLimit)
+    (hC : hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb)
+    (hLim : g + s + d - rg.step2 - rg.relief ≠ childcareIncomeLimit)
     (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) : False := by
   have := netAll_succ_ge (p := p) (c := c) hPA hPSA hMA hC hLim
   omega
@@ -548,25 +548,25 @@ Childcare and funded hours, that penny is one of the steps of
 £100,000. -/
 theorem netAll_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims)
     (s d g : Nat) (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) :
-    PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) ∨
+    PaStep (g + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.step2 - rg.relief)) ∨
       Income.step3 rg ⟨g, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g, s, d⟩ = rg.hrl ∨
-      MaStep rg s d g ∨ g + s + d - rg.relief = childcareIncomeLimit := by
-  by_cases hLim : g + s + d - rg.relief = childcareIncomeLimit
+      MaStep rg s d g ∨ g + s + d - rg.step2 - rg.relief = childcareIncomeLimit := by
+  by_cases hLim : g + s + d - rg.step2 - rg.relief = childcareIncomeLimit
   · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr hLim))))
   by_cases hM : MaStep rg s d g
   · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inl hM))))
   have hMA : Income.maReduction rg ⟨g + 1, s, d⟩ = Income.maReduction rg ⟨g, s, d⟩ :=
     Classical.not_not.mp hM
   have ht : g + 1 + s + d = (g + s + d) + 1 := by omega
-  have hA : (personalAllowanceFor (g + 1 + s + d - rg.relief)
-        = personalAllowanceFor (g + s + d - rg.relief) ∧
-      hicbc (g + 1 + s + d - rg.relief) cb = hicbc (g + s + d - rg.relief) cb) ∨
-      PaStep (g + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.relief)) := by
+  have hA : (personalAllowanceFor (g + 1 + s + d - rg.step2 - rg.relief)
+        = personalAllowanceFor (g + s + d - rg.step2 - rg.relief) ∧
+      hicbc (g + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + s + d - rg.step2 - rg.relief) cb) ∨
+      PaStep (g + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + s + d - rg.step2 - rg.relief)) := by
     rw [ht]
     rcases ani_succ rg (g + s + d) with ha | ⟨ha, hb⟩
     · rw [ha]
-      rcases personalAllowanceFor_succ (g + s + d - rg.relief) with hPA | hPA
-      · rcases hicbc_succ (g + s + d - rg.relief) cb with hc | hc
+      rcases personalAllowanceFor_succ (g + s + d - rg.step2 - rg.relief) with hPA | hPA
+      · rcases hicbc_succ (g + s + d - rg.step2 - rg.relief) cb with hc | hc
         · exact Or.inl ⟨hPA, hc⟩
         · by_cases hcb : cb = 0
           · left; subst hcb; unfold hicbc; simp [hPA]

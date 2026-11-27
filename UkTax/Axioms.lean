@@ -17,6 +17,7 @@ import UkTax.HousingBenefitWa
 import UkTax.CtrWorkingAge
 import UkTax.CtrEnglandLocal
 import UkTax.LandTax
+import UkTax.Reliefs
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -379,3 +380,19 @@ today, so any change to it is seen.
 /-- info: 'UkTax.ltt_succ' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.ltt_succ
+
+/-- info: 'UkTax.aaCharge_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.aaCharge_le
+
+/-- info: 'UkTax.aaTax_slice' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.aaTax_slice
+
+/-- info: 'UkTax.allowance_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.allowance_bounds
+
+/-- info: 'UkTax.financeReduction_le' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.financeReduction_le

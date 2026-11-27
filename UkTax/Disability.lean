@@ -203,18 +203,18 @@ example : benefitWeeks * caRate = 449_540 := rfl
 income (no NICs on it): as `net`, with income tax on `g + C`. -/
 def netCa (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d C g : Nat) : Int :=
   10_000 * ((g + C + s + d : Nat) : Int) + 10_000 * (cb : Int) - (finalTaxExact rg ⟨g + C, s, d⟩ : Int)
-    - (nicExact p (g + rg.netPay) : Int) - 10_000 * (hicbc (g + C + s + d - rg.relief) cb : Int)
+    - (nicExact p (g + rg.netPay) : Int) - 10_000 * (hicbc (g + C + s + d - rg.step2 - rg.relief) cb : Int)
 
 /-- Net income of a carer with pay `g`: `netCa` with the year's Carer's Allowance. -/
 def netCarer (p : EarningsPeriod) (cb : Nat) (rg : Regime) (ent : Bool) (ov s d g : Nat) : Int :=
   netCa p cb rg s d (caYear ent ov (caEarnings p rg g)) g
 
 theorem netCa_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {s d C g : Nat}
-    (hPA : personalAllowanceFor (g + C + 1 + s + d - rg.relief)
-      = personalAllowanceFor (g + C + s + d - rg.relief))
+    (hPA : personalAllowanceFor (g + C + 1 + s + d - rg.step2 - rg.relief)
+      = personalAllowanceFor (g + C + s + d - rg.step2 - rg.relief))
     (hPSA : Income.psa rg ⟨g + C + 1, s, d⟩ = Income.psa rg ⟨g + C, s, d⟩)
     (hMA : Income.maReduction rg ⟨g + C + 1, s, d⟩ = Income.maReduction rg ⟨g + C, s, d⟩)
-    (hC : hicbc (g + C + 1 + s + d - rg.relief) cb = hicbc (g + C + s + d - rg.relief) cb) :
+    (hC : hicbc (g + C + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + C + s + d - rg.step2 - rg.relief) cb) :
     netCa p cb rg s d C g + rg.minGain ≤ netCa p cb rg s d C (g + 1) := by
   have h1 := finalTaxExact_succ_le hPA hPSA hMA
   have h2 := nicExact_succ_le p (g + rg.netPay)
@@ -229,7 +229,7 @@ theorem netCa_succ_ge {p : EarningsPeriod} {cb : Nat} {rg : Regime} {s d C g : N
 `net_drop_only_at_steps`, taken at total income `g + C`. -/
 theorem netCa_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (s d C g : Nat)
     (h : netCa p cb rg s d C (g + 1) < netCa p cb rg s d C g) :
-    PaStep (g + C + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.relief)) ∨
+    PaStep (g + C + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.step2 - rg.relief)) ∨
       Income.step3 rg ⟨g + C, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g + C, s, d⟩ = rg.hrl ∨
       MaStep rg s d (g + C) := by
   by_cases hMA : MaStep rg s d (g + C)
@@ -238,15 +238,15 @@ theorem netCa_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime) (
   have hMA : Income.maReduction rg ⟨g + C + 1, s, d⟩ = Income.maReduction rg ⟨g + C, s, d⟩ :=
     Classical.not_not.mp hMA
   have ht : g + C + 1 + s + d = (g + C + s + d) + 1 := by omega
-  have hA : (personalAllowanceFor (g + C + 1 + s + d - rg.relief)
-        = personalAllowanceFor (g + C + s + d - rg.relief) ∧
-      hicbc (g + C + 1 + s + d - rg.relief) cb = hicbc (g + C + s + d - rg.relief) cb) ∨
-      PaStep (g + C + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.relief)) := by
+  have hA : (personalAllowanceFor (g + C + 1 + s + d - rg.step2 - rg.relief)
+        = personalAllowanceFor (g + C + s + d - rg.step2 - rg.relief) ∧
+      hicbc (g + C + 1 + s + d - rg.step2 - rg.relief) cb = hicbc (g + C + s + d - rg.step2 - rg.relief) cb) ∨
+      PaStep (g + C + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.step2 - rg.relief)) := by
     rw [ht]
     rcases ani_succ rg (g + C + s + d) with ha | ⟨ha, hb⟩
     · rw [ha]
-      rcases personalAllowanceFor_succ (g + C + s + d - rg.relief) with hPA | hPA
-      · rcases hicbc_succ (g + C + s + d - rg.relief) cb with hc | hc
+      rcases personalAllowanceFor_succ (g + C + s + d - rg.step2 - rg.relief) with hPA | hPA
+      · rcases hicbc_succ (g + C + s + d - rg.step2 - rg.relief) cb with hc | hc
         · exact Or.inl ⟨hPA, hc⟩
         · by_cases hcb : cb = 0
           · left; subst hcb; unfold hicbc; simp [hPA]
@@ -274,7 +274,7 @@ theorem netCarer_drop_only_at_steps (p : EarningsPeriod) (cb : Nat) (rg : Regime
     ((caEarnings p rg g < caThreshold ∧ caThreshold ≤ caEarnings p rg (g + 1)) ∨
       (caEarnings p rg (g + 1) < caThreshold ∧ caThreshold ≤ caEarnings p rg g)) ∨
     ∃ C, C = caYear ent ov (caEarnings p rg g) ∧
-      (PaStep (g + C + s + d - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.relief)) ∨
+      (PaStep (g + C + s + d - rg.step2 - rg.relief) ∨ (0 < cb ∧ HicbcStep (g + C + s + d - rg.step2 - rg.relief)) ∨
         Income.step3 rg ⟨g + C, s, d⟩ = rg.brl ∨ Income.step3 rg ⟨g + C, s, d⟩ = rg.hrl ∨
         MaStep rg s d (g + C)) := by
   by_cases hc : caYear ent ov (caEarnings p rg (g + 1)) = caYear ent ov (caEarnings p rg g)

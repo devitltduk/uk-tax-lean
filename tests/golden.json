@@ -3322,5 +3322,152 @@
     "working": "residential leases are exempt: nil on the rent",
     "land_tax_rent_scaled_ten_thousandths_pence": 0,
     "land_tax_rent_denominator": 8869743
+  },
+  {
+    "name": "Employment expenses deducted from pay",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "pay_pence": 3000000,
+        "employment_expenses_pence": 200000
+      }
+    },
+    "source": "ITEPA 2003 ss 327-336",
+    "working": "pay £30,000 less £2,000 expenses = £28,000; less £12,570 = £15,430 at 20 % = £3,086",
+    "reliefs_tax_exact_ten_thousandths_pence": 3086000000
+  },
+  {
+    "name": "Capital allowances and losses brought forward",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "trading_profit_pence": 4000000,
+        "capital_allowances_pence": 500000,
+        "losses_brought_forward_pence": 1000000
+      }
+    },
+    "source": "CAA 2001 s247; ITA 2007 s83; SSCBA 1992 Sch 2 para 3",
+    "working": "profit £40,000 less £5,000 allowances less £10,000 losses = £25,000; tax 20 % of £12,430 = £2,486; Class 4 6 % of £12,430 = £745.80",
+    "reliefs_tax_exact_ten_thousandths_pence": 2486000000,
+    "reliefs_class_4_exact_ten_thousandths_pence": 745800000
+  },
+  {
+    "name": "Finance costs: 20 % of the costs",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "property_profit_pence": 3000000,
+        "finance_costs_pence": 1000000
+      }
+    },
+    "source": "ITTOIA 2005 ss 272A, 274A, 274AA",
+    "working": "property profit £30,000 (finance costs not deducted): 20 % of £17,430 = £3,486; reduction 20 % of the lowest of £10,000 costs, £30,000 profits, £17,430 adjusted total income = £2,000; £1,486",
+    "reliefs_tax_exact_ten_thousandths_pence": 1486000000,
+    "reliefs_finance_reduction_ten_thousandths_pence": 2000000000
+  },
+  {
+    "name": "Finance costs: limited by adjusted total income",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "property_profit_pence": 1500000,
+        "finance_costs_pence": 1000000
+      }
+    },
+    "source": "ITTOIA 2005 s274AA(2), (3), (6)",
+    "working": "property profit £15,000: tax 20 % of £2,430 = £486; adjusted total income £15,000 less £12,570 = £2,430, so the reduction is 20 % of £2,430 = £486; nil",
+    "reliefs_tax_exact_ten_thousandths_pence": 0,
+    "reliefs_finance_reduction_ten_thousandths_pence": 486000000
+  },
+  {
+    "name": "Gifts of shares to charity",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "pay_pence": 6000000,
+        "share_gifts_pence": 1000000
+      }
+    },
+    "source": "ITA 2007 s431",
+    "working": "pay £60,000 less £10,000 of shares given = £50,000 net income; less £12,570 = £37,430 at 20 % = £7,486",
+    "reliefs_tax_exact_ten_thousandths_pence": 7486000000,
+    "reliefs_net_income_pence": 5000000
+  },
+  {
+    "name": "Annual allowance charge at the higher rate",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "pay_pence": 10000000,
+        "employer_pension_contributions_pence": 7000000
+      }
+    },
+    "source": "FA 2004 ss 227, 228",
+    "working": "pay £100,000: tax £7,540 + 40 % of £49,730 = £27,432; employer contributions £70,000, allowance £60,000, chargeable £10,000 on top of reduced net income £87,430: all at 40 % = £4,000; £31,432",
+    "reliefs_aa_charge_ten_thousandths_pence": 4000000000,
+    "reliefs_tax_exact_ten_thousandths_pence": 31432000000
+  },
+  {
+    "name": "Annual allowance taper",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "pay_pence": 30000000,
+        "employer_pension_contributions_pence": 4500000
+      }
+    },
+    "source": "FA 2004 s228ZA",
+    "working": "pay £300,000, employer contributions £45,000: adjusted income £345,000, threshold income £300,000; allowance £60,000 less half of £85,000 = £17,500; chargeable £27,500 at 45 % = £12,375; tax on pay £7,540 + £34,976 + 45 % of £174,860 = £121,203; £133,578",
+    "reliefs_annual_allowance_pence": 1750000,
+    "reliefs_aa_charge_ten_thousandths_pence": 12375000000,
+    "reliefs_tax_exact_ten_thousandths_pence": 133578000000
+  },
+  {
+    "name": "Annual allowance charge, Scottish taxpayer: the starter band at the basic rate",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland",
+      "reliefs": {
+        "pay_pence": 1300000,
+        "employer_pension_contributions_pence": 6500000
+      }
+    },
+    "source": "FA 2004 s227(4AA)",
+    "working": "pay £13,000: tax 19 % of £430 = £81.70; employer contributions £65,000, chargeable £5,000 on top of reduced net income £430: all below the Scottish basic rate limit, so at the Scottish basic rate 20 % (not the 19 % starter rate) = £1,000; £1,081.70",
+    "reliefs_aa_charge_ten_thousandths_pence": 1000000000,
+    "reliefs_tax_exact_ten_thousandths_pence": 1081700000
+  },
+  {
+    "name": "Gifts of shares set against dividends first (greatest reduction)",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "reliefs": {
+        "savings_pence": 1000000,
+        "dividends_pence": 2000000,
+        "share_gifts_pence": 1500000
+      }
+    },
+    "source": "ITA 2007 ss 24(1)(a), 25(2), 431",
+    "working": "savings £10,000, dividends £20,000, shares given £15,000: net income £15,000; the gift and the £12,570 allowance (£27,570) go against all the dividends and £7,570 of savings, leaving £2,430 of savings within the £5,000 starting rate band: nil (against savings first, £2,430 of dividends would pay 10.75 % of £1,930 = £207.48)",
+    "reliefs_tax_exact_ten_thousandths_pence": 0,
+    "reliefs_net_income_pence": 1500000
   }
 ]
