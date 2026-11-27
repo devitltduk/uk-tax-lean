@@ -417,7 +417,7 @@ above £321 or £479 a week, where that is greater.
 | Figure | 2026-27 | Source |
 |---|---|---|
 | Personal allowance | £95.55 single 25 or over or lone parent, £75.65 single under 25, £150.15 couple | Sch 1 para 1 |
-| Child premium, family premium | £109.85 each; no family premium | Sch 1 para 2 |
+| Child premium, family premium | £109.85 each; no family premium (the transitional family premium of reg 98, £20.22 or £22.20 for someone entitled on 31 March 2022 and lost on a new application, is not modelled: it turns on the claim's history) | Sch 1 para 2; reg 98 (SSI 2026/56 reg 13) |
 | Premiums, components | as working-age Housing Benefit | Sch 1 Parts 3-6 |
 | Earnings disregards | £5, £10, £20, £25; the £17.10 step without UC | Sch 3 |
 | Capital | £16,000; £1 a week per £250 or part above £6,000 (with UC £4.35 a month) | regs 63, 66 |
@@ -1355,22 +1355,24 @@ counted, not compared (findings #38).
 `uv run python compare_area6.py` compares individuals in England and Scotland with
 pay, employment expenses, a trade with capital allowances and losses brought
 forward, property profits with finance costs, savings, dividends, gifts of
-shares, and employer pension contributions with carry-forward. Latest local run:
-832 of 832 agree on income tax, the charge, the allowance and Class 4 (287 with a
-charge). PolicyEngine deducts gifts of shares as an allowance rather than from net
-income, so it does not lift the personal allowance or the pension taper: 168
-households with gifts and net income above £100,000 are counted, not compared
-(findings #39).
+shares, and employer pension contributions with carry-forward. Latest local run
+(`--random 1000`): 937 of 937 agree on income tax, the charge, the allowance and
+Class 4 (334 with a charge, 261 with gifts). PolicyEngine deducts gifts of shares
+as an allowance rather than from net income, so it does not lift the personal
+allowance or the pension taper: the 63 people whose gifts change their personal or
+annual allowance are counted, not compared (findings #39); other gifts give the
+same tax either way and are compared.
 
 ### Student loans and the Winter Fuel Payment against PolicyEngine
 
 `uv run python compare_p9a.py` compares borrowers on each plan with pay, pension
 income, savings and dividends, and households of pensioners in England and Wales
 (couples, single people and others sharing the home, some with Pension Credit).
-Latest local run: 730 of 730 repayments agree (617 repaying) and 2,068 of 2,068
-people's payment and charge agree (662 charged). PolicyEngine counts unearned
-income of £2,000 or less, which reg 29(4)(c) leaves out: 295 such borrowers are
-counted, not compared, up to £180 a year apart (findings #40).
+Latest local run (`--random 1000`): 1,025 of 1,025 repayments agree (836
+repaying) and 2,068 of 2,068 people's payment and charge agree (662 charged).
+PolicyEngine counts unearned income of £2,000 or less, which reg 29(4)(c) leaves
+out: for the 295 such borrowers PolicyEngine must be higher by exactly the rate on
+that income above the threshold, and is, by up to £180 a year (findings #40).
 
 ### Scotland's devolved benefits against PolicyEngine
 
@@ -1414,11 +1416,18 @@ living arrangement for given household incomes (band edges and random), the
 household income of families with pension contributions, a younger sibling and a
 student with term-time pay, and the Adult Dependants' Grant and Parents' Learning
 Allowance across their tapers. Every difference must fall in a class of findings
-#46 or the run fails. Latest local run: maintenance loan 505 of 1,140 agree to the
-pound, 406 £1 or £2 apart (complete steps), 119 up to £6 apart (the minimum), 110
-up to £55 apart (the over-60 cut-off); household income 44 of 200 agree, the rest
-exactly the deductions PolicyEngine leaves out; grants 150 and 178 of 214 agree,
-the rest inside the reg 47 tapers.
+#46 or the run fails: a loan difference counts only if PolicyEngine's figure is
+exactly its method (dividing by the taper and rounding, the minimum as a share of
+the maximum, nil for a student of 60 or over above £43,835) applied to the law's
+sums, and a grant difference only if PolicyEngine pays the full amount and the
+model exactly the reg 47 taper. Final years and eligible care leavers are not
+compared, as PolicyEngine has no input for either; golden cases check them. Latest
+local run (`--random 1000`): maintenance loan 505 of 1,140 agree to the pound, 406
+£1 or £2 apart (complete steps), 119 up to £6 apart (the minimum), 110 up to £55
+apart (the over-60 cut-off); household income 44 of 200 agree, the rest exactly
+the deductions PolicyEngine leaves out; grants 150 and 178 of 214 agree, the rest
+inside the reg 47 tapers (one each at the last penny, £15,835.98 and £18,957.98,
+where the law pays 1p and the £50 minimum and PolicyEngine nil).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

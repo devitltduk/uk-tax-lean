@@ -4,21 +4,30 @@
    household income: every living arrangement, the standard and "entitled to
    benefits" schedules and students of 60 or over, at band edges and at random.
    PolicyEngine's `maintenance_loan_household_income` is set to the same figure.
-   Agreement is to the pound; each difference must fall in one of the classes of
-   findings #46 or the run fails:
-   - "complete": PolicyEngine rounds the taper where the law counts complete
-     steps (£1, £2 at most on the two-stage schedule);
-   - "minimum": PolicyEngine's floor is a share of the maximum (44 %, 46.6 %,
-     49.8 %; 37.3 %, 40.9 %, 45.7 %) where reg 105(6A), (6C) set sums (at most
-     £6 a year);
-   - "over 60": PolicyEngine pays nothing above £43,835 (the 2025-26 point)
-     where the 2026-27 sums pay £50 to £55 up to £43,857.27.
+   Agreement is to the pound. A difference is explained only if PolicyEngine's
+   figure is exactly what its method gives with the law's sums (the maxima,
+   tapers and thresholds of SI 2026/130): household income over £25,000 divided
+   by the taper as a fraction and the result rounded, where the law takes £1 for
+   each complete step; the minimum as its share of the maximum (its
+   `minimum_rate` parameters) where reg 105(6A), (6C) set sums; and nothing for a
+   student of 60 or over above its `maximum_income` (£43,835, the 2025-26 point).
+   The explained differences are classed (findings #46); any other fails the run:
+   - "complete": the fractional step alone (£1, £2 at most on the two-stage
+     schedule);
+   - "minimum": a floor binds on either side (at most £6 a year);
+   - "over 60": PolicyEngine nil above £43,835, where the 2026-27 sums pay £50 to
+     £55 up to £43,857.27.
+   Final years and eligible care leavers (regs 80A(3), (5), 80B(4), (7), 80C(4))
+   are not compared: PolicyEngine has no input for either (golden cases check
+   them).
 2. Household income: parents' pay and pension contributions, a sibling, the
    student's term-time pay. The law's Sch 4 figure set against PolicyEngine's own
    proxy (net income of the benefit units); reported, not required to agree.
 3. Adult Dependants' Grant and Parents' Learning Allowance (reg 47) against
    PolicyEngine's flat amounts below a cut-off: agreement required outside the
-   taper bands, differences inside reported.
+   taper bands; inside them PolicyEngine must pay the full £3,545 or £2,024 and
+   the model exactly that less half the dependants' income over £8,746 or
+   £14,910 (the Parents' Learning Allowance at least £50, reg 47(6)).
 
     uv run python compare_p9g.py [--binary ../.lake/build/bin/uktax] [--random 1000]
 """
@@ -30,6 +39,7 @@ import csv
 import pathlib
 import random
 import sys
+from fractions import Fraction
 
 from compare_pension import run
 
@@ -37,7 +47,15 @@ HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_BINARY = HERE.parent / ".lake/build/bin/uktax"
 YEAR = 2026
 ARR = {"A": "LIVING_WITH_PARENTS", "B": "AWAY_IN_LONDON", "D": "AWAY_OUTSIDE_LONDON"}
-MIN_LAW = {"A": 4_013, "B": 7_039, "D": 5_048}  # reg 105(6A), (6C)
+# The law's sums for a year other than a final year, categories A, B, D (SI 2011/1986
+# as amended by SI 2026/130; UkTax/Params.lean). Tapers in tenths of a penny.
+MAX_A = {"A": 9_118, "B": 14_135, "D": 10_830}       # reg 80A(2)
+MAX_B = {"A": 10_757, "B": 15_415, "D": 12_345}      # reg 80B(2)
+TAPER = {"A": 6_540, "B": 6_360, "D": 6_470}         # reg 80A(2) Y, 80B(2) Z
+TAPER1 = {"A": 4_088, "B": 4_370, "D": 4_179}        # reg 80B(2) Y
+MIN_LAW = {"A": 4_013, "B": 7_039, "D": 5_048}       # reg 105(6A), (6C)
+LOW, HIGH = 2_500_000, 4_287_500                      # £25,000, £42,875
+MAX_60, TAPER_60 = 4_582, 4_160                       # reg 80C(2)
 EDGES = [0, 2_500_000, 2_500_001, 2_500_653, 2_500_654, 2_500_655, 3_000_000, 4_287_500, 4_287_501, 4_383_500,
          4_383_501, 4_385_000, 4_385_727, 4_385_728, 4_500_000, 5_500_000, 5_838_700, 6_000_000, 7_000_000, 10_000_000]
 B0 = {"non_savings_pence": 0, "savings_pence": 0, "dividends_pence": 0}
@@ -60,19 +78,45 @@ def loans(args, rng, Simulation) -> tuple[list[dict], int]:
                            "maintenance_loan_living_arrangement": {YEAR: ARR[c["cat"]]},
                            "maintenance_loan_entitled_to_benefits": {YEAR: c["sched"] == "benefits"}}
         hhs[f"h{i}"] = {"members": [f"p{i}"], "region": {YEAR: "LONDON" if c["cat"] == "B" else "NORTH_WEST"}}
-    pe = Simulation(situation={"people": people, "households": hhs}).calculate("maintenance_loan", YEAR)
+    sim = Simulation(situation={"people": people, "households": hhs})
+    pe = sim.calculate("maintenance_loan", YEAR)
+    p = sim.tax_benefit_system.parameters(f"{YEAR}-09-01").gov.dfe.maintenance_loans
+    rate = {s: {k: Fraction(str(getattr(getattr(p.full_time.minimum_rate, s), ARR[k].lower()))) for k in "ABD"}
+            for s in ("not_entitled", "entitled_to_benefits")}
+    cut_60 = round(float(p.over_60.maximum_income) * 100)
+
+    def pe_way(c: dict) -> tuple[Fraction, bool]:
+        """PolicyEngine's method with the law's sums, before its rounding to the pound;
+        and whether a minimum (PolicyEngine's share or the law's sum) is what binds."""
+        k, hi = c["cat"], c["hi"]
+        if c["sched"] == "over_60":
+            if hi > cut_60:
+                return Fraction(0), False
+            return max(Fraction(50), MAX_60 - Fraction(max(hi - LOW, 0) * 10, TAPER_60)), False
+        if c["sched"] == "standard":
+            top, red, share = MAX_A[k], Fraction(max(hi - LOW, 0) * 10, TAPER[k]), rate["not_entitled"][k]
+        else:
+            top, share = MAX_B[k], rate["entitled_to_benefits"][k]
+            red = Fraction(max(min(hi, HIGH) - LOW, 0) * 10, TAPER1[k]) + Fraction(max(hi - HIGH, 0) * 10, TAPER[k])
+        return max(share * top, top - red), share * top >= top - red or top - int(red) <= MIN_LAW[k]
+
     rows, bad, cls = [], 0, {"complete": [0, 0], "minimum": [0, 0], "over 60": [0, 0]}
     for c, r, v in zip(cs, ln, pe):
         mine, theirs = r["maintenance_loan_pounds"], round(float(v))
         d = theirs - mine
         kind = "agree"
         if d:
-            if c["sched"] == "over_60" and theirs == 0:
-                kind = "over 60" if 4_383_500 < c["hi"] < 4_385_728 and 50 <= mine <= 55 else "?"
-            elif c["sched"] != "over_60" and (mine == MIN_LAW[c["cat"]] or theirs <= MIN_LAW[c["cat"]] + 6):
-                kind = "minimum" if abs(d) <= 6 else "?"
+            want, floor = pe_way(c)
+            # PolicyEngine rounds its float32 figure: any rounding of the exact value
+            # (within a thousandth of a pound of the half) is its method.
+            if abs(theirs - want) > Fraction(1001, 2000):
+                kind = "?"
+            elif c["sched"] == "over_60" and c["hi"] > cut_60:
+                kind = "over 60"
+            elif floor:
+                kind = "minimum"
             else:
-                kind = "complete" if d == -1 or (c["sched"] == "benefits" and d == -2) else "?"
+                kind = "complete"
             if kind == "?":
                 bad += 1
                 if bad <= 10:
@@ -161,24 +205,34 @@ def grants(args, rng, Simulation) -> tuple[list[dict], int]:
     names = list(people)
     adg = dict(zip(names, sim.calculate("adult_dependants_grant", YEAR)))
     pla = dict(zip(names, sim.calculate("parents_learning_allowance", YEAR)))
-    rows, bad, band = [], 0, {"adg": [0, 0.0], "pla": [0, 0.0]}
+    rows, bad, band, edge = [], 0, {"adg": [0, 0.0], "pla": [0, 0.0]}, {"adg": 0, "pla": 0}
     for i, (x, r) in enumerate(zip(xs, ln)):
         for k, mine, theirs, lo, hi in (
                 ("adg", r["adult_dependants_grant_half_pence"] / 200, float(adg[f"s{i}"]), 874_600, 1_583_598),
                 ("pla", r["parents_learning_allowance_half_pence"] / 200, float(pla[f"s{i}"]), 1_491_000, 1_895_798)):
             ok = abs(mine - theirs) < 0.005
-            if not ok and lo < x <= hi:
+            basic, start, least = (3_545, 874_600, 0) if k == "adg" else (2_024, 1_491_000, 50)
+            # Inside the band PolicyEngine pays the full amount and the law takes off
+            # half the income over the threshold (reg 47(1A), (3A)), the PLA at least £50.
+            tapered = max(basic - (x - start) / 200, least)
+            if not ok and lo < x <= hi and abs(mine - tapered) < 0.005 and (
+                    abs(theirs - basic) < 0.005 or (x == hi and theirs == 0)):
+                # At the last penny of the band (£15,835.98, £18,957.98) the law still
+                # pays 1p or the £50 minimum and PolicyEngine's cut-off already pays nil.
                 band[k][0] += 1
-                band[k][1] = max(band[k][1], theirs - mine)
+                band[k][1] = max(band[k][1], abs(theirs - mine))
+                edge[k] += x == hi
             elif not ok:
                 bad += 1
                 if bad <= 10:
                     print(f"  unexplained {k} at {x / 100:,.2f}: lean {mine} pe {theirs}")
             rows.append({"part": k, "hi": x, "lean": mine, "pe": theirs, "class": "agree" if ok else "taper"})
     n = len(xs)
-    print(f"Adult Dependants' Grant: {n - band['adg'][0]}/{n} agree, {band['adg'][0]} in the taper band where PolicyEngine "
-          f"pays the full £3,545 (up to £{band['adg'][1]:,.2f} a year more); Parents' Learning Allowance: {n - band['pla'][0]}/{n} "
-          f"agree, {band['pla'][0]} in the band (up to £{band['pla'][1]:,.2f} more); {bad} unexplained")
+    agree = {k: sum(r["part"] == k and r["class"] == "agree" for r in rows) for k in band}
+    print(f"Adult Dependants' Grant: {agree['adg']}/{n} agree, {band['adg'][0]} in the taper band where PolicyEngine "
+          f"pays the full £3,545 ({edge['adg']} at the last penny, where it pays nil; up to £{band['adg'][1]:,.2f} a year apart); "
+          f"Parents' Learning Allowance: {agree['pla']}/{n} agree, {band['pla'][0]} in the band ({edge['pla']} at the last "
+          f"penny; up to £{band['pla'][1]:,.2f} apart); {bad} unexplained")
     return rows, bad
 
 

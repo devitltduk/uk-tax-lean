@@ -97,9 +97,25 @@ def main() -> int:
     sim = Simulation(situation={"people": people, "households": hhs})
     pe = {v: [float(x) for x in sim.calculate(v, YEAR)] for v in
           ["income_tax", "personal_pension_contributions_tax", "pension_annual_allowance", "ni_class_4"]}
+    def allowance(ani: int) -> int:
+        """The personal allowance, pence, on adjusted net income (ITA 2007 s35)."""
+        return max(1_257_000 - max(ani - 10_000_000, 0) // 2, 0)
+
+    def annual(net: int, employer: int) -> int:
+        """The annual allowance, pence: tapered where threshold income is over £200,000
+        and adjusted income over £260,000 (FA 2004 s228ZA), at least £10,000."""
+        if net <= 20_000_000 or net + employer <= 26_000_000:
+            return 6_000_000
+        return max(6_000_000 - (net + employer - 26_000_000) // 200 * 100, 1_000_000)
+
     rows, bad, skipped = [], 0, 0
     for i, (c, r) in enumerate(zip(cs, ln)):
-        if c["gifts"] and r["reliefs_net_income_pence"] + c["gifts"] > 10_000_000:
+        # PolicyEngine takes the gifts at Step 3, so its net income is the law's plus the
+        # gifts (findings #39). Left out only where that changes the personal allowance
+        # or the annual allowance; elsewhere the two readings give the same tax.
+        net = r["reliefs_net_income_pence"]
+        if c["gifts"] and (allowance(net) != allowance(net + c["gifts"])
+                           or annual(net, c["employer"]) != annual(net + c["gifts"], c["employer"])):
             skipped += 1
             continue
         mine = {"income_tax": r["reliefs_tax_exact_ten_thousandths_pence"] / 10_000,
@@ -123,7 +139,8 @@ def main() -> int:
     n = len(rows)
     print(f"Area 6 reliefs and the annual allowance charge: {n - bad}/{n} agree "
           f"({sum(r['scottish'] for r in rows)} Scottish, {sum(r['lean_personal_pension_contributions_tax'] > 0 for r in rows)} "
-          f"with a charge; {skipped} with gifts above £100,000 left out, findings #39)")
+          f"with a charge, {sum(r['gifts'] > 0 for r in rows)} with gifts; {skipped} where the gifts change the "
+          "personal or annual allowance left out, findings #39)")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))

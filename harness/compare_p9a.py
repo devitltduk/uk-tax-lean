@@ -5,10 +5,12 @@ Student loans: one borrower on one plan (PolicyEngine's `student_loan_plan`
 holds one), with pay, pension income, savings interest and dividends, at random
 and 1p either side of each threshold; no balance (PolicyEngine caps repayments
 at a balance it is given). Must agree within --steps float32 steps of the income.
-Not like with like (findings #40): PolicyEngine counts unearned income of £2,000
-or less, which SI 2009/470 reg 29(4)(c) leaves out. Those borrowers are counted,
-with the largest difference, not compared. Two or more plans at once (reg
-29(3A), (5A)) PolicyEngine cannot hold; the golden cases check them.
+PolicyEngine counts unearned income of £2,000 or less, which SI 2009/470 reg
+29(4)(c) leaves out (findings #40): for those borrowers PolicyEngine must exceed the
+model by exactly the known difference, the rate (9 %, 6 % for a Postgraduate loan)
+on the part of the unearned income that takes the total over the threshold, within
+the same tolerance. Two or more plans at once (reg 29(3A), (5A)) PolicyEngine cannot
+hold; the golden cases check them.
 
 Winter Fuel Payment: households in England and Wales of one or two pensioners
 (a couple or two single people) with, sometimes, another pensioner living with
@@ -128,19 +130,25 @@ def main() -> int:
     for c, r, v in zip(sl, ln, pe):
         mine = r["student_loan_repayment_ten_thousandths_pence"] / 10_000
         diff = v * 100 - mine
-        if 0 < c["savings"] + c["dividends"] <= 200_000:
+        earned, unearned = c["pay"] + c["pension"], c["savings"] + c["dividends"]
+        known = 0.0
+        if 0 < unearned <= 200_000:
+            # PolicyEngine counts it (findings #40): the rate on what it adds above the threshold.
+            t, pct = PLANS[c["plan"]], 6 if c["plan"] == "postgraduate" else 9
+            known = pct * (max(earned + unearned - t, 0) - max(earned - t, 0)) / 100
             small += 1
-            small_max = max(small_max, diff)
-            continue
-        tol = args.steps * step(c["pay"] + c["pension"] + c["savings"] + c["dividends"]) * 0.15 + 0.01
-        ok = abs(diff) <= tol
+            small_max = max(small_max, known)
+        tol = args.steps * step(earned + unearned) * 0.15 + 0.01
+        ok = abs(diff - known) <= tol
         bad += not ok
-        rows.append({"kind": "student_loan", **c, "lean": round(mine, 4), "pe": round(v * 100, 4), "ok": ok})
+        rows.append({"kind": "student_loan", **c, "lean": round(mine, 4), "pe": round(v * 100, 4),
+                     "known_difference": round(known, 4), "ok": ok})
         if not ok and bad <= 12:
-            print(f"  {c}: lean {mine / 100:,.4f} pe {v:,.4f}")
+            print(f"  {c}: lean {mine / 100:,.4f} pe {v:,.4f} (known difference {known / 100:,.4f})")
     n_sl = len(rows)
-    print(f"Student loan repayments: {n_sl - bad}/{n_sl} agree ({sum(r['lean'] > 0 for r in rows)} repaying); "
-          f"{small} with unearned income of £2,000 or less left out (findings #40; PolicyEngine up to £{small_max / 100:,.2f} more)")
+    print(f"Student loan repayments: {n_sl - bad}/{n_sl} agree ({sum(r['lean'] > 0 for r in rows)} repaying), "
+          f"{small} with unearned income of £2,000 or less where PolicyEngine is higher by exactly the rate on it above "
+          f"the threshold (findings #40; up to £{small_max / 100:,.2f})")
 
     # Winter Fuel Payment and the charge
     hs = wfp_households(rng, args.random)
