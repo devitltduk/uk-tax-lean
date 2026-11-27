@@ -4087,5 +4087,110 @@
     "source": "Communications Act 2003 ss 365(1A), 365A; the BBC's over-75 concession",
     "working": "nothing to pay",
     "tv_licence_pence": 0
+  },
+  {
+    "name": "ISAs: £25,000 subscribed, £5,000 to a Lifetime ISA at 49",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "isa": {
+        "age": 49,
+        "subscriptions_pence": 2500000,
+        "lifetime_isa_payments_pence": 500000
+      }
+    },
+    "source": "SI 1998/1870 regs 4ZA, 10A, Schedule para 1",
+    "working": "£5,000 over the £20,000 limit; bonus 25 % of the £4,000 payment limit = £1,000 (400,000 quarter pence)",
+    "isa_subscriptions_above_limit_pence": 500000,
+    "lifetime_isa_bonus_quarter_pence": 400000
+  },
+  {
+    "name": "Lifetime ISA at 50: no bonus",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "isa": {
+        "age": 50,
+        "lifetime_isa_payments_pence": 400000
+      }
+    },
+    "source": "SI 1998/1870 regs 4ZA, 10A, Schedule para 1",
+    "working": "reg 10A(2)(b): a current year payment only under 50: nothing",
+    "lifetime_isa_bonus_quarter_pence": 0
+  },
+  {
+    "name": "Minimum wage at 20",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "minimum_wage": {
+        "age": 20
+      }
+    },
+    "source": "SI 2015/621 regs 4, 4A (SI 2026/357)",
+    "working": "reg 4A(1)(b): £10.85",
+    "minimum_wage_pence": 1085
+  },
+  {
+    "name": "National Living Wage at 21",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "minimum_wage": {
+        "age": 21
+      }
+    },
+    "source": "SI 2015/621 regs 4, 4A (SI 2026/357)",
+    "working": "reg 4: £12.71",
+    "minimum_wage_pence": 1271
+  },
+  {
+    "name": "Minimum wage, apprentice of 25",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "minimum_wage": {
+        "age": 25,
+        "apprentice": true
+      }
+    },
+    "source": "SI 2015/621 regs 4, 4A (SI 2026/357)",
+    "working": "reg 4A(1)(d), reg 5(1): £8.00",
+    "minimum_wage_pence": 800
+  },
+  {
+    "name": "Warm Home Discount, Wales, on Universal Credit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "wales",
+      "warm_home_discount": {
+        "qualifying_benefit": true
+      }
+    },
+    "source": "SI 2026/389 reg 2; WHD eligibility statement 2026-27",
+    "working": "£150",
+    "warm_home_discount_pence": 15000
+  },
+  {
+    "name": "Warm Home Discount, Scotland",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "country": "scotland",
+      "warm_home_discount": {
+        "qualifying_benefit": true
+      }
+    },
+    "source": "SI 2026/389 reg 2; WHD eligibility statement 2026-27; Scotland has its own scheme",
+    "working": "the England and Wales scheme does not apply: nil",
+    "warm_home_discount_pence": 0
   }
 ]

@@ -941,6 +941,31 @@ def taxYearDays : Nat := 365
 2004, SI 2004/692, Sch 1 Part 1 para 2); half for a blind licence holder (reg 5). -/
 def tvLicenceFee : Nat := 18_000
 
+/-! ## ISAs, the minimum wage and the Warm Home Discount, 2026-27 (P9e)
+
+Checked 2026-11-27. -/
+
+/-- ISA subscription limit £20,000 and Lifetime ISA payment limit £4,000 a year
+(SI 1998/1870 reg 4ZA(1), (1A)); the government bonus is 25 % of qualifying
+additions (Schedule para 1, "government bonus"), for a holder of 18 to 49 (reg
+10A(2)(a), (b)). -/
+def isaLimit : Nat := 2_000_000
+def lisaLimit : Nat := 400_000
+
+/-- Hourly rates, pence (National Minimum Wage Regulations 2015, SI 2015/621, regs
+4, 4A(1), as amended by SI 2026/357 reg 2): 21 or over £12.71 (the National Living
+Wage), 18 to 20 £10.85, under 18 £8.00, apprentices (reg 5(1)(a), (b)) £8.00. -/
+def nlwRate : Nat := 1_271
+def nmw18Rate : Nat := 1_085
+def nmw16Rate : Nat := 800
+def nmwApprenticeRate : Nat := 800
+
+/-- The Warm Home Discount rebate, £150 (Warm Home Discount (England and Wales)
+Regulations 2026, SI 2026/389 reg 2, "prescribed rebate"); the qualifying benefits
+are set by the 2026-27 eligibility statement (reg 10): Pension Credit,
+income-related ESA, Housing Benefit, Universal Credit. -/
+def whdRebate : Nat := 15_000
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

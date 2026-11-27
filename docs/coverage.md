@@ -36,7 +36,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
 | P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
 | P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a; SDLT **done**, P8b; LBTT, LTT, leases and non-residents **done**, P8c; reliefs **done**, area 6) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
-| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits; P9c **done**: the targeted 2-year-old hours, the other childcare schemes scoped; P9d **done**: company cars, car fuel and the TV licence, consumption duties scoped) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
+| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits; P9c **done**: the targeted 2-year-old hours, the other childcare schemes scoped; P9d **done**: company cars, car fuel and the TV licence, consumption duties scoped; P9e **done**: ISAs, the minimum wage, the Warm Home Discount) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
 ## Taxes on income
 
@@ -158,15 +158,15 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Gambling duties | `gambling_duty` | Betting and Gaming Duties Act 1981; Finance Act 1997; Finance Act 2014 | out of scope: duty bases attributed to households by proxy |
 | TV licence | `tv_licence` | Communications Act 2003 ss 363, 365, 365A; SI 2004/692 Sch 1, reg 5 | **done** (P9d: £180, half for a blind holder, nil under the BBC's s365A concession for a holder of 75 or over with Pension Credit; the residential care concession not modelled) |
 | Student loan repayments | `student_loan_repayment` | SI 2009/470 reg 29, Sch 1A | **done** (P9a: plans 1, 2, 4, 5 and Postgraduate, more than one at once, the £2,000 unearned income rule; the balance cap and PAYE periods not modelled; findings #40) |
-| ISA subscription limits, Lifetime ISA bonus and charge | `isa_subscriptions_above_limit`, `lifetime_isa_bonus` | SI 1998/1870 | planned (P9) |
-| National Minimum Wage | `minimum_wage` | National Minimum Wage Act 1998; SI 2015/621 | planned (P9; already used for the childcare test) |
+| ISA subscription limits, Lifetime ISA bonus and charge | `isa_subscriptions_above_limit`, `lifetime_isa_bonus` | SI 1998/1870 regs 4ZA, 10A, Schedule para 1 | **done** (P9e: subscriptions over £20,000, the 25 % bonus on up to £4,000 from 18 to 49; the age-40 limit for the first payment and the withdrawal charge not modelled) |
+| National Minimum Wage | `minimum_wage` | National Minimum Wage Act 1998; SI 2015/621 regs 4, 4A, 5 (SI 2026/357) | **done** (P9e: the rates by age and for apprentices; already used for the childcare test) |
 
 ## Energy and one-off support
 
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
-| Household Energy Payment (England, from January 2027) | `household_energy_payment` | Budget 2026 (administrative scheme) | planned (P9) |
-| Warm Home Discount | `warm_home_discount` | SI 2022/772 (England and Wales; PolicyEngine does not model the Scottish scheme, SI 2022/1073) | planned (P9) |
+| Household Energy Payment (England, from January 2027) | `household_energy_payment` | Budget 2026 (administrative scheme) | out of scope: an administrative scheme announced at Budget 2026, with no legislation for its amounts or eligibility |
+| Warm Home Discount | `warm_home_discount` | SI 2026/389 reg 2 and the 2026-27 eligibility statement (reg 10); PolicyEngine does not model the Scottish scheme | **done** (P9e: £150 for a household on Pension Credit, income-related ESA, Housing Benefit or UC with the bill in the recipient's name; Scotland's scheme not modelled on either side) |
 | Cost of Living Payments, Energy Bills Rebate, Energy Price Guarantee | `cost_of_living_support_payment`, `energy_bills_rebate`, `price_cap_subsidy` | — | out of scope: ended before 2026-27 |
 
 ## Out of scope as a class

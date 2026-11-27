@@ -22,6 +22,7 @@ import UkTax.StudentLoans
 import UkTax.Devolved
 import UkTax.Targeted
 import UkTax.CompanyCar
+import UkTax.Misc
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -488,3 +489,15 @@ today, so any change to it is seen.
 /-- info: 'UkTax.car_50g_step' does not depend on any axioms -/
 #guard_msgs in
 #print axioms UkTax.car_50g_step
+
+/-- info: 'UkTax.lisaBonus_le' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.lisaBonus_le
+
+/-- info: 'UkTax.lisa_age_cliff' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.lisa_age_cliff
+
+/-- info: 'UkTax.minimumWage_mono' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.minimumWage_mono
