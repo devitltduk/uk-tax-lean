@@ -63,7 +63,8 @@ used. Retrieved 2026-11-27.
 2. **Incomes.** A working adult draws an income range from HMRC's 2026-27 projection (Table 2.5),
    or an income below the personal allowance; within the range, from a curve with the range's
    published mean income. The income is split into pay or self-employment, property, interest
-   and dividends by that range's shares (HMRC Tables 3.6 and 3.7, 2023-24). People over 66 get a
+   and dividends by that range's shares (HMRC Tables 3.6 and 3.7, 2023-24); workers aged 55 to 65
+   may also draw a private pension. People over 66 get a
    State Pension near the full new rate and the rest from their own range draw. Employees paid
    £10,000 or more pay the automatic-enrolment minimum (5 % of qualifying earnings) by net pay.
    The ranges above £100,000 are drawn more often and weighted down, so each has enough units.
