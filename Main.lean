@@ -129,6 +129,9 @@ Optional fields:
   and qualifying for Business Asset Disposal Relief (within the lifetime limit);
   output `cgt_exact_ten_thousandths_pence` (`UkTax/Cgt.lean`), banded against this
   taxpayer's income. Not for Scottish taxpayers yet;
+* `sdlt`: `{"kind": "residential" | "first_time_buyer" | "additional_dwelling" |
+  "non_residential", "consideration_pence": n}`, Stamp Duty Land Tax in England or
+  Northern Ireland (`UkTax/Sdlt.lean`; output `sdlt_exact_ten_thousandths_pence`);
 * `council_tax`: `{"band": "A" .. "H" (or "I" in Wales), "band_d_pence": n,
   "single_person_discount": false}` (by `country`; output `council_tax_1440ths_pence`
   for the year, `UkTax/CouncilTax.lean`);
@@ -198,6 +201,7 @@ structure Case where
   ct : Option Nat := none
   nation : Nation := .england
   cgt : Option (Nat × Nat) := none
+  sdlt : Option (SdltKind × Nat) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -462,6 +466,18 @@ def parseCase (j : Json) : Except String Case := do
       if scottish then
         throw "capital_gains_pence: Capital Gains Tax for a Scottish taxpayer is not modelled yet"
       pure (some (← optField "badr_gains_pence", ← optField "capital_gains_pence"))
+  let sdlt ← match obj "sdlt" with
+    | some o => do
+      if scottish || !england && (j.getObjValAs? String "country").toOption == some "wales" then
+        throw "sdlt: Scotland has LBTT and Wales LTT, not modelled yet"
+      let kind ← match o.getObjValAs? String "kind" with
+        | .ok "residential" => pure SdltKind.residential
+        | .ok "first_time_buyer" => pure .firstTime
+        | .ok "additional_dwelling" => pure .additional
+        | .ok "non_residential" => pure .nonResidential
+        | _ => throw "sdlt.kind must be residential, first_time_buyer, additional_dwelling or non_residential"
+      pure (some (kind, ← sub o "consideration_pence"))
+    | none => pure none
   let ct ← match obj "council_tax" with
     | some o => do
       let band ← match o.getObjValAs? String "band" with
@@ -485,7 +501,7 @@ def parseCase (j : Json) : Except String Case := do
     class1A := c1, class2Weeks := c2,
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
-    ctr := ctr, ct := ct, nation := nation, cgt := cgtIn }
+    ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt }
   return res
 
 def result (c : Case) : Json :=
@@ -576,6 +592,9 @@ def result (c : Case) : Json :=
       | _, _ => [])
     ++ (match c.cgt with
       | some (b, o) => [("cgt_exact_ten_thousandths_pence", toJson (cgtExact (i.cgtBand rg) b o))]
+      | none => [])
+    ++ (match c.sdlt with
+      | some (k, p) => [("sdlt_exact_ten_thousandths_pence", toJson (sdltExact k p))]
       | none => [])
     ++ (match c.ct with
       | some v => [("council_tax_1440ths_pence", toJson v)]

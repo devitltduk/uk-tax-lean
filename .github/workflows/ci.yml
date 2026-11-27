@@ -82,6 +82,9 @@ jobs:
       - name: Compare Capital Gains Tax
         working-directory: harness
         run: uv run --frozen python compare_cgt.py --binary ../bin/uktax --random 1000
+      - name: Compare Stamp Duty Land Tax
+        working-directory: harness
+        run: uv run --frozen python compare_sdlt.py --binary ../bin/uktax --random 1000
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -98,3 +101,4 @@ jobs:
             harness/out/compare_housing.csv
             harness/out/compare_council_tax.csv
             harness/out/compare_cgt.csv
+            harness/out/compare_sdlt.csv

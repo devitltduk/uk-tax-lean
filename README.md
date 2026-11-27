@@ -317,6 +317,18 @@ contributions, less Step 3 income. Carried interest is charged to income tax fro
 April 2026 (Finance Act 2026 s58) and is not modelled; nor are investors' relief and
 Scottish taxpayers.
 
+### Stamp Duty Land Tax (`UkTax/Sdlt.lean`)
+
+England and Northern Ireland, by slices of the consideration
+([FA 2003 s55(1B)](https://www.legislation.gov.uk/ukpga/2003/14/section/55)):
+residential 0 / 2 / 5 / 10 / 12 % at £125,000, £250,000, £925,000 and £1.5m;
+first-time buyers 0 % to £300,000 and 5 % to £500,000, not above £500,000
+([Sch 6ZA](https://www.legislation.gov.uk/ukpga/2003/14/schedule/6ZA)); additional
+dwellings 5 / 7 / 10 / 15 / 17 % from £40,000
+([Sch 4ZA](https://www.legislation.gov.uk/ukpga/2003/14/schedule/4ZA), FA 2025 s51);
+non-residential 0 / 2 / 5 % at £150,000 and £250,000. Input `sdlt`. The
+non-resident surcharge, leases and other reliefs are not modelled.
+
 ### Tax-Free Childcare and the funded hours (England)
 
 A parent is eligible when they, and their partner if they have one, each expect
@@ -496,6 +508,10 @@ relief-at-source contributions.
 - `cgt_succ_other`, `cgt_succ_badr`, `cgt_band`, `cgt_exempt` (`UkTax/Cgt.lean`):
   more gains never lower Capital Gains Tax and each penny adds at most 24p; each
   penny less of unused band adds at most 6p; gains up to £3,000 are tax-free.
+- `sdlt_succ`, `ftb_cliff`, `higher_cliff` (`UkTax/Sdlt.lean`): a penny more
+  consideration never lowers SDLT except at two cliffs: first-time buyers' relief
+  ends at £500,000 (£10,000 of tax, then £15,000.0005), and the higher rates start
+  at £40,000 (nil, then £2,000).
 - `fundedHours_over_limit`, `fundedHours_drop_at_limit`: over £100,000 the funded
   hours are worth exactly the universal hours, and for a parent eligible at
   £100,000 the penny over loses exactly the working-parent hours, never the
@@ -545,7 +561,7 @@ $ echo '{"non_savings_pence": 2957000, "savings_pence": 0, "dividends_pence": 30
 
 ### Golden cases
 
-`tests/golden.json` holds 157 cases with the expected figures worked out by hand
+`tests/golden.json` holds 164 cases with the expected figures worked out by hand
 and the working shown. Each case states which outputs it checks (income tax,
 NICs, HICBC). Two are GOV.UK's own 2026-27 worked examples (tax on
 dividends; the savings allowance). The others are aimed at edges: the taper and its
@@ -578,7 +594,7 @@ and the LHA cap. For council tax: a band in each nation (Wales's band I), the
 single person discount, and the pensioner reduction's taper over 365 days, a
 non-dependant band, Wales's £256 allowance and a Scottish non-dependant. For CGT:
 gains within and across the band, BADR taking the band first, the exempt amount,
-and Gift Aid extending the band.
+and Gift Aid extending the band. For SDLT: each kind, both cliffs and the top band.
 
 ### Where earning more lowers net income
 
@@ -808,6 +824,13 @@ savings, dividends, Gift Aid, gains and BADR gains, with edge cases at the exemp
 amount and the basic rate limit. Latest local run: 1,009 of 1,009 agree within 2
 float32 steps (worst 0.37).
 
+### Stamp Duty Land Tax against PolicyEngine
+
+`uv run python compare_sdlt.py` compares purchases of each kind at random prices
+and 1p either side of every limit. Latest local run: 1,108 of 1,108 agree; at
+£500,000.01 PolicyEngine's float32 price rounds to £500,000 and keeps the
+first-time buyers' relief (findings #31).
+
 ### Funded hours against PolicyEngine
 
 `uv run python compare_childcare.py` compares the funded hours' yearly value for a
@@ -834,5 +857,5 @@ GitHub Actions (`.github/workflows/ci.yml`) builds with `--wfail`, checks the
 proofs and the axiom guard, runs the golden cases, regenerates the cliff map and its charts
 (failing if `docs/` no longer matches the model), then runs the PolicyEngine
 comparisons (income tax, NICs and HICBC; Universal Credit; funded hours, UC in full, NICs,
-non-means-tested benefits, Pension Credit, Housing Benefit, council tax and CGT,
-with 1,000 random cases each; reliefs and allowances).
+non-means-tested benefits, Pension Credit, Housing Benefit, council tax, CGT and
+SDLT, with 1,000 random cases each; reliefs and allowances).
