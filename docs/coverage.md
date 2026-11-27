@@ -36,7 +36,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
 | P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
 | P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a; SDLT **done**, P8b; LBTT, LTT, leases and non-residents **done**, P8c; reliefs **done**, area 6) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
-| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
+| P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
 ## Taxes on income
 
@@ -119,10 +119,10 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
-| Scottish Child Payment | `scottish_child_payment` | SSI 2020/351 | planned (P9) |
-| Carer Support Payment, Scottish Carer's Allowance Supplement | `carer_support_payment`, `scottish_carer_supplement` | Social Security (Scotland) Act 2018 s81 (supplement); SSI 2023/302 | planned (P9) |
-| Pension Age Winter Heating Payment | `pension_age_winter_heating_payment` | Social Security (Scotland) Act 2018 s30; SSI 2024/351 | planned (P9) |
-| Scottish two-child limit payment | `two_child_limit_payment` | Scottish Government scheme | planned (P9): check whether anything is payable in 2026-27, since the UC two-child limit it makes up for was removed from 6 April 2026 (Universal Credit (Removal of Two Child Limit) Act 2026) |
+| Scottish Child Payment | `scottish_child_payment` | SSI 2020/351 regs 14, 18, 20 (SSI 2026/170) | **done** (P9b: £28.20 a week for each child under 16, gated on the UC worked out by the model or another qualifying benefit; the scp_cliff when UC ends) |
+| Carer Support Payment, Scottish Carer Supplement, Carer Additional Person Payment | `carer_support_payment`, `scottish_carer_supplement` | SSI 2023/302 regs 14, 14A, 14B, 16, Sch 2 (SSI 2026/170) | **done** (P9b: £86.45 a week less overlapping benefits, the £204 earnings limit on Carer's Allowance's net earnings, the weekly £11.70 supplement while payable; the £10.40 Carer Additional Person Payment, which PolicyEngine does not model; findings #41) |
+| Pension Age Winter Heating Payment | `pension_age_winter_heating_payment` | SSI 2024/351 regs 2A, 9, 10 (SSI 2026/170) | **done** (P9b: the Winter Fuel Payment's rule with Scotland's amounts, charged by s681I) |
+| Scottish two-child limit payment | `two_child_limit_payment` | Scottish Government scheme (draft regulations not laid) | out of scope: nothing payable in 2026-27; the UC two-child limit it was to make up for was removed from 6 April 2026 (Universal Credit (Removal of Two Child Limit) Act 2026), and PolicyEngine pays nil outside a reform |
 | Adult and Child Disability Payment (Scotland) | modelled through `pip`, `dla` | SSI 2022/54; SSI 2021/174 | **done** as PIP and DLA (P5a; the same weekly rates) |
 
 ## Local taxes and support

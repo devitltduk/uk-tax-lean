@@ -132,6 +132,9 @@ jobs:
       - name: Compare student loans and the Winter Fuel Payment
         working-directory: harness
         run: uv run --frozen python compare_p9a.py --binary ../bin/uktax --random 1000
+      - name: Compare Scotland's devolved benefits
+        working-directory: harness
+        run: uv run --frozen python compare_p9b.py --binary ../bin/uktax --random 1000
       - name: Compare council tax and Council Tax Reduction
         working-directory: harness
         run: uv run --frozen python compare_council_tax.py --binary ../bin/uktax --random 1000
@@ -164,5 +167,6 @@ jobs:
             harness/out/compare_land.csv
             harness/out/compare_area6.csv
             harness/out/compare_p9a.csv
+            harness/out/compare_p9b.csv
             harness/out/compare_cgt.csv
             harness/out/compare_sdlt.csv
