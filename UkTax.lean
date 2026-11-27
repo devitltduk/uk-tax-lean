@@ -21,4 +21,5 @@ import UkTax.CtrEnglandLocal
 import UkTax.LandTax
 import UkTax.Reliefs
 import UkTax.StudentLoans
+import UkTax.Devolved
 import UkTax.Axioms

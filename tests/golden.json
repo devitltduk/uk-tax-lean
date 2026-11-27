@@ -3663,5 +3663,192 @@
     "working": "reg 3(2)(b)(ii): £100",
     "winter_fuel_payment_pence": 10000,
     "winter_fuel_payment_charge_pence": 0
+  },
+  {
+    "name": "Scottish Child Payment, two children, on Universal Credit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "scottish_child_payment": {
+        "children_under_16": 2
+      },
+      "uc": {
+        "children": 2
+      }
+    },
+    "source": "SSI 2020/351 regs 14, 18, 20 (SSI 2026/170 reg 8)",
+    "working": "no earnings, so a Universal Credit award; 2 × £28.20 × 52 weeks = £2,932.80",
+    "scottish_child_payment_pence": 293280
+  },
+  {
+    "name": "Scottish Child Payment, one child, on Pension Credit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "scottish_child_payment": {
+        "children_under_16": 1,
+        "other_qualifying_benefit": true
+      }
+    },
+    "source": "SSI 2020/351 regs 14, 18, 20 (SSI 2026/170 reg 8)",
+    "working": "Pension Credit is a qualifying benefit (reg 14(e)): £28.20 × 52 = £1,466.40",
+    "scottish_child_payment_pence": 146640
+  },
+  {
+    "name": "Scottish Child Payment, no qualifying benefit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "scottish_child_payment": {
+        "children_under_16": 3
+      }
+    },
+    "source": "SSI 2020/351 regs 14, 18, 20 (SSI 2026/170 reg 8)",
+    "working": "no award of a reg 14 benefit (reg 18(f)): nothing",
+    "scottish_child_payment_pence": 0
+  },
+  {
+    "name": "Carer Support Payment with the supplement and one additional cared for person",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "carer_support_payment": {
+        "additional_cared_for": 1
+      }
+    },
+    "source": "SSI 2023/302 regs 14, 14A, 14B, 16, Sch 2 para 9 (SSI 2026/170 reg 12)",
+    "working": "no earnings: £86.45 × 52 = £4,495.40; Scottish Carer Supplement £11.70 × 52 = £608.40; Carer Additional Person Payment £10.40 × 52 = £540.80",
+    "carer_support_payment_pence": 449540,
+    "scottish_carer_supplement_pence": 60840,
+    "carer_additional_person_payment_pence": 54080
+  },
+  {
+    "name": "Carer Support Payment less £50 a week of overlapping benefit",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "carer_support_payment": {
+        "overlapping_weekly_pence": 5000
+      }
+    },
+    "source": "SSI 2023/302 regs 14, 14A, 14B, 16, Sch 2 para 9 (SSI 2026/170 reg 12)",
+    "working": "reg 16(2): (£86.45 - £50.00) × 52 = £1,895.40; still payable, so the supplement £608.40",
+    "carer_support_payment_pence": 189540,
+    "scottish_carer_supplement_pence": 60840
+  },
+  {
+    "name": "Carer Support Payment, earnings of exactly £204 a week",
+    "input": {
+      "non_savings_pence": 1060800,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1060800,
+      "country": "scotland",
+      "carer_support_payment": {}
+    },
+    "source": "SSI 2023/302 regs 14, 14A, 14B, 16, Sch 2 para 9 (SSI 2026/170 reg 12)",
+    "working": "pay £10,608 a year, below the personal allowance and the primary threshold, so net earnings £204.00 a week, not above £204: £4,495.40 and £608.40",
+    "carer_support_payment_pence": 449540,
+    "scottish_carer_supplement_pence": 60840
+  },
+  {
+    "name": "Carer Support Payment, earnings of £204.01 a week",
+    "input": {
+      "non_savings_pence": 1060852,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 1060852,
+      "country": "scotland",
+      "carer_support_payment": {
+        "additional_cared_for": 1
+      }
+    },
+    "source": "SSI 2023/302 regs 14, 14A, 14B, 16, Sch 2 para 9 (SSI 2026/170 reg 12)",
+    "working": "pay £10,608.52 a year, £204.01 a week, exceeds £204 (reg 14(1)): no payment, and so no supplement or additional person payment (regs 14A, 14B)",
+    "carer_support_payment_pence": 0,
+    "scottish_carer_supplement_pence": 0,
+    "carer_additional_person_payment_pence": 0
+  },
+  {
+    "name": "Pension Age Winter Heating Payment, under 80, alone",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "winter_fuel_payment": {}
+    },
+    "source": "SSI 2024/351 regs 9, 10 (SSI 2026/170 reg 15); ITEPA 2003 s681I",
+    "working": "reg 10(5)(a): £211.15; total income nil, no charge",
+    "pension_age_winter_heating_payment_pence": 21115,
+    "winter_fuel_payment_charge_pence": 0
+  },
+  {
+    "name": "Pension Age Winter Heating Payment, under 80 on Pension Credit with a partner of 81",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 4000000,
+      "country": "scotland",
+      "winter_fuel_payment": {
+        "relevant_benefit": true,
+        "partner_over_80": true
+      }
+    },
+    "source": "SSI 2024/351 regs 9, 10 (SSI 2026/170 reg 15); ITEPA 2003 s681I",
+    "working": "reg 10(4)(a)(ii): £316.70; entitled to a relevant benefit, so no charge (s681I(4))",
+    "pension_age_winter_heating_payment_pence": 31670,
+    "winter_fuel_payment_charge_pence": 0
+  },
+  {
+    "name": "Pension Age Winter Heating Payment, 80, living with an entitled person under 80, income £40,000",
+    "input": {
+      "non_savings_pence": 4000000,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 4000000,
+      "country": "scotland",
+      "winter_fuel_payment": {
+        "over_80": true,
+        "with_entitled_under_80": true
+      }
+    },
+    "source": "SSI 2024/351 regs 9, 10 (SSI 2026/170 reg 15); ITEPA 2003 s681I",
+    "working": "reg 10(6)(b): £211.15; total income over £35,000: charged £211.15 (s681I(6)(a) includes this payment)",
+    "pension_age_winter_heating_payment_pence": 21115,
+    "winter_fuel_payment_charge_pence": 21115
+  },
+  {
+    "name": "Pension Age Winter Heating Payment, under 80, sharing",
+    "input": {
+      "non_savings_pence": 0,
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "employment_pence": 0,
+      "country": "scotland",
+      "winter_fuel_payment": {
+        "with_entitled_80": true
+      }
+    },
+    "source": "SSI 2024/351 regs 9, 10 (SSI 2026/170 reg 15); ITEPA 2003 s681I",
+    "working": "reg 10(5)(b)(i): £105.55",
+    "pension_age_winter_heating_payment_pence": 10555
   }
 ]

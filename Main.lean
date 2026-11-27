@@ -303,6 +303,12 @@ structure Case where
   studentLoan : Option Loans := none
   /-- The Winter Fuel Payment case (P9a). -/
   wfp : Option WfpCase := none
+  /-- Scottish Child Payment: children under 16, and a qualifying benefit other
+  than the Universal Credit worked out here (P9b). -/
+  scp : Option (Nat × Bool) := none
+  /-- Carer Support Payment: weekly overlapping benefits and additional cared for
+  people (P9b). -/
+  csp : Option (Nat × Nat) := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -702,14 +708,26 @@ def parseCase (j : Json) : Except String Case := do
     | none => pure none
   let wfp ← match obj "winter_fuel_payment" with
     | some o => do
-      if scottish then
-        throw "winter_fuel_payment: Scotland pays the Pension Age Winter Heating Payment instead"
       let w : WfpCase := { over80 := subB o "over_80", relevantBenefit := subB o "relevant_benefit",
                            partnerOver80 := subB o "partner_over_80",
                            withEntitledUnder80 := subB o "with_entitled_under_80",
                            withEntitled80 := subB o "with_entitled_80", residentialCare := subB o "residential_care",
                            partnerPaidBenefit := subB o "partner_paid_benefit" }
       pure (some w)
+    | none => pure none
+  let scp ← match obj "scottish_child_payment" with
+    | some o => do
+      if !scottish then throw "scottish_child_payment: Scotland only (country \"scotland\")"
+      pure (some (← sub o "children_under_16", subB o "other_qualifying_benefit"))
+    | none => pure none
+  let csp ← match obj "carer_support_payment" with
+    | some o => do
+      if !scottish then throw "carer_support_payment: Scotland only (country \"scotland\")"
+      if income.savings + income.dividends > 0 || employment - netPay ≠ income.nonSavings then
+        throw "carer_support_payment: only pay is modelled (employment_pence must equal non_savings_pence, with no savings or dividends)"
+      if relief > 0 || tr + te + pr + pe + rr + re > 0 then
+        throw "carer_support_payment: not modelled with Gift Aid, relief at source, or trading and property income"
+      pure (some (← sub o "overlapping_weekly_pence", ← sub o "additional_cared_for"))
     | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
@@ -761,7 +779,7 @@ def parseCase (j : Json) : Except String Case := do
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
     ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
-    studentLoan := studentLoan, wfp := wfp }
+    studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp }
   return res
 
 def result (c : Case) : Json :=
@@ -968,8 +986,25 @@ def result (c : Case) : Json :=
     ++ (match c.wfp with
       | some w =>
         let total := i.nonSavings + i.savings + i.dividends
-        [("winter_fuel_payment_pence", toJson (wfpAmount w)),
-         ("winter_fuel_payment_charge_pence", toJson (wfpCharge total (wfpAmount w) w.relevantBenefit))]
+        -- Scotland pays the Pension Age Winter Heating Payment (SSI 2024/351);
+        -- s681I(6)(a) charges either
+        let pay := if rg.scottish then pawhpAmount w else wfpAmount w
+        [(if rg.scottish then "pension_age_winter_heating_payment_pence" else "winter_fuel_payment_pence", toJson pay),
+         ("winter_fuel_payment_charge_pence", toJson (wfpCharge total pay w.relevantBenefit))]
+      | none => [])
+    ++ (match c.scp with
+      | some (n, other) =>
+        let onUc := c.claims.uc && (0 : Int) < (match floor with
+          | some f => ucAwardFloor claims f ucEarned
+          | none => ucAward claims ucEarned)
+        [("scottish_child_payment_pence", toJson (scpYear n (other || onUc)))]
+      | none => [])
+    ++ (match c.csp with
+      | some (ov, n) =>
+        let e := caEarnings c.period rg c.employment
+        [("carer_support_payment_pence", toJson (cspYear ov e)),
+         ("scottish_carer_supplement_pence", toJson (cspExtras ov e 0)),
+         ("carer_additional_person_payment_pence", toJson (cspExtras ov e n - cspExtras ov e 0))]
       | none => [])
     ++ (match c.land with
       | some (tax, kind, p, nr, rents, resi) =>

@@ -877,6 +877,34 @@ def wfpHigherSharedWith80 : Nat := 15_000
 Sch 10): total income for the tax year exceeding £35,000. -/
 def wfpChargeThreshold : Nat := 3_500_000
 
+/-! ## Scottish devolved benefits, 2026-27 (P9b)
+
+Checked 2026-11-27 against the regulations as amended by the Social Security
+(Up-rating) (Miscellaneous Amendments) (Scotland) Regulations 2026 (SSI 2026/170)
+<https://www.legislation.gov.uk/ssi/2026/170/made>. -/
+
+/-- Scottish Child Payment, £28.20 a week per child (SSI 2020/351 reg 20(1); SSI
+2026/170 reg 8). -/
+def scpWeekly : Nat := 2_820
+
+/-- Scottish Carer Supplement £11.70 and Carer Additional Person Payment £10.40 a
+week (SSI 2023/302 reg 16(1A), (1B); SSI 2026/170 reg 12(3)). Carer Support
+Payment itself is £86.45 (reg 16(1)) with a £204 earnings limit (reg 14(1)), the
+Carer's Allowance figures `caRate` and `caEarningsLimit`. -/
+def cspSupplement : Nat := 1_170
+def cspAdditional : Nat := 1_040
+
+/-- Pension Age Winter Heating Payment, pence (SSI 2024/351 reg 10(4)-(6); SSI
+2026/170 reg 15(3)): £316.70 and £211.15 on a relevant benefit; under 80 without
+one £211.15, or £105.55 sharing or in residential care; 80 or over without one
+£316.70, £211.15 living with an entitled person under 80, £158.35 with one 80 or
+over or in residential care. -/
+def pawhpLower : Nat := 21_115
+def pawhpLowerShared : Nat := 10_555
+def pawhpHigher : Nat := 31_670
+def pawhpHigherSharedWithUnder80 : Nat := 21_115
+def pawhpHigherSharedWith80 : Nat := 15_835
+
 /-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
 
 Finance Act 2003, for land transactions with an effective date in 2026-27. Bands

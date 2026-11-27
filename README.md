@@ -497,7 +497,24 @@ and Wales: `over_80`, `relevant_benefit`, `partner_over_80`,
 
 Not modelled: the outstanding balance as a cap, PAYE's pay-period deductions, the
 other reg 29(4) adjustments (losses, incapacity benefit, ESA, pension relief not
-already in total income), and Scotland's Pension Age Winter Heating Payment.
+already in total income). Scotland's Pension Age Winter Heating Payment is in
+`UkTax/Devolved.lean`.
+
+### Scotland's devolved benefits (`UkTax/Devolved.lean`)
+
+Inputs for a household in Scotland (`country` `"scotland"`):
+`scottish_child_payment` (`children_under_16`, `other_qualifying_benefit`; with
+`uc`, the model's own award decides), `carer_support_payment`
+(`overlapping_weekly_pence`, `additional_cared_for`; pay only), and
+`winter_fuel_payment`, which in Scotland gives the Pension Age Winter Heating
+Payment.
+
+| Programme | Rule | Source |
+|---|---|---|
+| Scottish Child Payment | £28.20 a week for each child under 16 while UC or another qualifying benefit is awarded | SSI 2020/351 regs 14, 18, 20 |
+| Carer Support Payment | £86.45 a week less overlapping benefits; none after a week with net earnings over £204 (net as for Carer's Allowance) | SSI 2023/302 regs 14, 16, Sch 2 |
+| Scottish Carer Supplement, Carer Additional Person Payment | £11.70 a week, and £10.40 for each additional person cared for, while Carer Support Payment is payable | SSI 2023/302 regs 14A, 14B, 16(1A), (1B) |
+| Pension Age Winter Heating Payment | the Winter Fuel Payment's rule with £316.70, £211.15, £158.35 and £105.55; charged like it | SSI 2024/351 regs 2A, 9, 10; ITEPA 2003 s681I |
 
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
@@ -759,6 +776,13 @@ relief-at-source contributions.
   more earned income adds 0 to 0.15p; the Winter Fuel Payment is at most £300; a
   penny of total income above £35,000 charges the whole payment, and a relevant
   benefit removes the charge at any income.
+- `wfpAmount_eq`, `scp_cliff`, `csp_cliff`, `pawhpAmount_le`
+  (`UkTax/Devolved.lean`): the Winter Fuel Payment and the Scottish payment are one
+  rule with two sets of amounts; when a family's Universal Credit ends, £1,466.40 a
+  year of Scottish Child Payment goes for each child; a penny a week of net earnings
+  above £204 takes away Carer Support Payment, the supplement and the additional
+  person payments together (£5,103.80 a year, and £540.80 for each additional
+  person); the heating payment is at most £316.70.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1161,6 +1185,16 @@ Latest local run: 730 of 730 repayments agree (617 repaying) and 2,068 of 2,068
 people's payment and charge agree (662 charged). PolicyEngine counts unearned
 income of £2,000 or less, which reg 29(4)(c) leaves out: 295 such borrowers are
 counted, not compared, up to £180 a year apart (findings #40).
+
+### Scotland's devolved benefits against PolicyEngine
+
+`uv run python compare_p9b.py` compares families in Scotland on Universal Credit
+(the Scottish Child Payment), carers with pay and pension contributions (Carer
+Support Payment and the supplement), and pensioner households (the Pension Age
+Winter Heating Payment and the charge). Latest local run: 1,000 of 1,000, 1,007 of
+1,007 and 2,042 of 2,042 agree; 7 families at the end of UC and 1 carer at the
+earnings limit are float32 precision. PolicyEngine has no Carer Additional Person
+Payment (findings #41).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

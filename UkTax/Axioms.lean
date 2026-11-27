@@ -19,6 +19,7 @@ import UkTax.CtrEnglandLocal
 import UkTax.LandTax
 import UkTax.Reliefs
 import UkTax.StudentLoans
+import UkTax.Devolved
 
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
@@ -425,3 +426,19 @@ today, so any change to it is seen.
 /-- info: 'UkTax.wfp_charge_benefit' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms UkTax.wfp_charge_benefit
+
+/-- info: 'UkTax.wfpAmount_eq' does not depend on any axioms -/
+#guard_msgs in
+#print axioms UkTax.wfpAmount_eq
+
+/-- info: 'UkTax.scp_cliff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.scp_cliff
+
+/-- info: 'UkTax.csp_cliff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.csp_cliff
+
+/-- info: 'UkTax.pawhpAmount_le' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.pawhpAmount_le
