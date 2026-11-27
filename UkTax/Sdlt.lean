@@ -16,9 +16,11 @@ leases, multiple dwellings and the other reliefs.
   from £40,000 of consideration;
 * non-residential or mixed property: Table B.
 
-Proved: `sdlt_succ` (a penny more consideration never lowers the tax), and the two
-cliffs: first-time buyers' relief ends at £500,000 (`ftb_cliff`, £5,000 more tax
-for a penny more), and the higher rates start at £40,000 (`higher_cliff`, £2,000).
+Proved: `sdlt_succ` (a penny more consideration never lowers the tax; it leaves
+out only the first-time buyer's penny from £500,000), and the two cliffs, both
+jumps up: first-time buyers' relief ends at £500,000 (`ftb_cliff`, £5,000 more tax
+for a penny more), and the higher rates start at £40,000 (`higher_cliff`, £2,000,
+which `sdlt_succ` covers).
 -/
 
 namespace UkTax
@@ -64,8 +66,10 @@ theorem bandsTax_succ (bs : List (Nat × Nat)) (lo p : Nat) :
       have := ih u
       omega
 
-/-- A penny more consideration never lowers SDLT, for every kind of transaction
-except at the two cliffs below. -/
+/-- A penny more consideration never lowers SDLT, for every kind of transaction.
+The hypothesis leaves out only the first-time buyer's penny from £500,000 (where
+the tax in fact jumps up, `ftb_cliff`); the higher rates' start at £40,000, also a
+jump up (`higher_cliff`), is covered. -/
 theorem sdlt_succ (k : SdltKind) (p : Nat) (h1 : k = .firstTime → p ≠ sdltFirstTimeLimit) :
     sdltExact k p ≤ sdltExact k (p + 1) := by
   cases k <;> simp only [sdltExact]

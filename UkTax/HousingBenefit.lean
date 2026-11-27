@@ -132,8 +132,11 @@ def housingBenefit (h : HbClaim) (pc : PcClaim) : Nat :=
 
 /-! ## Proved properties -/
 
-/-- Income plus Housing Benefit keeps at least 35 % of any rise in income: the taper
-takes 65 %, never more. -/
+/-- On the taper (`hbTaper`, with the maximum and applicable amount fixed), income
+plus Housing Benefit keeps at least 35 % of any rise in income: the taper takes
+65 %, never more. This is about `hbTaper` only, not every route of
+`housingBenefit`: a rise that ends the guarantee credit, or changes the savings
+credit added to income, is not covered. -/
 theorem hb_total_gain (m aa i δ : Nat) :
     i + hbTaper m aa i + 7 * δ / 20 ≤ (i + δ) + hbTaper m aa (i + δ) + 1 := by
   unfold hbTaper hw; omega
@@ -144,8 +147,10 @@ theorem hb_passport (h : HbClaim) (pc : PcClaim) (hg : 0 < guaranteeCredit pc.mg
     housingBenefit h pc = hw * h.maximum := by
   unfold housingBenefit; simp only [hg, ↓reduceIte]
 
-/-- **The capital limit is a cliff.** Without the guarantee credit, £16,000 of
-capital keeps Housing Benefit and a penny more loses all of it. -/
+/-- **The capital limit is a cliff.** Without the guarantee credit, a penny over
+£16,000 of capital loses all Housing Benefit. At £16,000 itself the claim is
+assessed as usual (`housingBenefit` tests `capital > hbCapitalLimit`); this theorem
+proves only the loss a penny above it. -/
 theorem hb_capital_cliff (h : HbClaim) (pc : PcClaim) (hg : guaranteeCredit pc.mg pc.income = 0)
     (hc : pc.capital = hbCapitalLimit + 1) : housingBenefit h pc = 0 := by
   unfold housingBenefit

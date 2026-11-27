@@ -40,10 +40,12 @@ units stay whole.
   40 % of income above the appropriate minimum guarantee, rounded down; not below
   nil.
 
-Proved: income plus Pension Credit never falls as income rises, except by at most
-a penny a week where amount B's rounding steps (`pc_total_succ`); between those
-pennies it keeps at least 60 % of any rise once the guarantee credit is used up
-(`pc_total_gain`); each £500 of capital above £10,000 costs exactly £1 a week of
+Proved: income plus Pension Credit never falls as income rises with qualifying
+income rising by the same amount (both theorems assume this, so they do not cover
+a rise in income reg 9 leaves out of qualifying income), except by at most a
+penny a week where amount B's rounding steps (`pc_total_succ`); between those
+pennies it keeps at least 60 % of any such rise once the guarantee credit is used
+up (`pc_total_gain`); each £500 of capital above £10,000 costs exactly £1 a week of
 guarantee credit while it is payable (`deemed_step`).
 -/
 
