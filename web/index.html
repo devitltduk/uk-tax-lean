@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UK take-home pay 2026-27 (prototype)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <p class="badge">Prototype</p>
+  <h1>UK take-home pay, 2026-27</h1>
+  <p class="lede">
+    Every figure on this page is computed in your browser by the <strong>proved Lean model</strong>
+    (<code>uktax</code>), compiled to WebAssembly. Nothing is sent to a server.
+  </p>
+  <p class="status" id="status" role="status">Loading the model…</p>
+</header>
+
+<main>
+  <form id="form" class="panel" autocomplete="off">
+    <h2>Your situation</h2>
+
+    <fieldset>
+      <legend>Income for the year</legend>
+      <label>Pay (£ a year, before tax)
+        <input name="pay" type="number" min="0" step="0.01" value="60000" inputmode="decimal"></label>
+      <label>Savings interest (£)
+        <input name="savings" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+      <label>Dividends (£)
+        <input name="dividends" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+      <label>Pension contributions, relief at source (£ gross)
+        <input name="pension" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+      <label>Paid
+        <select name="period">
+          <option value="annual">annually (or a director)</option>
+          <option value="monthly" selected>monthly</option>
+          <option value="weekly">weekly</option>
+        </select></label>
+      <label>Where you live
+        <select name="country">
+          <option value="england" selected>England</option>
+          <option value="wales">Wales</option>
+          <option value="northern_ireland">Northern Ireland</option>
+          <option value="scotland">Scotland</option>
+        </select></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Children</legend>
+      <label>Children you get Child Benefit for
+        <input name="children" type="number" min="0" max="6" step="1" value="0"></label>
+      <div id="kids"></div>
+      <p class="hint">Childcare help (Tax-Free Childcare, funded hours) follows England's rules.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Household and benefits</legend>
+      <label class="check"><input name="partner" type="checkbox"> I have a partner who works</label>
+      <label class="dep" data-dep="partner">Partner's pay (£ a year)
+        <input name="partnerPay" type="number" min="0" step="0.01" value="30000"></label>
+      <label class="check"><input name="uc" type="checkbox"> Claim Universal Credit</label>
+      <label class="dep check" data-dep="uc"><input name="ucCouple" type="checkbox"> Claiming as a couple (partner not working)</label>
+      <label class="dep" data-dep="uc">Rent (£ a month)
+        <input name="rent" type="number" min="0" step="0.01" value="0"></label>
+      <label>Marriage Allowance
+        <select name="ma">
+          <option value="">none</option>
+          <option value="receive">my spouse transfers it to me</option>
+          <option value="transfer">I transfer it to my spouse</option>
+        </select></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Figures</legend>
+      <label>Rates and thresholds
+        <select name="params"><option value="builtin-2026-27">2026-27 (built into the model)</option></select></label>
+      <p class="hint">A later version will accept other parameter sets as JSON.</p>
+    </fieldset>
+  </form>
+
+  <section class="panel results" aria-live="polite">
+    <h2>Take-home</h2>
+    <p class="error" id="error" hidden></p>
+    <div id="result">
+      <p class="hero"><span id="net">–</span><span class="unit">a year</span></p>
+      <p class="sub" id="netMonthly"></p>
+      <table class="breakdown" id="breakdown"><tbody></tbody></table>
+      <p class="hint" id="timing"></p>
+    </div>
+  </section>
+
+  <section class="panel chart-panel">
+    <h2>Take-home against pay</h2>
+    <p class="hint">Your situation as above with pay swept from £0, computed live by the model. Marked points are cliffs: a pound more pay leaves you worse off.</p>
+    <div class="chart" id="chart"></div>
+    <details>
+      <summary>Cliffs found (table)</summary>
+      <table class="cliffs" id="cliffs"><thead><tr><th>Pay rises past</th><th>Take-home falls by</th></tr></thead><tbody></tbody></table>
+    </details>
+  </section>
+
+  <section class="panel">
+    <h2>Self-check</h2>
+    <p>Runs the hand-worked golden cases (<code>tests/golden.json</code>) through the model in this page.
+      Needs the page served from the repository root.</p>
+    <button type="button" id="golden">Run the golden cases</button>
+    <p id="goldenResult" role="status"></p>
+  </section>
+
+  <section class="panel scope">
+    <h2>What this covers, and what it doesn't</h2>
+    <p>The model covers income tax (UK and Scottish rates), employee National Insurance,
+      the High Income Child Benefit Charge, Child Benefit, Universal Credit, Tax-Free Childcare and
+      funded childcare hours for 2026-27, and more than this page asks for (see the repository README).</p>
+    <ul>
+      <li>Out of scope on this page: other benefits the model has (PIP, Carer's Allowance, Pension Credit,
+        Housing Benefit, Council Tax Reduction…), self-employment, property income, capital gains, Stamp Duty.</li>
+      <li>Not in the model: every tax year other than 2026-27, and the items under "Out of scope" in the
+        README. The model grows faster than this page: the README is the full list of what it covers.</li>
+      <li>Childcare support follows England's rules wherever you live. Universal Credit here is a single
+        claimant or a couple where the partner has no pay, with pay as the only income.</li>
+      <li>Take-home counts the larger of Universal Credit and Tax-Free Childcare (they cannot be had together),
+        plus funded hours at their value.</li>
+      <li>This is a prototype for trying the compiled model. It is not advice.</li>
+    </ul>
+  </section>
+</main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

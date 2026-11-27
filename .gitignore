@@ -5,3 +5,5 @@
 /harness/out/
 __pycache__/
 /harness/.uv-python/
+/.wasm-build/
+/web/dist/

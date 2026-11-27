@@ -37,6 +37,38 @@ jobs:
           name: uktax
           path: .lake/build/bin/uktax
 
+  wasm:
+    name: WebAssembly build, equivalence with the native binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - uses: emscripten-core/setup-emsdk@4528d102f7230f0e7b276855c01ea1159be0e984 # v16
+        with:
+          version: 7.0.1
+          actions-cache-folder: emsdk-cache
+      # The Lean runtime and the Lean core modules compiled for wasm depend only
+      # on the toolchain and the build recipe, not on the model.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .wasm-build/runtime-*
+            .wasm-build/stdlib-*
+            .wasm-build/obj-O2/std
+          key: wasm-${{ hashFiles('lean-toolchain', 'wasm/build.sh', 'wasm/lean-runtime-emscripten.patch', 'wasm/stdlib_modules.py') }}
+      - name: Build (Lean to C to wasm)
+        run: wasm/build.sh
+      - name: Wasm and native give identical JSON
+        run: node wasm/equivalence.mjs --random 1000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: uktax-wasm
+          path: web/
+
   policyengine:
     name: Compare with PolicyEngine UK
     needs: lean
