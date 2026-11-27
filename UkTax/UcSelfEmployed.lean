@@ -1,6 +1,7 @@
 import UkTax.Benefits
 import UkTax.Nics
 import UkTax.Profits
+import UkTax.Misc
 
 /-!
 # Universal Credit for the self-employed and the minimum income floor (P4b)
@@ -24,9 +25,14 @@ paid above the small profits threshold, so nothing is paid (SSCBA 1992 s11).
 A claimant in gainful self-employment (reg 64) who would otherwise be subject to
 all work-related requirements, outside a start-up period (regs 62(5), 63), whose
 earned income is below their individual threshold is treated as having that
-threshold (reg 62(2)). The individual threshold (reg 90(2)(b)) is the National
-Living Wage (£12.71, SI 2026/357 reg 2(2), for a claimant aged 21 or over) for the
-expected hours (35 unless lower under reg 88(2)), × 52 / 12 a month. Reg 6(1A)(a)
+threshold (reg 62(2)). The individual threshold (reg 90(2)(b)) is what "a person
+of the same age as the claimant would be paid at the hourly rate applicable under
+regulation 4 or regulation 4A(1)(a) to (c)" of the National Minimum Wage
+Regulations 2015 for the expected hours (35 unless lower under reg 88(2)), × 52 / 12
+a month: £12.71 at 21 or over, £10.85 at 18 to 20, £8.00 under 18 (SI 2026/357 reg
+2; `minimumWage` outside apprenticeships). Not modelled: the apprentice rate of reg
+90(4), the 16 hours of reg 90(2)(a), and reg 90(3)(b) (a partner who is not a joint
+claimant). Reg 6(1A)(a)
 disregards a fraction of a pound in an amount calculated for reg 90; DWP's
 published floors keep the pence, so both are offered (`wholePounds`).
 
@@ -53,22 +59,20 @@ earned income rises).
 
 namespace UkTax
 
-/-- The National Living Wage, pence an hour, from 1 April 2026 (NMW Regulations
-2015 reg 4 as amended by SI 2026/357 reg 2(2)). -/
-def nationalLivingWage : Nat := 1_271
-
-/-- The individual threshold for a year (12 months), pence, for `hours` expected
-hours a week: `hours` × £12.71 × 52 / 12 a month, in whole pounds a month if
-`wholePounds` (reg 6(1A)(a)), else exact (a year is then `hours` × £12.71 × 52). -/
-def mifGrossYear (wholePounds : Bool) (hours : Nat) : Nat :=
-  if wholePounds then 12 * (hours * nationalLivingWage * 52 / 1_200 * 100)
-  else hours * nationalLivingWage * 52
+/-- The individual threshold for a year (12 months), pence, for a claimant aged
+`age` with `hours` expected hours a week: `hours` × the minimum wage for that age ×
+52 / 12 a month, in whole pounds a month if `wholePounds` (reg 6(1A)(a)), else exact
+(a year is then `hours` × the rate × 52). -/
+def mifGrossYear (wholePounds : Bool) (age hours : Nat) : Nat :=
+  let r := minimumWage age false
+  if wholePounds then 12 * (hours * r * 52 / 1_200 * 100)
+  else hours * r * 52
 
 /-- The net individual threshold for the year, 1/10 000 pence: the gross threshold
 less the income tax (personal allowance, the person's own rates, no other relief)
 and Class 4 on it as the person's only income. -/
-def mifNetYear (P : TaxParams) (scottish wholePounds : Bool) (hours : Nat) : Int :=
-  let g := mifGrossYear wholePounds hours
+def mifNetYear (P : TaxParams) (scottish wholePounds : Bool) (age hours : Nat) : Int :=
+  let g := mifGrossYear wholePounds age hours
   10_000 * (g : Int) - (taxExact { scottish, params := P } ⟨g, 0, 0⟩ : Int)
     - (class4Exact P .annual 0 g : Int)
 

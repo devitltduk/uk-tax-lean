@@ -219,9 +219,11 @@ claimant beyond the unearned income given.
   for a claimant in gainful self-employment who would otherwise have all
   work-related requirements, outside a start-up period, earned income is at least
   the individual threshold: the expected hours (35 unless less, reg 88) at the
-  National Living Wage (£12.71), × 52 / 12 a month (£1,927.68 for 35 hours,
-  £1,927 with the fraction of a pound disregarded under reg 6(1A)(a), the
-  default), less notional income tax and Class 4: £20,379.96 a year. Reg 62(4)(b)
+  minimum wage for the claimant's age (reg 90(2): £12.71 at 21 or over, £10.85 at
+  18 to 20, £8.00 under 18), × 52 / 12 a month (£1,927.68 for 35 hours at 21 or
+  over, £1,927 with the fraction of a pound disregarded under reg 6(1A)(a), the
+  default), less notional income tax and Class 4: £20,379.96 a year (£17,875.80
+  at 18 to 20, £14,039.64 under 18). Reg 62(4)(b)
   leaves that deduction to the Secretary of State; the model, like PolicyEngine,
   takes the tax and Class 4 on the threshold as the only income. For a couple
   (reg 62(3)) the floor is cut back so that it and the partner's earned income do
@@ -1206,11 +1208,13 @@ under-occupancy deduction (findings #16).
 
 `uv run python compare_uc_se.py` compares a claimant with a trade (profit or loss)
 and perhaps pay, single or with an employed partner, 0 to 3 children, with edge
-cases around the floor. Whether the floor applies and the expected hours are
-DWP's determinations, read from PolicyEngine and passed to the model with the
-threshold's pence kept, as PolicyEngine keeps them. Latest local run: 1,011 of
-1,011 agree within 2 float32 steps plus 0.95p (1,010 with the floor, 797 below it,
-341 couples, 29 with a loss beside pay; expected hours 30 or 35).
+cases around the floor; claimants are 30, 22, 19 or (single parents) 17, partners
+30 or 19, so the threshold is at each of the three minimum wage rates. Whether the
+floor applies and the expected hours are DWP's determinations, read from
+PolicyEngine and passed to the model with the threshold's pence kept, as
+PolicyEngine keeps them. Latest local run (`--random 1000`): 1,017 of 1,017 agree
+within 2 float32 steps plus 0.95p (1,016 with the floor, 784 below it, 372 with a
+member under 21, 390 couples, 27 with a loss beside pay).
 
 ### National Insurance against PolicyEngine
 
@@ -1301,8 +1305,11 @@ says the input does not implement that); it also caps the year at the unrounded
 annual limit where the law caps each week at the limit ÷ 52 to the penny. Latest
 local run: 1,017 of 1,017 agree within 2 float32 steps plus 0.4p (921 paid, 65 on
 UC). In law the child amount adds up to £8,742 a year for the 357 families with
-children, specified accommodation up to £847 where the cap would bite, and the
-weekly cap gives 8p to £63.35 a year less where it binds (findings #34).
+children, specified accommodation up to £847 where the cap would bite. The
+model's own weekly cap is compared: of the 18 households it caps, all differ from
+PolicyEngine only by capping each week rather than the year, by about 8p where
+the cap binds all year and up to £380.61 where it binds only from October
+(findings #34).
 
 ### Council Tax Reduction in Wales for working-age applicants against PolicyEngine
 
@@ -1370,10 +1377,15 @@ counted, not compared, up to £180 a year apart (findings #40).
 `uv run python compare_p9b.py` compares families in Scotland on Universal Credit
 (the Scottish Child Payment), carers with pay and pension contributions (Carer
 Support Payment and the supplement), and pensioner households (the Pension Age
-Winter Heating Payment and the charge). Latest local run: 1,000 of 1,000, 1,007 of
-1,007 and 2,042 of 2,042 agree; 7 families at the end of UC and 1 carer at the
-earnings limit are float32 precision. PolicyEngine has no Carer Additional Person
-Payment (findings #41).
+Winter Heating Payment and the charge). Both sides' UC is worked out from the same
+inputs: the model is given PolicyEngine's Child Benefit (which the benefit cap
+counts) and whether the eldest child was born before 6 April 2017 (the higher
+first child element). Latest local run (`--random 1000`): 1,000 of 1,000 (886
+paid, none excused), 1,007 of 1,007 and 2,042 of 2,042 agree; 1 carer at the
+earnings limit is float32 precision. An earlier run fed the model neither input
+and excused 7 families as "precision" whose UC was £0 in the model and £71 to
+£564 in PolicyEngine; they agree once the inputs match. PolicyEngine has no Carer
+Additional Person Payment (findings #41).
 
 ### Company cars and the TV licence against PolicyEngine
 

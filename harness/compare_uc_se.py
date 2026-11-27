@@ -1,16 +1,20 @@
 """Compare Universal Credit for the self-employed and the minimum income floor (P4b)
 with PolicyEngine UK, 2026-27.
 
-A claimant aged 30 with a trade (`self_employment_income` = receipts less
-expenses, which may be a loss, and `self_employment_gross_receipts` for the
-trading allowance) and perhaps pay, single or in a couple whose partner (30) has
-pay only; 0 to 3 children aged 5. Edge cases put the claimant's earned income 1p
-either side of the floor and make a loss beside pay.
+A claimant (mostly 30; some 22, 19 or 17) with a trade (`self_employment_income`
+= receipts less expenses, which may be a loss, and `self_employment_gross_receipts`
+for the trading allowance) and perhaps pay, single or in a couple whose partner
+(30 or 19) has pay only; 0 to 3 children aged 5. The floor's threshold is at the
+minimum wage for each member's age (reg 90(2)): £12.71, £10.85 at 18 to 20, £8.00
+under 18 (17-year-olds as single parents only: reg 8(1)(b); a couple with a
+member under 18 falls under rules the model does not take). Edge cases put the claimant's earned income 1p either side of the floor,
+make a loss beside pay, and take claimants and partners under 21.
 
 Whether the floor applies (reg 62(1): gainful self-employment, all work-related
 requirements, no start-up period) and the expected hours (reg 88) are determinations
 DWP makes; they are read from PolicyEngine (`uc_mif_applies`, and the hours from
-`uc_minimum_income_floor_gross` ÷ (£12.71 × 52)) and passed to the model, which
+`uc_minimum_income_floor_gross` ÷ (the rate for the age × 52)) and passed to the
+model with the ages, which
 uses the threshold with the pence kept (`whole_pounds: false`), as PolicyEngine
 does (reg 6(1A)(a) would round each month down to the pound; findings #33).
 
@@ -39,7 +43,10 @@ HERE = pathlib.Path(__file__).resolve().parent
 DEFAULT_BINARY = HERE.parent / ".lake/build/bin/uktax"
 YEAR = 2026
 MICRO = 1_000_000
-NLW_YEAR_PER_HOUR = 1271 * 52  # pence
+
+def rate(age: int) -> int:
+    """The minimum wage for the age, pence an hour (SI 2026/357 reg 2)."""
+    return 1271 if age >= 21 else 1085 if age >= 18 else 800
 
 
 def step(pence: float) -> float:
@@ -50,18 +57,26 @@ def random_case(rng: random.Random) -> dict:
     couple = rng.random() < 0.35
     receipts = rng.choice([rng.randint(0, 1_500_000), rng.randint(0, 5_000_000)])
     expenses = rng.choice([0, rng.randint(0, receipts), rng.randint(0, receipts + 500_000)])
-    return {"couple": couple, "kids": rng.choice([0, 0, 1, 2, 3]),
+    case = {"couple": couple, "kids": rng.choice([0, 0, 1, 2, 3]),
             "pay": rng.choice([0, 0, 0, rng.randint(0, 2_000_000)]),
             "receipts": receipts, "expenses": expenses,
-            "partner_pay": rng.choice([0, rng.randint(0, 3_000_000)]) if couple else 0}
+            "partner_pay": rng.choice([0, rng.randint(0, 3_000_000)]) if couple else 0,
+            "age": rng.choice([30, 30, 30, 22, 19] + ([] if couple else [17])),
+            "partner_age": rng.choice([30, 30, 19]) if couple else 30}
+    if case["age"] < 18:
+        case["kids"] = max(case["kids"], 1)  # reg 8(1)(b): responsible for a child
+    return case
 
 
 def edge_cases() -> list[dict]:
-    base = {"couple": False, "kids": 1, "pay": 0, "expenses": 0, "partner_pay": 0}
+    base = {"couple": False, "kids": 1, "pay": 0, "expenses": 0, "partner_pay": 0, "age": 30, "partner_age": 30}
     out = [{**base, "receipts": r} for r in (0, 100_000, 1_000_000, 2_400_000, 2_600_000, 4_000_000)]
     out += [{**base, "pay": 1_200_000, "receipts": 200_000, "expenses": 500_000}]
     out += [{**base, "couple": True, "kids": 2, "receipts": 600_000, "partner_pay": p}
             for p in (0, 1_200_000, 2_000_000, 3_000_000)]
+    out += [{**base, "age": a, "receipts": r} for a in (19, 17) for r in (600_000, 2_000_000)]
+    out += [{**base, "couple": True, "kids": 4, "receipts": 600_000, "partner_pay": p, "partner_age": 19}
+            for p in (1_200_000, 2_500_000)]
     return out
 
 
@@ -74,13 +89,13 @@ def policyengine(cs: list[dict]) -> dict[str, list[float]]:
         part = cs[lo : lo + 400]
         people, bus, hhs = {}, {}, {}
         for i, c in enumerate(part):
-            people[f"a{i}"] = {"age": {YEAR: 30}, "employment_income": {YEAR: c["pay"] / 100},
+            people[f"a{i}"] = {"age": {YEAR: c["age"]}, "employment_income": {YEAR: c["pay"] / 100},
                                "self_employment_income": {YEAR: (c["receipts"] - c["expenses"]) / 100},
                                "self_employment_gross_receipts": {YEAR: c["receipts"] / 100},
                                "marriage_allowance": {YEAR: 0}}
             members = [f"a{i}"]
             if c["couple"]:
-                people[f"p{i}"] = {"age": {YEAR: 30}, "employment_income": {YEAR: c["partner_pay"] / 100},
+                people[f"p{i}"] = {"age": {YEAR: c["partner_age"]}, "employment_income": {YEAR: c["partner_pay"] / 100},
                                    "marriage_allowance": {YEAR: 0}}
                 members.append(f"p{i}")
             for k in range(c["kids"]):
@@ -102,8 +117,8 @@ def policyengine(cs: list[dict]) -> dict[str, list[float]]:
     return res
 
 
-def hours(gross_pounds: float) -> int:
-    h = gross_pounds * 100 / NLW_YEAR_PER_HOUR
+def hours(gross_pounds: float, age: int) -> int:
+    h = gross_pounds * 100 / (rate(age) * 52)
     assert abs(h - round(h)) < 1e-3, gross_pounds
     return round(h)
 
@@ -122,10 +137,12 @@ def main() -> int:
     pp = partner_earned(args.binary, cs)
     payload = []
     for c, m, g, pg, p in zip(cs, pe["mif"], pe["gross"], pe["partner_gross"], pp):
-        uc = {"couple": c["couple"], "children": c["kids"], "partner_earned_pence": p}
+        uc = {"couple": c["couple"], "children": c["kids"], "partner_earned_pence": p,
+              "under_25": c["age"] < 25 and (not c["couple"] or c["partner_age"] < 25)}
         if m:
-            uc["minimum_income_floor"] = {"expected_hours": hours(g), "partner_expected_hours": hours(pg),
-                                          "whole_pounds": False}
+            uc["minimum_income_floor"] = {"expected_hours": hours(g, c["age"]),
+                                          "partner_expected_hours": hours(pg, c["partner_age"]),
+                                          "age": c["age"], "partner_age": c["partner_age"], "whole_pounds": False}
         payload.append({"non_savings_pence": c["pay"], "savings_pence": 0, "dividends_pence": 0,
                         "employment_pence": c["pay"], "trading_receipts_pence": c["receipts"],
                         "trading_expenses_pence": c["expenses"], "uc": uc})

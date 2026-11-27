@@ -2579,6 +2579,78 @@
     "uc_millionths_pence": 221976460000
   },
   {
+    "name": "UC, minimum income floor at 19: the 18 to 20 rate",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 1500000,
+      "trading_expenses_pence": 500000,
+      "uc": {
+        "couple": false,
+        "children": 1,
+        "under_25": true,
+        "minimum_income_floor": {
+          "expected_hours": 35,
+          "age": 19
+        }
+      }
+    },
+    "source": "SI 2013/376 regs 22, 36, 57(2), 62(2), (3), 88(1), 90(2)(b), (3)(a), 6(1A)(a); NMW Regs 2015 regs 4, 4A(1) (SI 2026/357 reg 2); ITTOIA 2005 s783AF; SSCBA 1992 s15",
+    "working": "reg 90(2): the rate for a person of the claimant's age, £10.85 at 18 to 20. 35 x £10.85 x 52 / 12 = £1,645.58, £1,645 a month, £19,740 a year; less tax 20 % x (£19,740 - £12,570) = £1,434 and Class 4 6 % x £7,170 = £430.20: £17,875.80. UC: 12 x (£338.58 + £303.94) = £7,710.24 less 55 % x (£17,875.80 - £8,520) = £5,145.69: £2,564.55",
+    "uc_minimum_income_floor_ten_thousandths_pence": 17875800000,
+    "uc_millionths_pence": 256455000000
+  },
+  {
+    "name": "UC, minimum income floor at 17: the under-18 rate",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 1500000,
+      "trading_expenses_pence": 500000,
+      "uc": {
+        "couple": false,
+        "children": 1,
+        "under_25": true,
+        "minimum_income_floor": {
+          "expected_hours": 35,
+          "age": 17
+        }
+      }
+    },
+    "source": "SI 2013/376 regs 22, 36, 57(2), 62(2), (3), 88(1), 90(2)(b), (3)(a), 6(1A)(a); NMW Regs 2015 regs 4, 4A(1) (SI 2026/357 reg 2); ITTOIA 2005 s783AF; SSCBA 1992 s15",
+    "working": "£8.00 under 18. 35 x £8.00 x 52 / 12 = £1,213.33, £1,213 a month, £14,556 a year; less tax 20 % x £1,986 = £397.20 and Class 4 6 % x £1,986 = £119.16: £14,039.64. UC £7,710.24 less 55 % x (£14,039.64 - £8,520) = £3,035.802: £4,674.438",
+    "uc_minimum_income_floor_ten_thousandths_pence": 14039640000,
+    "uc_millionths_pence": 467443800000
+  },
+  {
+    "name": "UC, couple threshold with a partner of 19",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "trading_receipts_pence": 1500000,
+      "trading_expenses_pence": 500000,
+      "uc": {
+        "couple": true,
+        "children": 4,
+        "partner_earned_pence": 2000000,
+        "minimum_income_floor": {
+          "expected_hours": 35,
+          "age": 30,
+          "partner_age": 19
+        }
+      }
+    },
+    "source": "SI 2013/376 regs 22, 36, 57(2), 62(2), (3), 88(1), 90(2)(b), (3)(a), 6(1A)(a); NMW Regs 2015 regs 4, 4A(1) (SI 2026/357 reg 2); ITTOIA 2005 s783AF; SSCBA 1992 s15",
+    "working": "claimant's threshold (30) £20,379.96 net, partner's (19) £17,875.80 net; couple threshold £38,255.76 (reg 90(3)(a)). Partner earns £20,000, so reg 62(3) floors the claimant at £38,255.76 - £20,000 = £18,255.76 (with the partner at the 21+ rate it would be £20,379.96). Joint earned income £38,255.76. UC: 12 x (£666.97 + 4 x £303.94) = £22,592.76 less 55 % x (£38,255.76 - £8,520) = £16,354.668: £6,238.092",
+    "uc_millionths_pence": 623809200000
+  },
+  {
     "name": "UC, self-employed above the floor: tax and Class 4 on the trade deducted",
     "input": {
       "savings_pence": 0,
