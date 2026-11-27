@@ -673,4 +673,31 @@ def cgtBadrRate : Nat := 1_800
 /-- Annual exempt amount: £3,000 (s1K(2), FA 2023 s8). -/
 def cgtExemptAmount : Nat := 300_000
 
+/-! ## Stamp Duty Land Tax (England and Northern Ireland), 2026-27
+
+Finance Act 2003, for land transactions with an effective date in 2026-27. Bands
+as (upper limit in pence, rate in basis points); the last band has no limit. -/
+
+/-- Residential rates (s55(1B) Table A): 0 % to £125,000, 2 % to £250,000, 5 % to
+£925,000, 10 % to £1,500,000, 12 % above. -/
+def sdltResidential : List (Nat × Nat) :=
+  [(12_500_000, 0), (25_000_000, 200), (92_500_000, 500), (150_000_000, 1_000), (0, 1_200)]
+
+/-- First-time buyers' relief (Sch 6ZA para 4): 0 % to £300,000, 5 % to £500,000;
+only where the consideration is not more than £500,000 (para 1(3)) and not for a
+higher rates transaction (para 1(7)). -/
+def sdltFirstTime : List (Nat × Nat) := [(30_000_000, 0), (0, 500)]
+def sdltFirstTimeLimit : Nat := 50_000_000
+
+/-- Higher rates for additional dwellings (Sch 4ZA para 1(2), FA 2025 s51, from
+1 April 2025): 5 % to £125,000, 7 % to £250,000, 10 % to £925,000, 15 % to
+£1,500,000, 17 % above; not where the consideration is under £40,000 (para 3(2)). -/
+def sdltHigher : List (Nat × Nat) :=
+  [(12_500_000, 500), (25_000_000, 700), (92_500_000, 1_000), (150_000_000, 1_500), (0, 1_700)]
+def sdltHigherMin : Nat := 4_000_000
+
+/-- Non-residential or mixed (s55(1B) Table B): 0 % to £150,000, 2 % to £250,000,
+5 % above. -/
+def sdltNonResidential : List (Nat × Nat) := [(15_000_000, 0), (25_000_000, 200), (0, 500)]
+
 end UkTax

@@ -35,7 +35,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P5 | Other means-tested and disability benefits | Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant (P5a, **done**); Housing Benefit for pensioners (P5b, **done**); working-age Housing Benefit and legacy benefits still in payment (P5c) |
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
 | P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
-| P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
+| P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a; SDLT **done**, P8b) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
 | P9 | The rest | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
 ## Taxes on income
@@ -140,9 +140,9 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | Programme | PolicyEngine variables | Legal source | Status |
 |---|---|---|---|
 | Capital Gains Tax (including BADR, residential property, carried interest) | `capital_gains_tax`, `capital_gains_badr` | TCGA 1992 ss 1H-1K, 169N; Finance Act 2025 ss 7-8; Finance Act 2026 s58 | **done** (P8a: main and residential rates, the annual exempt amount, BADR, the band after income and reliefs; losses as an input; carried interest, investors' relief and Scottish taxpayers not modelled; findings #29, #30) |
-| Stamp Duty Land Tax | `stamp_duty_land_tax`, `sdlt_on_residential_property_transactions`, `sdlt_on_*_rent` | Finance Act 2003 Part 4, s55, Sch 5 | planned (P8) |
-| Land and Buildings Transaction Tax | `land_and_buildings_transaction_tax` | LBTT (Scotland) Act 2013 | planned (P8) |
-| Land Transaction Tax | `land_transaction_tax` | LTT and Anti-avoidance of Devolved Taxes (Wales) Act 2017 | planned (P8) |
+| Stamp Duty Land Tax | `stamp_duty_land_tax`, `sdlt_on_residential_property_transactions`, `sdlt_on_*_rent` | Finance Act 2003 s55, Schs 4ZA, 6ZA (FA 2025 s51) | **done** for purchases (P8b: residential, first-time buyers, additional dwellings, non-residential; findings #31); leases, the non-resident surcharge, multiple dwellings and linked transactions planned |
+| Land and Buildings Transaction Tax | `land_and_buildings_transaction_tax` | LBTT (Scotland) Act 2013 | planned (P8c) |
+| Land Transaction Tax | `land_transaction_tax` | LTT and Anti-avoidance of Devolved Taxes (Wales) Act 2017 | planned (P8c) |
 | Corporate SDLT, land value, wealth | `corporate_sdlt`, `corporate_land_value`, `net_wealth` | — | out of scope: incidence and imputation |
 
 ## Consumption and other taxes
