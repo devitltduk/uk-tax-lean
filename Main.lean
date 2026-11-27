@@ -93,10 +93,15 @@ Optional fields:
   "attendance_allowance": "lower" | "higher"}` (outputs
   `disability_benefits_weekly_pence`, `disability_benefits_pence` for 52 weeks);
 * `carers_allowance`: `{"overlapping_weekly_pence": 0}` for a carer meeting the
-  caring conditions; pay only, not with `uc` (outputs `carers_allowance_pence`,
+  caring conditions; pay only (outputs `carers_allowance_pence`,
   `carers_allowance_weekly_net_earnings_pence`, and
   `net_income_carer_ten_thousandths_pence`, the `netCarer` of
-  `UkTax/Disability.lean`, with the allowance taxed as non-savings income);
+  `UkTax/Disability.lean`, with the allowance taxed as non-savings income).
+  With `uc` (which must then have `carers` of at least 1, reg 30(1)(a), and no
+  childcare tests) the allowance is deducted from UC as unearned income
+  (`uc_millionths_pence`), and `net_income_carer_uc_millionths_pence` is the
+  `netCarerUc` of `UkTax/CarerUc.lean` (`net_income_millionths_pence` is then
+  null);
 * `maternity_allowance`: `{"average_weekly_earnings_pence": n}` (output
   `maternity_allowance_weekly_tenths_pence`); `jsa_contrib`: `{"under_25": false,
   "earnings_weekly_pence": n, "pension_weekly_pence": n}` (output
@@ -128,7 +133,8 @@ Optional fields:
 * `capital_gains_pence` and `badr_gains_pence`: the year's gains after losses, other
   and qualifying for Business Asset Disposal Relief (within the lifetime limit);
   output `cgt_exact_ten_thousandths_pence` (`UkTax/Cgt.lean`), banded against this
-  taxpayer's income. Not for Scottish taxpayers yet;
+  taxpayer's income. For a Scottish taxpayer the UK basic rate band is used
+  (TCGA 1992 s1J(6));
 * `sdlt`: `{"kind": "residential" | "first_time_buyer" | "additional_dwelling" |
   "non_residential", "consideration_pence": n}`, Stamp Duty Land Tax in England or
   Northern Ireland (`UkTax/Sdlt.lean`; output `sdlt_exact_ten_thousandths_pence`);
@@ -378,8 +384,12 @@ def parseCase (j : Json) : Except String Case := do
     | some o => do
       if income.savings + income.dividends > 0 || employment - netPay ≠ income.nonSavings then
         throw "carers_allowance: only pay is modelled (employment_pence must equal non_savings_pence, with no savings or dividends)"
-      if uc.isSome || relief > 0 || tr + te + pr + pe + rr + re > 0 then
-        throw "carers_allowance: not modelled with uc, Gift Aid, relief at source, or trading and property income"
+      if relief > 0 || tr + te + pr + pe + rr + re > 0 then
+        throw "carers_allowance: not modelled with Gift Aid, relief at source, or trading and property income"
+      if uc.isSome && ext.carers = 0 then
+        throw "carers_allowance with uc: a carer meeting the Carer's Allowance conditions has the carer element (SI 2013/376 reg 30(1)(a)); set uc.carers to at least 1"
+      if uc.isSome && (!costs.isEmpty || (j.getObjVal? "funded_children").toOption.isSome || partner.isSome) then
+        throw "carers_allowance with uc: the childcare tests (childcare_costs_pence, funded_children, partner) are not modelled with it"
       pure (some (← sub o "overlapping_weekly_pence"))
     | none => pure none
   let maAwe ← match obj "maternity_allowance" with
@@ -463,8 +473,6 @@ def parseCase (j : Json) : Except String Case := do
   let cgtIn ← match (j.getObjVal? "capital_gains_pence").toOption, (j.getObjVal? "badr_gains_pence").toOption with
     | none, none => pure none
     | _, _ => do
-      if scottish then
-        throw "capital_gains_pence: Capital Gains Tax for a Scottish taxpayer is not modelled yet"
       pure (some (← optField "badr_gains_pence", ← optField "capital_gains_pence"))
   let sdlt ← match obj "sdlt" with
     | some o => do
@@ -510,6 +518,11 @@ def result (c : Case) : Json :=
   let a := i.bestAlloc rg
   let nic := nicExact c.period (c.employment + rg.netPay)
   let ani := i.ani rg
+  -- Carer's Allowance is unearned income for UC (reg 66(1)(b)(iii))
+  let claims := match c.carer with
+    | some ov => if c.claims.uc then c.claims.withCa (caYear true ov (caEarnings c.period rg c.employment))
+                 else c.claims
+    | none => c.claims
   [
     ("liability_pence", toJson (finalLiability rg i)),
     ("tax_exact_ten_thousandths_pence", toJson (finalTaxExact rg i)),
@@ -537,13 +550,13 @@ def result (c : Case) : Json :=
     ("class_3_pence", toJson (class3 c.class3Weeks)),
     ("hicbc_pence", toJson (hicbc ani c.childBenefit)),
     ("uc_millionths_pence",
-      toJson (ucAward c.claims (earned c.period rg i.savings i.dividends c.employment))),
+      toJson (ucAward claims (earned c.period rg i.savings i.dividends c.employment))),
     ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment ani)),
     ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment ani)),
     ("childcare_eligible", toJson (childcareEligible c.claims c.employment ani)),
     -- `netAll` takes all non-savings income as pay
     ("net_income_millionths_pence",
-      if c.employment = i.nonSavings then
+      if c.employment = i.nonSavings && (c.carer.isNone || !c.claims.uc) then
         toJson (netAll c.period c.childBenefit rg c.claims i.savings i.dividends c.employment)
       else Json.null),
     ("child_benefit_pence", toJson c.childBenefit),
@@ -556,6 +569,10 @@ def result (c : Case) : Json :=
           toJson (caWeeklyEarnings (caEarnings c.period rg c.employment))),
         ("net_income_carer_ten_thousandths_pence",
           toJson (netCarer c.period c.childBenefit rg true ov 0 0 c.employment))]
+        ++ (if c.claims.uc then
+          [("net_income_carer_uc_millionths_pence",
+            toJson (netCarerUc c.period c.childBenefit rg c.claims true ov c.employment))]
+          else [])
       | none => [])
     ++ (match c.maAwe with
       | some a => [("maternity_allowance_weekly_tenths_pence", toJson (maWeeklyTenths a))]

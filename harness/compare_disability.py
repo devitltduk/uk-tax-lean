@@ -12,6 +12,14 @@
   £1 of 52 x £204.01: PolicyEngine's monthly NIC thresholds (findings #1) move
   net earnings by up to 60p a year, so the two can fall either side there. Those
   are counted, not failed.
+- Carer's Allowance with Universal Credit: the same carer claiming UC as a single
+  person aged 40 with 0 to 3 children aged 5, with the carer element (reg 30(1)(a)
+  gives it from the caring alone). Carer's Allowance is unearned income (reg
+  66(1)(b)(iii)). UC must agree within --steps float32 steps of the larger of pay
+  and the yearly maximum amount, plus 55 % of 0.32p where pay is above the primary
+  threshold (PolicyEngine's weekly and monthly NIC thresholds put its annual NICs
+  up to 0.32p apart, findings #1), except where Carer's Allowance itself differs at
+  the limit (above); those are counted.
 - Child Benefit for 1 to 4 children: PolicyEngine pays 52 weeks; a whole
   2026-27 has 53 Child Benefit weeks (findings #19). The weekly amounts (the
   model's ÷ 53, PolicyEngine's ÷ 52) must agree, and the yearly gap is
@@ -71,7 +79,7 @@ def simulate(people_specs: list[dict], variables: list[str]) -> dict[str, list[f
         sim = Simulation(situation={"people": people, "benunits": bus, "households": hhs})
         for v in variables:
             vals = sim.calculate(v, YEAR)
-            if v == "child_benefit":
+            if v in ("child_benefit", "universal_credit", "uc_maximum_amount"):
                 res[v] += [float(x) for x in vals]
             else:  # person level: the adult is the first member of each unit
                 ids = list(people)
@@ -137,6 +145,43 @@ def carers(binary: pathlib.Path, steps: float, n: int, rng: random.Random, rows:
     return bad
 
 
+def carers_uc(binary: pathlib.Path, steps: float, n: int, rng: random.Random, rows: list[dict]) -> int:
+    cases = [(CA_THRESHOLD + k, 0, kids) for k in (-2, -1, 0, 1) for kids in (0, 2)]
+    cases += [(1_000_000, 0, 2), (0, 0, 0), (500_000, 0, 0), (900_000, 50_000, 1)]
+    for _ in range(n):
+        pay = rng.choice([rng.randint(0, 1_200_000), rng.randint(900_000, 1_250_000), rng.randint(0, 3_000_000)])
+        cases.append((pay, rng.choice([0, 0, rng.randint(0, min(pay, 200_000))]), rng.choice([0, 1, 2, 3])))
+    pe = simulate([{"kids": kids, "inputs": {"employment_income": pay / 100,
+                                             "employee_pension_contributions": pen / 100, "care_hours": 35}}
+                   for pay, pen, kids in cases],
+                  ["carers_allowance", "universal_credit", "uc_maximum_amount"])
+    ln = lean(binary, [{"non_savings_pence": pay, "savings_pence": 0, "dividends_pence": 0,
+                        "employment_pence": pay, "net_pay_pension_pence": pen, "carers_allowance": {},
+                        "uc": {"couple": False, "children": kids, "carers": 1}} for pay, pen, kids in cases])
+    bad = boundary = paid = both = worst = 0
+    for (pay, pen, kids), r, ca, uc, mx in zip(cases, ln, pe["carers_allowance"], pe["universal_credit"],
+                                               pe["uc_maximum_amount"]):
+        mine, theirs = r["uc_millionths_pence"] / 1_000_000, uc * 100
+        st = step(max(mx * 100, pay))
+        ok = abs(mine - theirs) <= steps * st + (0.55 * 0.32 if pay > 1_257_000 else 0)
+        if ok:
+            worst = max(worst, abs(mine - theirs) / st)
+        if not ok and abs(r["carers_allowance_pence"] - ca * 100) > 1:
+            boundary += 1
+            ok = True
+        bad += not ok
+        paid += mine > 0
+        both += mine > 0 and r["carers_allowance_pence"] > 0
+        rows.append({"area": "carers_allowance_uc", "case": f"pay {pay} pension {pen} children {kids}",
+                     "lean_pence": mine, "pe_pence": round(theirs, 4), "ok": ok})
+        if not ok and bad <= 10:
+            print(f"  pay {pay} pension {pen} children {kids}: lean UC {mine:.2f} pe {theirs:.2f}"
+                  f" (CA lean {r['carers_allowance_pence']} pe {ca * 100:.2f})")
+    print(f"Universal Credit with Carer's Allowance: {len(cases) - bad}/{len(cases)} agree ({paid} with UC paid, "
+          f"{both} with both; {boundary} where Carer's Allowance differs at the limit; worst {worst:.2f} float32 steps)")
+    return bad
+
+
 def child_benefit(binary: pathlib.Path, steps: float, rows: list[dict]) -> int:
     kids = [1, 2, 3, 4]
     pe = simulate([{"kids": k} for k in kids], ["child_benefit"])
@@ -167,6 +212,7 @@ def main() -> int:
     rows: list[dict] = []
     bad = disability(args.binary, args.steps, rows)
     bad += carers(args.binary, args.steps, args.random, rng, rows)
+    bad += carers_uc(args.binary, args.steps, args.random, rng, rows)
     bad += child_benefit(args.binary, args.steps, rows)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="") as f:

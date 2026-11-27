@@ -162,6 +162,10 @@ structure Claims where
   capital : Nat := 0
   /-- UC: monthly unearned income, pence (reg 66; deducted in full). -/
   unearnedMonthly : Nat := 0
+  /-- UC: Carer's Allowance for the year, pence, unearned income deducted in full
+  (reg 66(1)(b)(iii)). Weekly payments count as 52/12 of a week a month
+  (reg 73(2)(a)), so twelve months of it are the 52 weeks' allowance exactly. -/
+  carersAllowanceYear : Nat := 0
   /-- UC: the partner's earned income for the year, pence, net of their income tax
   and NICs (reg 55(5)); fixed while the claimant's pay varies. -/
   partnerEarned : Nat := 0
@@ -293,7 +297,8 @@ def ucAward (c : Claims) (e : Int) : Int :=
   if c.uc && c.capital ≤ ucCapitalUpper then
     let eh := e + 10_000 * (c.partnerEarned : Int)
     let cc := 12 * c.childcareMicro e
-    let award := max 0 (12 * (c.maxMicro - micro * (c.tariff + c.unearnedMonthly : Nat)) + cc
+    let award := max 0 (12 * (c.maxMicro - micro * (c.tariff + c.unearnedMonthly : Nat))
+      - micro * (c.carersAllowanceYear : Int) + cc
       - (ucTaperPercent : Int) * max 0 (eh - 10_000 * 12 * (c.workAllowance : Int)))
     if c.capApplies eh then
       max 0 (min award (micro * (c.capAmount : Int) + cc - micro * (c.capOtherBenefits : Int)))
@@ -396,6 +401,7 @@ theorem earned_plus_uc_gain (c : Claims) {e e' : Int} (h : e ≤ e') :
     generalize micro * (c.capAmount : Int) = K
     generalize micro * (c.capOtherBenefits : Int) = O
     generalize micro * ((c.tariff + c.unearnedMonthly : Nat) : Int) = T
+    generalize micro * (c.carersAllowanceYear : Int) = A
     generalize (c.partnerEarned : Int) = P
     cases a <;> cases a'
     · simp only [Bool.false_eq_true, ↓reduceIte]; omega

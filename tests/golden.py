@@ -62,6 +62,7 @@ CHECKED = (
     "council_tax_reduction_7280ths_pence",
     "cgt_exact_ten_thousandths_pence",
     "sdlt_exact_ten_thousandths_pence",
+    "net_income_carer_uc_millionths_pence",
 )
 
 failures = 0

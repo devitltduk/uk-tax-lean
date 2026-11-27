@@ -1,6 +1,8 @@
 """Compare Capital Gains Tax (P8a) with PolicyEngine UK, 2026-27.
 
-One taxpayer outside Scotland with pay, savings interest, dividends and Gift Aid
+One taxpayer, a Scottish taxpayer in about a third of cases (whose gains are
+banded on the UK basic rate band, TCGA 1992 s1J(6)), with pay, savings interest,
+dividends and Gift Aid
 (passed to PolicyEngine as the amount given, the gross x 0.8), gains after losses
 (`capital_gains`) of which some qualify for Business Asset Disposal Relief
 (`capital_gains_badr`), with edge cases at the annual exempt amount and the basic
@@ -37,22 +39,29 @@ def random_case(rng: random.Random) -> dict:
             "savings": rng.choice([0, 0, rng.randint(0, 2_000_000)]),
             "dividends": rng.choice([0, 0, rng.randint(0, 3_000_000)]),
             "gift_aid": rng.choice([0, 0, 0, 5 * rng.randint(0, 100_000)]),
-            "gains": gains, "badr": rng.choice([0, 0, rng.randint(0, gains)])}
+            "gains": gains, "badr": rng.choice([0, 0, rng.randint(0, gains)]),
+            "scotland": rng.random() < 0.35}
 
 
 def edge_cases() -> list[dict]:
-    base = {"pay": 3_000_000, "savings": 0, "dividends": 0, "gift_aid": 0, "badr": 0}
+    base = {"pay": 3_000_000, "savings": 0, "dividends": 0, "gift_aid": 0, "badr": 0, "scotland": False}
     out = [{**base, "gains": g} for g in (299_999, 300_000, 300_001)]
     # pay £50,000 leaves £270 of band: gains putting the top of the band at the limit
     out += [{**base, "pay": 5_000_000, "gains": g} for g in (326_999, 327_000, 327_001)]
     out += [{**base, "gains": 2_000_000, "badr": b} for b in (0, 1_000_000, 2_000_000)]
+    # Scottish taxpayers paying the Scottish higher rate (from £43,662) inside the UK
+    # band, and either side of the UK basic rate limit
+    scot = {**base, "scotland": True}
+    out += [{**scot, "pay": p, "gains": 1_000_000} for p in (4_500_000, 5_026_999, 5_027_000, 5_027_001)]
+    out += [{**scot, "pay": 4_500_000, "gift_aid": 500_000, "gains": 2_000_000, "badr": 500_000}]
     return out
 
 
 def lean(binary: pathlib.Path, cs: list[dict]) -> list[dict]:
     return run(binary, [{"non_savings_pence": c["pay"], "savings_pence": c["savings"], "dividends_pence": c["dividends"],
                          "employment_pence": c["pay"], "gift_aid_gross_pence": c["gift_aid"],
-                         "capital_gains_pence": c["gains"] - c["badr"], "badr_gains_pence": c["badr"]} for c in cs])
+                         "capital_gains_pence": c["gains"] - c["badr"], "badr_gains_pence": c["badr"],
+                         "country": "scotland" if c["scotland"] else "england"} for c in cs])
 
 
 def policyengine(cs: list[dict]) -> list[float]:
@@ -68,7 +77,7 @@ def policyengine(cs: list[dict]) -> list[float]:
                                "gift_aid": {YEAR: c["gift_aid"] * 0.8 / 100},
                                "capital_gains": {YEAR: c["gains"] / 100},
                                "capital_gains_badr": {YEAR: c["badr"] / 100}}
-            hhs[f"h{i}"] = {"members": [f"p{i}"], "region": {YEAR: "NORTH_WEST"}}
+            hhs[f"h{i}"] = {"members": [f"p{i}"], "region": {YEAR: "SCOTLAND" if c["scotland"] else "NORTH_WEST"}}
         sim = Simulation(situation={"people": people, "households": hhs})
         out += [float(x) for x in sim.calculate("capital_gains_tax", YEAR)]
     return out
@@ -86,7 +95,7 @@ def main() -> int:
     cs = edge_cases() + [random_case(rng) for _ in range(args.random)]
     pe = policyengine(cs)
     ln = lean(args.binary, cs)
-    rows, bad, taxed, worst = [], 0, 0, 0.0
+    rows, bad, taxed, worst, scot = [], 0, 0, 0.0, 0
     for c, r, p in zip(cs, ln, pe):
         mine = r["cgt_exact_ten_thousandths_pence"] / 10_000
         theirs = p * 100
@@ -95,10 +104,12 @@ def main() -> int:
         worst = max(worst, abs(theirs - mine) / st)
         bad += not ok
         taxed += mine > 0
+        scot += c["scotland"]
         rows.append({**c, "lean_pence": mine, "pe_pence": round(theirs, 4), "diff": round(theirs - mine, 4), "ok": ok})
         if not ok and bad <= 10:
             print(f"  {c}: lean {mine:.2f} pe {theirs:.2f}")
-    print(f"Capital Gains Tax: {len(cs) - bad}/{len(cs)} agree ({taxed} taxed; worst {worst:.2f} float32 steps)")
+    print(f"Capital Gains Tax: {len(cs) - bad}/{len(cs)} agree ({taxed} taxed, {scot} Scottish taxpayers; worst {worst:.2f} "
+          "float32 steps)")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
