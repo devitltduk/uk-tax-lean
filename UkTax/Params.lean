@@ -19,7 +19,7 @@ structure Rates where
   basic : Nat
   higher : Nat
   additional : Nat
-  deriving Repr
+  deriving Repr, DecidableEq
 
 /-- Personal allowance, £12,570.
 ITA 2007 s35(1) <https://www.legislation.gov.uk/ukpga/2007/3/section/35>; amount

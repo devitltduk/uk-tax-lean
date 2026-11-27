@@ -25,6 +25,13 @@ PolicyEngine; the likely PolicyEngine errors among them have 13 draft issues in
 A write-up of the results, with the cliff map and the differences from
 PolicyEngine UK, is in [`docs/writeup.md`](docs/writeup.md).
 
+The main guarantees (income tax monotone in every kind of income, the optimal
+placement of the allowance, where net income can fall, the marginal rate between
+those steps, and a complete cliff map) are proved for **any rates and thresholds
+that meet stated conditions**, not only the 2026-27 figures: see
+[What is proved for any figures](#what-is-proved-for-any-figures) and
+[`docs/parametric.md`](docs/parametric.md).
+
 ## What is modelled
 
 Wales is included because for 2026-27 every Welsh rate is 10p in the pound
@@ -710,10 +717,53 @@ enacted, Finance Act 2026 s5 sets 22 / 42 / 47 % from 6 April 2027. Budget 2026
 
 ## What is proved
 
+### What is proved for any figures
+
+The rates and thresholds of income tax, employee NICs, the HICBC, the UC taper and
+the childcare tests form a parameter set, `TaxParams` (`UkTax/TaxParams.lean`),
+carried by every `Regime`; its default is 2026-27. The results below marked with
+a condition hold for **every parameter set meeting `TaxParams.Valid`**:
+
+- each schedule's rates (UK non-savings, savings, dividends, and the six Scottish
+  rates) do not fall from band to band;
+- the basic rate limit is at most the higher rate limit;
+- the personal savings allowance does not rise from band to band;
+- the UC taper is at most 100 %;
+- the worst-case marginal rate between steps is at most 100 %:
+  `maxStep + 0.05p + the larger NIC rate ≤ 1p`, where `maxStep` is a formula in the
+  rates and limits (0.686p for 2026-27, 0.706p in Scotland).
+
+Covered: `liability_mono` and `leastTax_mono` (income tax never falls as any income
+rises), `isLeastTax_taxExact` (the allowance placement is optimal; this needs only
+the basic rate limit at most the higher), `net_drop_only_at_steps` and
+`netAll_drop_only_at_steps` (net income falls only at the named steps, now
+formulas in the figures: `PaStep`, `HicbcStep`, Step 3 income at the rate limits,
+the Marriage Allowance test, the childcare limit), `taxExact_succ_le`,
+`net_succ_ge` and `netAll_succ_ge` (the marginal-rate bounds between steps, as
+formulas: `TaxParams.maxStep`, `Regime.minGain`, `(100 − taper) % × minGain`), the
+carer versions, the annual allowance charge bound (the top rate), and
+`cliffMap_complete` (`UkTax/CliffMap.lean`): for a household, every pay at which a
+penny more lowers net income is among `paPennies` and `oneOffPennies`, computed
+from the figures. The 2026-27 numbers quoted below are corollaries
+(`maxStep_y2026`, `Regime.minGain_y2026`, `paStep_y2026`, `hicbcStep_y2026`,
+`valid_y2026`).
+
+Only figures can change, not structure (the £1-per-£2 taper and its rounding, the
+1 % HICBC steps, three UK and six Scottish bands). Figures outside the set (benefit
+amounts, the Marriage Allowance and married couple's allowance, Class 4 and
+employer NICs, CGT, property taxes, council tax, student loans and support, cars,
+VED and the rest) stay 2026-27, so the 92 theorems about them are **proved for
+2026-27 only**; [`docs/parametric.md`](docs/parametric.md) lists every theorem in
+the axiom guard with its status. Mathlib is still not needed: products of
+symbolic rates and amounts are handled by three small lemmas and `omega`.
+
+### Proved for 2026-27 (and, where marked above, for any figures)
+
 In `UkTax/Proofs.lean` and `UkTax/Optimal.lean`, with no `sorry`.
 `UkTax/Axioms.lean` fails the build if any of these theorems ever depends on more
 than Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`). Nothing
-is assumed: every result below holds for every income.
+is assumed about the income: every result below holds for every income, and the
+figures quoted are those of 2026-27.
 
 Every result holds for every regime: rUK or Scottish, with any Gift Aid and
 relief-at-source contributions.

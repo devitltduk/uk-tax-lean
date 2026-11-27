@@ -874,7 +874,8 @@ def result (c : Case) : Json :=
   let i := c.income
   let rg := c.regime
   let a := i.bestAlloc rg
-  let nic := nicExact c.period (c.employment + rg.netPay)
+  let P := rg.params
+  let nic := nicExact P c.period (c.employment + rg.netPay)
   let ani := i.ani rg
   -- Carer's Allowance is unearned income for UC (reg 66(1)(b)(iii))
   let claims := match c.carer with
@@ -886,11 +887,11 @@ def result (c : Case) : Json :=
       earnedWithTrade c.period rg c.employment c.tradeProfit c.ucProfit
     else earned c.period rg i.savings i.dividends c.employment
   -- the minimum income floor (reg 62): a lower bound on the claimant's earned income
-  let mifF : Option Int := c.mif.map fun (w, h, _) => mifNetYear rg.scottish w h
+  let mifF : Option Int := c.mif.map fun (w, h, _) => mifNetYear P rg.scottish w h
   let floor : Option Int := c.mif.map fun (w, h, ph) =>
-    let F := mifNetYear rg.scottish w h
+    let F := mifNetYear P rg.scottish w h
     if c.claims.couple then
-      min F (F + mifNetYear rg.scottish w ph - 10_000 * (c.claims.partnerEarned : Int))
+      min F (F + mifNetYear P rg.scottish w ph - 10_000 * (c.claims.partnerEarned : Int))
     else F
   [
     ("liability_pence", toJson (finalLiability rg i)),
@@ -913,27 +914,27 @@ def result (c : Case) : Json :=
       toJson (employerNicExact c.period c.zeroRated (c.employment + rg.netPay))),
     ("class_1a_exact_ten_thousandths_pence", toJson (class1AExact c.class1A)),
     ("class_4_exact_ten_thousandths_pence",
-      toJson (class4Exact c.period (c.employment + rg.netPay) c.tradeProfit)),
+      toJson (class4Exact P c.period (c.employment + rg.netPay) c.tradeProfit)),
     ("class_2_treated_paid", toJson (class2TreatedPaid c.tradeProfit)),
     ("class_2_voluntary_pence", toJson (class2Voluntary c.tradeProfit c.class2Weeks)),
     ("class_3_pence", toJson (class3 c.class3Weeks)),
-    ("hicbc_pence", toJson (hicbc ani c.childBenefit)),
+    ("hicbc_pence", toJson (hicbc P ani c.childBenefit)),
     ("uc_millionths_pence",
       toJson (match floor with
-        | some f => ucAwardFloor claims f ucEarned
-        | none => ucAward claims ucEarned)),
+        | some f => ucAwardFloor P claims f ucEarned
+        | none => ucAward P claims ucEarned)),
     ("uc_earned_income_ten_thousandths_pence", toJson ucEarned),
     ("uc_minimum_income_floor_ten_thousandths_pence", toJson mifF),
-    ("tfc_millionths_pence", toJson (tfcTopUp c.claims c.employment ani)),
-    ("funded_hours_millionths_pence", toJson (fundedHours c.claims c.employment ani)),
-    ("childcare_eligible", toJson (childcareEligible c.claims c.employment ani)),
+    ("tfc_millionths_pence", toJson (tfcTopUp P c.claims c.employment ani)),
+    ("funded_hours_millionths_pence", toJson (fundedHours P c.claims c.employment ani)),
+    ("childcare_eligible", toJson (childcareEligible P c.claims c.employment ani)),
     ("funded_hours_targeted_millionths_pence",
       let award : Int := match floor with
-        | some f => ucAwardFloor claims f ucEarned
-        | none => ucAward claims ucEarned
+        | some f => ucAwardFloor P claims f ucEarned
+        | none => ucAward P claims ucEarned
       let e := ucEarned + (if c.claims.couple then 10_000 * (c.claims.partnerEarned : Int) else 0)
       toJson (micro * (targetedExtra c.claims (targetedFamily (c.claims.uc && decide (0 < award)) e c.targetedOther)
-        (childcareEligible c.claims c.employment ani) : Nat))),
+        (childcareEligible P c.claims c.employment ani) : Nat))),
     -- `netAll` takes all non-savings income as pay
     ("net_income_millionths_pence",
       if c.employment = i.nonSavings && (c.carer.isNone || !c.claims.uc) then
@@ -1010,13 +1011,13 @@ def result (c : Case) : Json :=
       | none => [])
     ++ (match c.ctrWa with
       | some (ct, h, band, sar) =>
-        let onUc := claims.uc && decide (0 < ucAward claims ucEarned)
+        let onUc := claims.uc && decide (0 < ucAward P claims ucEarned)
         let scot := c.nation == .scotland
         let nd := ctrNonDeps (if scot then .scotland else .wales) h.housing
         let E := hbWaEarnings c.period rg c.employment
         let x : Int := if scot then
-            (if onUc then scotUcExcess claims h.disregard.weekly h.scotApplicable ucEarned else scotOwnExcess h E)
-          else (if onUc then walesUcExcess claims ucEarned else walesOwnExcess h E)
+            (if onUc then scotUcExcess P claims h.disregard.weekly h.scotApplicable ucEarned else scotOwnExcess h E)
+          else (if onUc then walesUcExcess P claims ucEarned else walesOwnExcess h E)
         let passported := h.passported && !onUc
         let xEff : Int := if passported then 0 else x
         let capOk := onUc || !(h.capital > hbCapitalLimit)
@@ -1038,19 +1039,19 @@ def result (c : Case) : Json :=
     ++ (match c.ctrLocal with
       | some (la, ct, h, limited, cb) =>
         let s := la.scheme
-        let onUc := claims.uc && decide (0 < ucAward claims ucEarned)
+        let onUc := claims.uc && decide (0 < ucAward P claims ucEarned)
         let nd := s.nonDepTotal h.housing
         let E := hbWaEarnings c.period rg c.employment
         let passported := h.passported && !onUc
         let capOk := la == .oxford && onUc || !(h.capital > s.capitalLimit)
         if la == .oxford then
-          let x : Int := if passported then 0 else if onUc then oxfordUcIncome claims cb ucEarned else oxfordOwnIncome h E
+          let x : Int := if passported then 0 else if onUc then oxfordUcIncome P claims cb ucEarned else oxfordOwnIncome h E
           [("council_tax_reduction_local_lcu_pence", toJson (if capOk then oxfordYear ct nd x else 0)),
            ("council_tax_reduction_local_uc_route", toJson onUc),
            ("council_tax_reduction_local_oxford_percent", toJson (oxfordPct x)),
            ("council_tax_reduction_local_income_millionths_pence", toJson x)]
         else
-          let x : Int := if passported then 0 else if onUc then walesUcExcess claims ucEarned
+          let x : Int := if passported then 0 else if onUc then walesUcExcess P claims ucEarned
             else localOwnExcess s h limited E
           [("council_tax_reduction_local_lcu_pence", toJson (if capOk then localYear s ct nd x else 0)),
            ("council_tax_reduction_local_uc_route", toJson onUc),
@@ -1068,7 +1069,7 @@ def result (c : Case) : Json :=
          ("reliefs_chargeable_amount_pence", toJson r.chargeable),
          ("reliefs_aa_charge_ten_thousandths_pence", toJson (aaCharge (r.regime rg) r.income r.chargeable)),
          ("reliefs_net_income_pence", toJson r.netIncome),
-         ("reliefs_class_4_exact_ten_thousandths_pence", toJson (class4Exact c.period r.pay r.tradeProfit))]
+         ("reliefs_class_4_exact_ten_thousandths_pence", toJson (class4Exact P c.period r.pay r.tradeProfit))]
       | none => [])
     ++ (match c.studentLoan with
       | some l =>
@@ -1123,8 +1124,8 @@ def result (c : Case) : Json :=
     ++ (match c.scp with
       | some (n, other) =>
         let onUc := c.claims.uc && (0 : Int) < (match floor with
-          | some f => ucAwardFloor claims f ucEarned
-          | none => ucAward claims ucEarned)
+          | some f => ucAwardFloor P claims f ucEarned
+          | none => ucAward P claims ucEarned)
         [("scottish_child_payment_pence", toJson (scpYear n (other || onUc)))]
       | none => [])
     ++ (match c.csp with

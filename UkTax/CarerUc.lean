@@ -43,7 +43,7 @@ income tax on pay and the allowance, NICs and the HICBC, plus UC with the allowa
 deducted as unearned income. -/
 def netCarerUc (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (ent : Bool) (ov g : Nat) : Int :=
   let C := caYear ent ov (caEarnings p rg g)
-  100 * netCa p cb rg 0 0 C g + ucAward (c.withCa C) (earned p rg 0 0 g)
+  100 * netCa p cb rg 0 0 C g + ucAward rg.params (c.withCa C) (earned p rg 0 0 g)
 
 /-! ## Proved properties -/
 
@@ -51,18 +51,18 @@ def netCarerUc (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (ent :
 a claim with the carer element (so outside the benefit cap, reg 83(1)(j)), if UC is
 paid with Carer's Allowance `C` for the year, it is the award without the
 allowance less `C`. -/
-theorem ucAward_withCa (c : Claims) (e : Int) (C : Nat) (hc : 0 < c.carers)
-    (h : 0 < ucAward (c.withCa C) e) :
-    ucAward (c.withCa C) e = ucAward (c.withCa 0) e - micro * (C : Int) := by
+theorem ucAward_withCa (P : TaxParams) (c : Claims) (e : Int) (C : Nat) (hc : 0 < c.carers)
+    (h : 0 < ucAward P (c.withCa C) e) :
+    ucAward P (c.withCa C) e = ucAward P (c.withCa 0) e - micro * (C : Int) := by
   have hcap : ∀ (A : Nat) (x : Int), (c.withCa A).capApplies x = false := by
     intro A x
     have : c.carers ≠ 0 := by omega
     simp [Claims.capApplies, Claims.withCa, this]
   -- the award with allowance `A`: the same expression less `micro * A` inside the max
-  have key : ∀ A : Nat, ucAward (c.withCa A) e =
+  have key : ∀ A : Nat, ucAward P (c.withCa A) e =
       if c.uc && decide (c.capital ≤ ucCapitalUpper) then
         max 0 (12 * (c.maxMicro - micro * (c.tariff + c.unearnedMonthly : Nat)) + 12 * c.childcareMicro e
-          - (ucTaperPercent : Int)
+          - (P.ucTaper : Int)
             * max 0 (e + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int))
           - micro * (A : Int))
       else 0 := by
@@ -72,7 +72,7 @@ theorem ucAward_withCa (c : Claims) (e : Int) (C : Nat) (hc : 0 < c.carers)
     show (if c.uc && decide (c.capital ≤ ucCapitalUpper) then _ else 0) = _
     split
     · show max 0 (12 * (c.maxMicro - micro * (c.tariff + c.unearnedMonthly : Nat)) - micro * (A : Int)
-          + 12 * c.childcareMicro e - (ucTaperPercent : Int)
+          + 12 * c.childcareMicro e - (P.ucTaper : Int)
             * max 0 (e + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int))) = _
       congr 1
       omega
@@ -82,7 +82,7 @@ theorem ucAward_withCa (c : Claims) (e : Int) (C : Nat) (hc : 0 < c.carers)
   · rename_i hu
     simp only [hu, ↓reduceIte]
     generalize 12 * (c.maxMicro - micro * (c.tariff + c.unearnedMonthly : Nat)) + 12 * c.childcareMicro e
-          - (ucTaperPercent : Int)
+          - (P.ucTaper : Int)
             * max 0 (e + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int)) = Z at *
     unfold micro at *
     omega
@@ -93,12 +93,13 @@ with the carer element and pay `g`, while UC is in payment with the allowance `C
 net income with it equals net income without it less the extra income tax and
 HICBC on it. -/
 theorem carer_uc_net (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (C g : Nat)
-    (hc : 0 < c.carers) (h : 0 < ucAward (c.withCa C) (earned p rg 0 0 g)) :
-    100 * netCa p cb rg 0 0 C g + ucAward (c.withCa C) (earned p rg 0 0 g)
-      = 100 * netCa p cb rg 0 0 0 g + ucAward (c.withCa 0) (earned p rg 0 0 g)
+    (hc : 0 < c.carers) (h : 0 < ucAward rg.params (c.withCa C) (earned p rg 0 0 g)) :
+    100 * netCa p cb rg 0 0 C g + ucAward rg.params (c.withCa C) (earned p rg 0 0 g)
+      = 100 * netCa p cb rg 0 0 0 g + ucAward rg.params (c.withCa 0) (earned p rg 0 0 g)
         - 100 * ((finalTaxExact rg ⟨g + C, 0, 0⟩ : Int) - finalTaxExact rg ⟨g, 0, 0⟩)
-        - micro * ((hicbc (g + C - rg.step2 - rg.relief) cb : Int) - hicbc (g - rg.step2 - rg.relief) cb) := by
-  rw [ucAward_withCa c _ C hc h]
+        - micro * ((hicbc rg.params (g + C - rg.step2 - rg.relief) cb : Int)
+          - hicbc rg.params (g - rg.step2 - rg.relief) cb) := by
+  rw [ucAward_withCa rg.params c _ C hc h]
   unfold netCa micro
   simp only [Nat.add_zero]
   push_cast
@@ -110,13 +111,13 @@ income at the same pay without the allowance, less the tax and HICBC the allowan
 brought. -/
 theorem carer_uc_cliff (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (ent : Bool)
     (ov g : Nat) (hc : 0 < c.carers)
-    (h : 0 < ucAward (c.withCa (caYear ent ov (caEarnings p rg g))) (earned p rg 0 0 g)) :
+    (h : 0 < ucAward rg.params (c.withCa (caYear ent ov (caEarnings p rg g))) (earned p rg 0 0 g)) :
     netCarerUc p cb rg c ent ov g
-      = 100 * netCa p cb rg 0 0 0 g + ucAward (c.withCa 0) (earned p rg 0 0 g)
+      = 100 * netCa p cb rg 0 0 0 g + ucAward rg.params (c.withCa 0) (earned p rg 0 0 g)
         - 100 * ((finalTaxExact rg ⟨g + caYear ent ov (caEarnings p rg g), 0, 0⟩ : Int)
             - finalTaxExact rg ⟨g, 0, 0⟩)
-        - micro * ((hicbc (g + caYear ent ov (caEarnings p rg g) - rg.step2 - rg.relief) cb : Int)
-            - hicbc (g - rg.step2 - rg.relief) cb) :=
+        - micro * ((hicbc rg.params (g + caYear ent ov (caEarnings p rg g) - rg.step2 - rg.relief) cb : Int)
+            - hicbc rg.params (g - rg.step2 - rg.relief) cb) :=
   carer_uc_net p cb rg c _ g hc h
 
 end UkTax

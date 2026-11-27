@@ -84,23 +84,24 @@ the monthly amounts is 12 months of them): the income assessed for UC (the claim
 earned income `e`, 1/10 000 pence a year, the partner's, unearned and tariff income
 and Carer's Allowance) plus the award, less 12 months of the maximum amount
 (childcare element included). -/
-def walesUcExcess (c : Claims) (e : Int) : Int :=
+def walesUcExcess (P : TaxParams) (c : Claims) (e : Int) : Int :=
   100 * (e + 10_000 * (c.partnerEarned : Int)) + 12 * (micro * ((c.tariff + c.unearnedMonthly : Nat) : Int))
-    + micro * (c.carersAllowanceYear : Int) + ucAward c e - 12 * (c.maxMicro + c.childcareMicro e)
+    + micro * (c.carersAllowanceYear : Int) + ucAward P c e - 12 * (c.maxMicro + c.childcareMicro e)
 
 /-- Wales, on UC: the year's reduction, `cu`. -/
-def ctrWalesUc (ct nd : Nat) (c : Claims) (e : Int) : Int := ctrWaYear ct nd (walesUcExcess c e)
+def ctrWalesUc (P : TaxParams) (ct nd : Nat) (c : Claims) (e : Int) : Int :=
+  ctrWaYear ct nd (walesUcExcess P c e)
 
 /-! ## Proved properties -/
 
 /-- **On UC, the Welsh reduction depends on earnings alone.** While UC is in payment
 and the benefit cap does not apply, the year's excess income is the household's
-earned income less 55 % of it above the work allowance: the maximum amount, unearned
+earned income less the taper (55 %) of it above the work allowance: the maximum amount, unearned
 income, Carer's Allowance and the childcare element cancel. -/
-theorem ctrWalesUc_excess (c : Claims) (e : Int) (hcap : c.capApplies (e + 10_000 * (c.partnerEarned : Int)) = false)
-    (h : 0 < ucAward c e) :
-    walesUcExcess c e = 100 * (e + 10_000 * (c.partnerEarned : Int))
-      - (ucTaperPercent : Int) * max 0 (e + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int)) := by
+theorem ctrWalesUc_excess (P : TaxParams) (c : Claims) (e : Int) (hcap : c.capApplies (e + 10_000 * (c.partnerEarned : Int)) = false)
+    (h : 0 < ucAward P c e) :
+    walesUcExcess P c e = 100 * (e + 10_000 * (c.partnerEarned : Int))
+      - (P.ucTaper : Int) * max 0 (e + 10_000 * (c.partnerEarned : Int) - 10_000 * 12 * (c.workAllowance : Int)) := by
   unfold walesUcExcess
   unfold ucAward at *
   simp only [hcap, Bool.false_eq_true, ↓reduceIte] at *
@@ -110,8 +111,8 @@ theorem ctrWalesUc_excess (c : Claims) (e : Int) (hcap : c.capApplies (e + 10_00
     generalize c.childcareMicro e = X at *
     generalize c.maxMicro = M at *
     generalize micro * ((c.tariff + c.unearnedMonthly : Nat) : Int) = T at *
-    generalize (ucTaperPercent : Int) * max 0 (e + 10_000 * (c.partnerEarned : Int)
-      - 10_000 * 12 * (c.workAllowance : Int)) = P at *
+    generalize (P.ucTaper : Int) * max 0 (e + 10_000 * (c.partnerEarned : Int)
+      - 10_000 * 12 * (c.workAllowance : Int)) = TP at *
     omega
   · omega
 
@@ -175,10 +176,10 @@ def scotOwnExcess (h : HbWaClaim) (E : Int) : Int :=
 /-- The relevant UC payments for the year, 1/1 000 000 pence (reg 57(1)(p), (2)(d)):
 with a child element, the child element and disabled child additions and the
 childcare costs element, or the award (after the benefit cap) if lower. -/
-def scotUcPayments (c : Claims) (e : Int) : Int :=
+def scotUcPayments (P : TaxParams) (c : Claims) (e : Int) : Int :=
   if c.childElements > 0 then
     min (12 * (micro * ((c.childElements + c.disabledLower * ucDisabledChildLower
-      + c.disabledHigher * ucDisabledChildHigher : Nat) : Int) + c.childcareMicro e)) (ucAward c e)
+      + c.disabledHigher * ucDisabledChildHigher : Nat) : Int) + c.childcareMicro e)) (ucAward P c e)
   else 0
 
 /-- The weekly relevant childcare charges of a UC claimant, pence (reg 78(3)): the
@@ -193,10 +194,10 @@ earned income `e` (1/10 000 pence a year) and the partner's less the weekly
 disregard `S`, unearned income, Carer's Allowance, UC tariff income and the relevant
 UC payments, less the childcare charges and the applicable amount `A` (pence a
 week). -/
-def scotUcExcess (c : Claims) (S A : Nat) (e : Int) : Int :=
+def scotUcExcess (P : TaxParams) (c : Claims) (S A : Nat) (e : Int) : Int :=
   100 * hbWaEarningsAfter false S (e + 10_000 * (c.partnerEarned : Int))
     + 12 * (micro * ((c.tariff + c.unearnedMonthly : Nat) : Int)) + micro * (c.carersAllowanceYear : Int)
-    + scotUcPayments c e - 52 * micro * scotUcChildcare c e - 52 * micro * (A : Int)
+    + scotUcPayments P c e - 52 * micro * scotUcChildcare c e - 52 * micro * (A : Int)
 
 /-- The second adult rebate for the year, `cu` (Sch 2): `rate` tenths of a percent of
 the year's council tax due `gct` pence. -/

@@ -122,8 +122,8 @@ def class4Main (prof : Nat) : Nat :=
   class4MainRate * (min prof upperProfitsLimit - lowerProfitsLimit)
 
 /-- Employee Class 1 paid at the main primary percentage, exact. -/
-def nicMainExact (p : EarningsPeriod) (e : Nat) : Nat :=
-  nicMainRate * (min e p.upperEarningsLimit - p.primaryThreshold)
+def nicMainExact (P : TaxParams) (p : EarningsPeriod) (e : Nat) : Nat :=
+  P.nicMain * (min e (p.upperEarningsLimit P) - p.primaryThreshold P)
 
 /-- The Class 4 annual maximum of SI 2001/1004 reg 100(3)
 <https://www.legislation.gov.uk/uksi/2001/1004/regulation/100>, times 3 (so that
@@ -149,8 +149,8 @@ def class4Max3 (c1 prof : Nat) : Nat :=
 /-- Class 4 for the year, exact: before the maximum, limited by reg 100 where
 employee Class 1 is also payable (reg 100(1)(a)). Where the maximum applies it is
 rounded down to 1/10 000 of a penny, the only rounding in the model below that. -/
-def class4Exact (p : EarningsPeriod) (e prof : Nat) : Nat :=
-  if 0 < nicExact p e then min (class4Pre prof) (class4Max3 (nicMainExact p e) prof / 3)
+def class4Exact (P : TaxParams) (p : EarningsPeriod) (e prof : Nat) : Nat :=
+  if 0 < nicExact P p e then min (class4Pre prof) (class4Max3 (nicMainExact P p e) prof / 3)
   else class4Pre prof
 
 /-! ## Properties -/
@@ -166,19 +166,19 @@ theorem employerNicExact_succ (p : EarningsPeriod) (z : Bool) (e : Nat) :
   omega
 
 /-- The annual maximum never raises Class 4. -/
-theorem class4Exact_le_pre (p : EarningsPeriod) (e prof : Nat) :
-    class4Exact p e prof ≤ class4Pre prof := by
+theorem class4Exact_le_pre (P : TaxParams) (p : EarningsPeriod) (e prof : Nat) :
+    class4Exact P p e prof ≤ class4Pre prof := by
   unfold class4Exact; split <;> omega
 
 /-- Class 4 never falls as profits rise, with or without the annual maximum, and a
 penny more profit adds at most 6 % of a penny. -/
-theorem class4Exact_succ (p : EarningsPeriod) (e prof : Nat) :
-    class4Exact p e prof ≤ class4Exact p e (prof + 1) ∧
-      class4Exact p e (prof + 1) ≤ class4Exact p e prof + class4MainRate := by
+theorem class4Exact_succ (P : TaxParams) (p : EarningsPeriod) (e prof : Nat) :
+    class4Exact P p e prof ≤ class4Exact P p e (prof + 1) ∧
+      class4Exact P p e (prof + 1) ≤ class4Exact P p e prof + class4MainRate := by
   have hLU : lowerProfitsLimit ≤ upperProfitsLimit := by decide
   unfold class4Exact class4Max3 class4Pre class4Main
-  generalize nicMainExact p e = c
-  generalize nicExact p e = n
+  generalize nicMainExact P p e = c
+  generalize nicExact P p e = n
   generalize upperProfitsLimit = U at *
   generalize lowerProfitsLimit = L at *
   unfold class4MainRate class4AdditionalRate
@@ -191,11 +191,11 @@ earnings limit on the annual basis), Class 4 is 2 % of all profits above the
 lower limit: the employee has already paid 8 % on the whole band, more than the
 6 % Class 4 would charge on it, so reg 100 leaves only the additional rate. -/
 theorem class4Exact_full_class1 (prof : Nat) :
-    class4Exact .annual upperEarningsLimitAnnual prof
+    class4Exact .y2026 .annual upperEarningsLimitAnnual prof
       = class4AdditionalRate * (prof - lowerProfitsLimit) := by
-  have h1 : nicMainExact .annual upperEarningsLimitAnnual
+  have h1 : nicMainExact .y2026 .annual upperEarningsLimitAnnual
       = nicMainRate * (upperProfitsLimit - lowerProfitsLimit) := by decide
-  have h2 : 0 < nicExact .annual upperEarningsLimitAnnual := by decide
+  have h2 : 0 < nicExact .y2026 .annual upperEarningsLimitAnnual := by decide
   have hLU : lowerProfitsLimit ≤ upperProfitsLimit := by decide
   unfold class4Exact class4Max3 class4Pre class4Main
   rw [h1]

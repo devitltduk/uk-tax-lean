@@ -119,10 +119,10 @@ unearned income" (UC unearned income, Carer's Allowance, and Child Benefit of `c
 pence a week, which Appendix 3 does not ignore: the Child Benefit disregard of
 Appendix 5 is only for applicants without UC), less £48.15 a week of each carer
 element and £84.46 of each disabled child element. -/
-def oxfordUcIncome (c : Claims) (cb : Nat) (e : Int) : Int :=
+def oxfordUcIncome (P : TaxParams) (c : Claims) (cb : Nat) (e : Int) : Int :=
   100 * (e + 10_000 * (c.partnerEarned : Int)) + 12 * (micro * (c.unearnedMonthly : Int))
     + 52 * micro * (cb : Int)
-    + micro * (c.carersAllowanceYear : Int) + ucAward c e
+    + micro * (c.carersAllowanceYear : Int) + ucAward P c e
     - 52 * micro * ((c.carerCount * oxfordCarerDisregard
         + (c.disabledLower + c.disabledHigher) * oxfordDisabledChildDisregard : Nat) : Int)
 
