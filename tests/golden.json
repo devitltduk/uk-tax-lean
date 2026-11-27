@@ -2641,5 +2641,131 @@
     "source": "SI 2013/376 regs 62(3), 90(2), 90(3)(a), 6(1A)(a); ADM H4080 example 2",
     "working": "claimant's UC profit £6,000 (taxable £5,000 after the trading allowance; no tax), floor £20,379.96. Partner: 16 x £12.71 x 52 / 12 = £881.21, £881 a month, £10,572 a year, no tax or NICs. Couple threshold £30,951.96. £6,000 < £20,379.96 and £6,000 + £12,000 < £30,951.96, so the floor applies, less £20,379.96 + £12,000 - £30,951.96 = £1,428: £18,951.96. UC 12 x (£666.97 + 2 x £303.94) = £15,298.20 less 55 % x (£18,951.96 + £12,000 - £8,520) = £12,337.578: £2,960.622",
     "uc_millionths_pence": 296062200000
+  },
+  {
+    "name": "Working-age HB, on UC in supported accommodation: the maximum",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "housing_benefit_working_age": {
+        "rent_weekly_pence": 15000,
+        "passported": true
+      }
+    },
+    "source": "SI 2006/213 reg 70, Sch 5 para 4, Sch 6 para 5; SI 2025/1148 art 7(4)(a); SI 2014/1230 reg 6A(2)",
+    "working": "all income and capital disregarded on UC: £150 a week, 52 x £150 = £7,800 at both rates, saved for the whole year (x 728: 728 x £7,800)",
+    "housing_benefit_wa_rate_before_millionths_pence": 780000000000,
+    "housing_benefit_wa_rate_from_october_millionths_pence": 780000000000,
+    "housing_benefit_wa_payable_728_millionths_pence": 567840000000000
+  },
+  {
+    "name": "Working-age HB, single on pay, general accommodation: ends 30 June 2026",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 1200000,
+      "employment_pence": 1200000,
+      "housing_benefit_working_age": {
+        "rent_weekly_pence": 12000,
+        "accommodation": "general"
+      }
+    },
+    "source": "SI 2006/213 regs 22, 36(3), 70, 71, Sch 3 para 1, Sch 4 para 10; SI 2026/148 Sch 4; SI 2025/1148 art 7(3)",
+    "working": "net earnings £12,000 (no tax or NICs), less 52 x £5 = £11,740; applicable 52 x £95.55 = £4,968.60; 65 % x £6,771.40 = £4,401.41; maximum 52 x £120 = £6,240; £1,838.59 for 52 weeks (no para 18 disregard outside specified accommodation). Ends 30 June 2026: 86 days from Monday 6 April, £1,838.59 x 86 / 364 = £434.39 (x 728: 172 x £1,838.59)",
+    "housing_benefit_wa_rate_before_millionths_pence": 183859000000,
+    "housing_benefit_wa_rate_from_october_millionths_pence": 183859000000,
+    "housing_benefit_wa_payable_728_millionths_pence": 31623748000000
+  },
+  {
+    "name": "Working-age HB, single earner in specified accommodation: the October disregard",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 1200000,
+      "employment_pence": 1200000,
+      "housing_benefit_working_age": {
+        "rent_weekly_pence": 12000
+      }
+    },
+    "source": "SI 2006/213 Sch 4 paras 10, 18 (SI 2026/753 reg 2, as substituted by SI 2026/978 reg 2)",
+    "working": "to 4 October as above, £1,838.59. From 5 October the disregard is £5 + £77.73 (single, 25 or over): 52 x £82.73 = £4,301.96; income £7,698.04; 65 % x (£7,698.04 - £4,968.60) = £1,774.136; £6,240 - £1,774.136 = £4,465.864. Year: 26 weeks of each, (£1,838.59 + £4,465.864) / 2 = £3,152.227",
+    "housing_benefit_wa_rate_before_millionths_pence": 183859000000,
+    "housing_benefit_wa_rate_from_october_millionths_pence": 446586400000,
+    "housing_benefit_wa_payable_728_millionths_pence": 229482125600000
+  },
+  {
+    "name": "Working-age HB, lone parent: £25, £17.10 and October disregards, tariff on part of £250",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 1800000,
+      "employment_pence": 1800000,
+      "housing_benefit_working_age": {
+        "rent_weekly_pence": 14000,
+        "lha_weekly_pence": 13000,
+        "lone_parent": true,
+        "children": 2,
+        "additional_disregard": true,
+        "capital_pence": 610000
+      }
+    },
+    "source": "SI 2006/213 regs 36(3), 52(1), (6), 70, 71, Sch 3 paras 1, 2, Sch 4 paras 4, 17, 18; SI 2026/148 art 23(6), (10), Sch 4; SI 2026/978 reg 2",
+    "working": "pay £18,000: tax 20 % x £5,430 = £1,086, Class 1 8 % x £5,430 = £434.40, net £16,479.60. Capital £6,100: £100 over £6,000 is part of £250, £1 a week, £52. Applicable 52 x (£95.55 + 2 x £87.88) = £14,108.12. Eligible rent the LHA, 52 x £130 = £6,760. To 4 October: earnings reach 52 x (£25 + £17.10) = £2,189.20, so both come off: £14,290.40; income £14,342.40; 65 % x £234.28 = £152.282; £6,607.718. From 5 October: 52 x (£25 + £77.73 + £17.10) = £6,231.16 off: £10,248.44; income £10,300.44, below the applicable amount: the maximum, £6,760",
+    "housing_benefit_wa_rate_before_millionths_pence": 660771800000,
+    "housing_benefit_wa_rate_from_october_millionths_pence": 676000000000,
+    "housing_benefit_wa_payable_728_millionths_pence": 486584935200000
+  },
+  {
+    "name": "Working-age HB, capital 1p over £16,000",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 1200000,
+      "employment_pence": 1200000,
+      "housing_benefit_working_age": {
+        "rent_weekly_pence": 12000,
+        "capital_pence": 1600001
+      }
+    },
+    "source": "SI 2006/213 reg 43",
+    "working": "capital over £16,000: no Housing Benefit at either rate",
+    "housing_benefit_wa_rate_before_millionths_pence": 0,
+    "housing_benefit_wa_rate_from_october_millionths_pence": 0
+  },
+  {
+    "name": "Working-age HB in temporary accommodation: the benefit cap",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "housing_benefit_working_age": {
+        "rent_weekly_pence": 30000,
+        "accommodation": "temporary"
+      }
+    },
+    "source": "SI 2006/213 regs 75C(1), 75CA(1), (2)(c), 75D(1)",
+    "working": "no income: the maximum, £300 a week. Cap £14,753 / 52 = £283.7115, £283.71; Housing Benefit counts in temporary accommodation, so £16.29 a week comes off: £283.71 a week, 52 x £283.71 = £14,752.92 at both rates",
+    "housing_benefit_wa_rate_before_millionths_pence": 1475292000000,
+    "housing_benefit_wa_rate_from_october_millionths_pence": 1475292000000
+  },
+  {
+    "name": "Working-age HB in specified accommodation: counted as nil for the cap",
+    "input": {
+      "savings_pence": 0,
+      "dividends_pence": 0,
+      "non_savings_pence": 0,
+      "employment_pence": 0,
+      "housing_benefit_working_age": {
+        "rent_weekly_pence": 30000,
+        "accommodation": "specified"
+      }
+    },
+    "source": "SI 2006/213 regs 75C(2)(a), 75H",
+    "working": "as above, but Housing Benefit in specified accommodation counts as nil, and there are no other welfare benefits: no reduction, 52 x £300 = £15,600",
+    "housing_benefit_wa_rate_before_millionths_pence": 1560000000000,
+    "housing_benefit_wa_rate_from_october_millionths_pence": 1560000000000
   }
 ]

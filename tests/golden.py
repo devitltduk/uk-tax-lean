@@ -65,6 +65,9 @@ CHECKED = (
     "net_income_carer_uc_millionths_pence",
     "uc_earned_income_ten_thousandths_pence",
     "uc_minimum_income_floor_ten_thousandths_pence",
+    "housing_benefit_wa_rate_before_millionths_pence",
+    "housing_benefit_wa_rate_from_october_millionths_pence",
+    "housing_benefit_wa_payable_728_millionths_pence",
 )
 
 failures = 0

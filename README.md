@@ -308,8 +308,42 @@ deductions (reg 26); with savings credit only, income is the Pension Credit
 assessment plus the savings credit (reg 27); otherwise HB's own means test, with
 income net of tax (reg 33(12)) and nothing over £16,000 of capital. Input
 `housing_benefit` with the household's income in `pension_credit`. Not modelled:
-working-age Housing Benefit, the additional £17.10 earnings disregard, childcare
-charges, and the LHA itself (an input).
+the additional £17.10 earnings disregard, childcare charges, and the LHA itself (an
+input).
+
+### Working-age Housing Benefit and the legacy benefits (`UkTax/HousingBenefitWa.lean`)
+
+What is left of the legacy benefits in 2026-27
+([SI 2025/1148](https://www.legislation.gov.uk/uksi/2025/1148)):
+
+- Income Support and income-based JSA were abolished for every award from 1 April
+  2026 (arts 4, 5): nothing is payable;
+- income-related ESA ends on 1 July 2026 except where an appointee acts for the
+  claimant (art 3A); not computed (an input, as in PolicyEngine);
+- working-age Housing Benefit ends on 1 July 2026 (art 7) except in specified or
+  temporary accommodation and for awards saved with income-related ESA (art 7(4)).
+
+Working-age Housing Benefit ([SI 2006/213](https://www.legislation.gov.uk/uksi/2006/213)),
+input `housing_benefit_working_age`, from pay:
+
+| Figure | 2026-27 | Source |
+|---|---|---|
+| Personal allowance | £95.55 single 25 or over or lone parent, £75.65 single under 25, £150.15 couple | Sch 3 para 1; [SI 2026/148 art 23(6), Sch 4](https://www.legislation.gov.uk/uksi/2026/148/article/23/made) |
+| Each child | £87.88, every child (no two-child limit from 6 April 2026) | Sch 3 para 2; reg 22(1)(b) as amended by [SI 2026/316 reg 2(2)](https://www.legislation.gov.uk/uksi/2026/316/made) |
+| Premiums | disability £44.85 / £64.00, enhanced disability £22.00 / £31.40 (child £33.99), severe disability £86.05, disabled child £84.46, carer £48.15, family premium (protected) £20.22; support component £50.35 | Sch 3, Order Sch 5 |
+| Earnings disregards | £25 lone parent, £20 disability, carer or listed jobs, £10 couple, £5 single; £17.10 more where para 17(2) is met and earnings reach the total; from 5 October 2026 in specified or temporary accommodation £77.73 (£61.41 under 25), couples £119.70 (£61.53) | [Sch 4](https://www.legislation.gov.uk/uksi/2006/213/schedule/4) paras 3-10, 17, 18 ([SI 2026/753](https://www.legislation.gov.uk/uksi/2026/753/made) as substituted by [SI 2026/978](https://www.legislation.gov.uk/uksi/2026/978/made)) |
+| Capital | £16,000 limit; £1 a week for each £250 or part above £6,000 | [regs 43, 52(1), (6)](https://www.legislation.gov.uk/uksi/2006/213/regulation/52) |
+| Benefit cap | annual limit ÷ 52 to the penny (£283.71 single, £423.46 others outside London); Housing Benefit counts as nil in specified accommodation | [regs 75C, 75CA, 75D, 75H](https://www.legislation.gov.uk/uksi/2006/213/regulation/75C) |
+
+Net earnings are pay less tax on the pay, primary Class 1 and half the pension
+contributions (reg 36(3)). On UC, Income Support, income-based JSA or
+income-related ESA all income and capital is disregarded (Sch 5 para 4, Sch 6
+para 5): the maximum, the rent less non-dependant deductions (the pensioner
+amounts). The award is the maximum less 65 % of income above the applicable
+amount. 6 April 2026 is a Monday, so the 52-week year is 26 weeks to 4 October and
+26 from 5 October; an award in general accommodation is payable for the 86 days to
+30 June 2026. Not modelled: self-employment, childcare charges, other special
+disregards, the cap's grace period.
 
 ### Council tax and Council Tax Reduction for pensioners (`UkTax/CouncilTax.lean`)
 
@@ -436,7 +470,7 @@ disabled children, the childcare tests' routes for a partner who is disabled or 
 carer, the lower minimum earnings for parents under 21 or apprentices, the 15
 hours for disadvantaged 2-year-olds (which depend on benefits), a child changing
 age band during the year (the model takes one band for the year), Wales's,
-Scotland's and Northern Ireland's own childcare schemes, legacy benefits, reliefs and deductions not listed above (losses and loss
+Scotland's and Northern Ireland's own childcare schemes, income-related ESA, reliefs and deductions not listed above (losses and loss
 relief, capital allowances, property finance costs, employment expenses; Gift
 Aid, pension contributions and trading or property income with Universal Credit
 or the childcare tests), other tax reductions, property income's own rates (from 2027-28), the default rates for non-residents, top-slicing relief,
@@ -538,6 +572,15 @@ relief-at-source contributions.
   rounding steps; above the minimum guarantee it keeps at least 60 % of such a
   rise; and each £500 of capital above £10,000 is exactly
   £1 a week of deemed income.
+- `hbWa_passport`, `hbWa_capital_cliff`, `hbWa_additional_step`, `hbWa_earnings_gain`,
+  `hbWa_cap_bounds`, `hbWa_cap_specified`, `hbWa_abolition`
+  (`UkTax/HousingBenefitWa.lean`): working-age Housing Benefit is the maximum on a
+  passporting benefit and nil a penny over £16,000; the £17.10 additional disregard
+  is a step at which more earnings lower the income counted (HB rises); otherwise
+  more earnings never give more HB and income plus HB keeps 35 % of a rise; the cap
+  never raises HB or takes it below 50p a week, and in specified accommodation
+  takes nothing unless the other benefits alone exceed it; an award ending on 1
+  July 2026 pays 86/364 of the year.
 - `hb_total_gain`, `hb_passport`, `hb_capital_cliff`, `nonDep_mono`
   (`UkTax/HousingBenefit.lean`): on the 65 % taper (`hbTaper`, the same maximum
   and applicable amount), income plus Housing Benefit keeps at least 35 % of any
@@ -872,6 +915,21 @@ non-dependant in each band. Latest local run: 1,013 of 1,013 agree (893 paid),
 within 2 float32 steps plus 65 % of the savings credit rounding of findings #22
 (largest difference 39p a year). Households with a non-dependant have no savings,
 since PolicyEngine shares household savings between benefit units (findings #26).
+
+### Working-age Housing Benefit against PolicyEngine
+
+`uv run python compare_housing_wa.py` compares working-age council tenants
+(single, under 25, lone parents, couples, 0 to 3 children) with pay and savings, in
+specified, temporary and general accommodation, some on Universal Credit, with the
+benefit cap. Two documented PolicyEngine limitations are put on its basis: it
+leaves out the £87.88 child amount (its open issue #2825) and does not count
+Housing Benefit as nil for the cap in specified accommodation (its documentation
+says the input does not implement that); it also caps the year at the unrounded
+annual limit where the law caps each week at the limit ÷ 52 to the penny. Latest
+local run: 1,017 of 1,017 agree within 2 float32 steps plus 0.4p (921 paid, 65 on
+UC). In law the child amount adds up to £8,742 a year for the 357 families with
+children, specified accommodation up to £847 where the cap would bite, and the
+weekly cap gives 8p to £63.35 a year less where it binds (findings #34).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

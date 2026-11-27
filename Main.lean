@@ -143,6 +143,25 @@ Optional fields:
   output `cgt_exact_ten_thousandths_pence` (`UkTax/Cgt.lean`), banded against this
   taxpayer's income. For a Scottish taxpayer the UK basic rate band is used
   (TCGA 1992 s1J(6));
+* `housing_benefit_working_age`: working-age Housing Benefit (`UkTax/HousingBenefitWa.lean`),
+  pay only: the rent and non-dependant fields of `housing_benefit`, and `couple`,
+  `lone_parent`, `under_25`, `children`, `family_premium`, `disability_premium`,
+  `enhanced_disability_premium`, `severe_disability`, `enhanced_disability_children`,
+  `disabled_children`, `carers`, `esa_component` (`"none"`, `"support"`, `"wra"`),
+  `disregard` (`"single"`, `"couple"`, `"higher"`, `"lone_parent"`; by default from
+  the household), `additional_disregard`, `passported` (on UC, Income Support,
+  income-based JSA or income-related ESA), `other_weekly_pence` (other income
+  counted in full), `capital_pence`, `accommodation` (`"specified"`, the default,
+  `"temporary"` or `"general"`: specified or temporary accommodation keeps the award
+  past 1 July 2026 and gives an earner the para 18 disregard from 5 October 2026)
+  and `esa_saved` (an income-related ESA award saved by art 3A(2)); in general
+  accommodation without that the award ends on 30 June 2026. The benefit cap:
+  `cap_exempt` (a reg 75F benefit), `london`, `cap_other_weekly_pence` (the other
+  welfare benefits a week). `under_25` is the single claimant or lone parent, or both members
+  of a couple. Outputs `housing_benefit_wa_rate_before_millionths_pence` and
+  `housing_benefit_wa_rate_from_october_millionths_pence` (each a rate for 52 weeks,
+  to 4 October and from 5 October 2026), `housing_benefit_wa_payable_728_millionths_pence`
+  (payable in 2026-27, × 728), the weekly applicable amount and maximum;
 * `sdlt`: `{"kind": "residential" | "first_time_buyer" | "additional_dwelling" |
   "non_residential", "consideration_pence": n}`, Stamp Duty Land Tax in England or
   Northern Ireland (`UkTax/Sdlt.lean`; output `sdlt_exact_ten_thousandths_pence`);
@@ -221,6 +240,7 @@ structure Case where
   /-- The minimum income floor: whole pounds, the claimant's and the partner's
   expected hours. -/
   mif : Option (Bool × Nat × Nat) := none
+  hbWa : Option HbWaClaim := none
 
 def parseCase (j : Json) : Except String Case := do
   let field (k : String) : Except String Nat :=
@@ -487,6 +507,48 @@ def parseCase (j : Json) : Except String Case := do
         throw "housing_benefit: give the household's income as pension_credit (HB(SPC), for pensioners)"
       pure (some (← parseHb o))
     | none => pure none
+  let hbWa ← match obj "housing_benefit_working_age" with
+    | some o => do
+      if income.savings + income.dividends > 0 || employment - netPay ≠ income.nonSavings then
+        throw "housing_benefit_working_age: only pay is modelled (employment_pence must equal non_savings_pence, with no savings or dividends)"
+      if pc.isSome then
+        throw "housing_benefit_working_age: not with pension_credit (pensioners have housing_benefit)"
+      let h ← parseHb o
+      let couple := subB o "couple"
+      let lone := subB o "lone_parent"
+      let children ← sub o "children"
+      if couple && lone then throw "housing_benefit_working_age: couple and lone_parent together"
+      let esa ← match o.getObjValAs? String "esa_component" with
+        | .ok "none" | .error _ => pure EsaComponent.none
+        | .ok "support" => pure .support
+        | .ok "wra" => pure .wra
+        | .ok v => throw s!"housing_benefit_working_age.esa_component must be none, support or wra, not {v}"
+      let dis ← match o.getObjValAs? String "disregard" with
+        | .ok "single" => pure HbWaDisregard.single
+        | .ok "couple" => pure .couple
+        | .ok "higher" => pure .higher
+        | .ok "lone_parent" => pure .loneParent
+        | .ok v => throw s!"housing_benefit_working_age.disregard must be single, couple, higher or lone_parent, not {v}"
+        | .error _ => pure (if lone then .loneParent else if couple then .couple else .single)
+      let acc ← match o.getObjValAs? String "accommodation" with
+        | .ok "specified" | .error _ => pure HbWaAccommodation.specified
+        | .ok "temporary" => pure .temporary
+        | .ok "general" => pure .general
+        | .ok v => throw s!"housing_benefit_working_age.accommodation must be specified, temporary or general, not {v}"
+      let capOther ← sub o "cap_other_weekly_pence"
+      let other ← sub o "other_weekly_pence"
+      let cap ← sub o "capital_pence"
+      pure (some ({
+        housing := h, couple, lone, under25 := subB o "under_25", children,
+        familyPremium := h.familyPremium, disability := subB o "disability_premium",
+        enhancedDisability := subB o "enhanced_disability_premium",
+        severeDisability := h.severeDisability, enhancedDisabilityChildren := h.enhancedDisabilityChildren,
+        disabledChildren := h.disabledChildren, carers := h.carers, esa, disregard := dis,
+        additionalDisregard := subB o "additional_disregard", passported := subB o "passported",
+        otherWeekly := other, capital := cap,
+        accommodation := acc, esaSaved := subB o "esa_saved", capExempt := subB o "cap_exempt",
+        london := subB o "london", capOtherWeekly := capOther } : HbWaClaim))
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -536,7 +598,7 @@ def parseCase (j : Json) : Except String Case := do
     class3Weeks := c3, disability := disability, carer := carer,
     maAwe := maAwe, jsa := jsa, esa := esa, ssmgIn := ssmgIn, pc := pc, nspYears := nspYears, hb := hb,
     ctr := ctr, ct := ct, nation := nation, cgt := cgtIn, sdlt := sdlt,
-    ucProfit := (tr : Int) - te, mif := mif }
+    ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa }
   return res
 
 def result (c : Case) : Json :=
@@ -651,6 +713,24 @@ def result (c : Case) : Json :=
       | _, _ => [])
     ++ (match c.cgt with
       | some (b, o) => [("cgt_exact_ten_thousandths_pence", toJson (cgtExact (i.cgtBand rg) b o))]
+      | none => [])
+    ++ (match c.hbWa with
+      | some h => [
+        ("housing_benefit_wa_rate_before_millionths_pence",
+          toJson (hbWaRateBefore h (hbWaEarnings c.period rg c.employment))),
+        ("housing_benefit_wa_rate_from_october_millionths_pence",
+          toJson (hbWaRateAfter h (hbWaEarnings c.period rg c.employment))),
+        ("housing_benefit_wa_payable_728_millionths_pence",
+          toJson (hbWaPayable h (hbWaEarnings c.period rg c.employment))),
+        ("housing_benefit_wa_uncapped_before_millionths_pence",
+          toJson (hbWaRateUncapped h h.disregard.weekly (hbWaEarnings c.period rg c.employment))),
+        ("housing_benefit_wa_uncapped_from_october_millionths_pence",
+          toJson (hbWaRateUncapped h (h.disregard.weekly
+            + if h.specifiedOrTemporary && decide (0 < hbWaEarnings c.period rg c.employment)
+              then h.specifiedDisregard else 0) (hbWaEarnings c.period rg c.employment))),
+        ("housing_benefit_wa_cap_weekly_pence", toJson h.capWeekly),
+        ("housing_benefit_wa_applicable_weekly_pence", toJson h.applicable),
+        ("housing_benefit_wa_maximum_weekly_pence", toJson h.housing.maximum)]
       | none => [])
     ++ (match c.sdlt with
       | some (k, p) => [("sdlt_exact_ten_thousandths_pence", toJson (sdltExact k p))]

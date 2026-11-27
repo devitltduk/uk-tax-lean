@@ -13,6 +13,8 @@ import UkTax.Sdlt
 import UkTax.CarerUc
 import UkTax.UcSelfEmployed
 
+import UkTax.HousingBenefitWa
+
 /-!
 Fails the build if the main theorems ever depend on `sorryAx` or any axiom
 beyond Lean's standard three. Each guard states the exact set a theorem uses
@@ -278,3 +280,31 @@ today, so any change to it is seen.
 /-- info: 'UkTax.earned_plus_uc_mono_floor' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.earned_plus_uc_mono_floor
+
+/-- info: 'UkTax.hbWa_passport' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.hbWa_passport
+
+/-- info: 'UkTax.hbWa_capital_cliff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.hbWa_capital_cliff
+
+/-- info: 'UkTax.hbWa_additional_step' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.hbWa_additional_step
+
+/-- info: 'UkTax.hbWa_earnings_gain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.hbWa_earnings_gain
+
+/-- info: 'UkTax.hbWa_cap_bounds' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.hbWa_cap_bounds
+
+/-- info: 'UkTax.hbWa_cap_specified' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms UkTax.hbWa_cap_specified
+
+/-- info: 'UkTax.hbWa_abolition' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.hbWa_abolition

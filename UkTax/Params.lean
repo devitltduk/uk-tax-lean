@@ -618,6 +618,55 @@ claimant or partner or listed employments (paras 2-5, at most £25 for a lone
 parent and £20 otherwise, para 1), else £10 for a couple and £5 single (para 7). -/
 def hbDisregardLoneParent : Nat := 2_500
 
+/-! ## Housing Benefit for working-age claimants, 2026-27 (weekly amounts, pence)
+
+The Housing Benefit Regulations 2006 (SI 2006/213), as uprated by SI 2026/148 art
+23 and Schs 4-5 <https://www.legislation.gov.uk/uksi/2026/148/article/23/made>.
+The child allowance, family premium, severe disability, enhanced disability (child),
+disabled child and carer premiums and the non-dependant deductions are the same
+amounts as for pensioners (above). Checked against legislation.gov.uk on
+2026-11-27. -/
+
+/-- Personal allowances (Sch 3 para 1, SI 2026/148 Sch 4): single claimant aged 25
+or over, or entitled to main phase ESA, £95.55; under 25, £75.65; lone parent aged
+18 or over £95.55; couple with a member aged 18 or over £150.15. -/
+def hbWaSingle25 : Nat := 9_555
+def hbWaSingleU25 : Nat := 7_565
+def hbWaLoneParent : Nat := 9_555
+def hbWaCouple : Nat := 15_015
+
+/-- Disability premium (Sch 3 para 20(5)): £44.85 single, £64.00 couple. Enhanced
+disability premium for an adult (para 20(9)(b), (c)): £22.00 single, £31.40 couple. -/
+def hbWaDisabilitySingle : Nat := 4_485
+def hbWaDisabilityCouple : Nat := 6_400
+def hbWaEnhancedSingle : Nat := 2_200
+def hbWaEnhancedCouple : Nat := 3_140
+
+/-- Components (Sch 3 Part 6, art 23(9)): the support component £50.35 (para 26);
+the work-related activity component £37.95 (para 25, only for awards protected by
+SI 2017/204 Sch 2 paras 2-7). -/
+def hbWaSupportComponent : Nat := 5_035
+def hbWaWraComponent : Nat := 3_795
+
+/-- The additional earnings disregard (Sch 4 para 17): £17.10, unchanged
+(art 23(10)). -/
+def hbWaAdditionalDisregard : Nat := 1_710
+
+/-- The disregard for earners in specified or temporary accommodation, from 5 October
+2026 (Sch 4 para 18, inserted by SI 2026/753 reg 2 as substituted by SI 2026/978
+reg 2): a single claimant or lone parent £61.41 under 25, £77.73 at 25 or over; a
+couple £61.53 where both are under 25 (one 18 or over), £119.70 where one is 25 or
+over. -/
+def hbWaSpecifiedSingleU25 : Nat := 6_141
+def hbWaSpecifiedSingle25 : Nat := 7_773
+def hbWaSpecifiedCoupleU25 : Nat := 6_153
+def hbWaSpecifiedCouple25 : Nat := 11_970
+
+/-- Tariff income (reg 52(1), (6)): £1 a week for each £250, or part, of capital
+above £6,000. -/
+def hbWaCapitalLower : Nat := 600_000
+def hbWaCapitalStep : Nat := 25_000
+
 /-! ## Council tax and Council Tax Reduction, 2026-27
 
 Checked against legislation.gov.uk on 2026-11-27. -/
