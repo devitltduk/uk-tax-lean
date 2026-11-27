@@ -1,4 +1,4 @@
-"""The 1200 x 1500 image for docs/drafts/linkedin.png: pension relief at source.
+"""A 1200 x 1500 image for a LinkedIn draft: pension relief at source.
 
 A worker pays £1,600 into a personal pension (a relief-at-source scheme); the
 provider claims £400 from HMRC, so £2,000 goes in. In law that £400 is the
@@ -11,7 +11,7 @@ and shades the relief PolicyEngine leaves out.
 
     lake build && cd harness && uv run --frozen python linkedin.py
 
-The style is the shared
+It writes harness/out/linkedin.png (ignored by git). The style is the shared
 cliff image's: Inter (harness/fonts, SIL Open Font License), 4:5.
 """
 
@@ -133,7 +133,8 @@ def main() -> None:
     text(80, 1360, "2026-27, England. Law: Finance Act 2004 s192, from an exact model of the rules.", 13.5, MUTED)
     text(80, 1386, "Model: PolicyEngine UK 2.180.2, the fall in income tax from the contribution.", 13.5, MUTED)
     text(80, 1430, HANDLE, 15, MUTED, "SemiBold")
-    out = ROOT / "docs/drafts/linkedin.png"
+    out = HERE / "out/linkedin.png"
+    out.parent.mkdir(exist_ok=True)
     fig.savefig(out, dpi=DPI, facecolor=BG, metadata={"Software": None})
     print(f"wrote {out}")
 

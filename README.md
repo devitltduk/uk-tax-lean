@@ -19,8 +19,8 @@ Of the 90 programme rows in [`docs/coverage.md`](docs/coverage.md), 68 are done 
 22 are out of scope with the reason (consumption duties, discretionary or
 cost-reimbursement schemes, reported amounts and the like); none is left to build.
 [`docs/findings.md`](docs/findings.md) classifies 46 sets of differences from
-PolicyEngine; the likely PolicyEngine errors among them have 13 draft issues in
-[`docs/drafts/issues/`](docs/drafts/issues/) (not posted).
+PolicyEngine; the likely PolicyEngine errors among them have 13 draft issues,
+kept privately and not posted.
 
 A write-up of the results, with the cliff map and the differences from
 PolicyEngine UK, is in [`docs/writeup.md`](docs/writeup.md).
