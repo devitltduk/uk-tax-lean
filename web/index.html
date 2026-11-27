@@ -71,11 +71,13 @@
         </select></label>
     </fieldset>
 
-    <fieldset>
+    <fieldset id="figures">
       <legend>Figures</legend>
-      <label>Rates and thresholds
-        <select name="params"><option value="builtin-2026-27">2026-27 (built into the model)</option></select></label>
-      <p class="hint">A later version will accept other parameter sets as JSON.</p>
+      <p class="hint">The 2026-27 rates and thresholds, loaded from the model. Change any of them and
+        everything on the page is recomputed with yours. Only figures can change, not the rules.</p>
+      <div id="paramFields" class="params"></div>
+      <button type="button" id="resetParams">Reset to 2026-27</button>
+      <p class="check-status" id="paramsStatus" role="status"></p>
     </fieldset>
   </form>
 
@@ -92,11 +94,13 @@
 
   <section class="panel chart-panel">
     <h2>Take-home against pay</h2>
-    <p class="hint">Your situation as above with pay swept from £0, computed live by the model. Marked points are cliffs: a pound more pay leaves you worse off.</p>
+    <p class="hint">Your situation as above with pay swept from £0, computed live by the model. Marked points are cliffs:
+      a penny more pay leaves you worse off. Shaded ranges are runs of small steps.</p>
     <div class="chart" id="chart"></div>
-    <details>
-      <summary>Cliffs found (table)</summary>
-      <table class="cliffs" id="cliffs"><thead><tr><th>Pay rises past</th><th>Take-home falls by</th></tr></thead><tbody></tbody></table>
+    <p class="hint" id="cliffNote"></p>
+    <details open>
+      <summary>Cliffs (from the model's cliff map)</summary>
+      <table class="cliffs" id="cliffs"><thead><tr><th>Pay rises past</th><th>What steps</th><th>Take-home falls by</th></tr></thead><tbody></tbody></table>
     </details>
   </section>
 
@@ -112,7 +116,7 @@
     <h2>What this covers, and what it doesn't</h2>
     <p>The model covers income tax (UK and Scottish rates), employee National Insurance,
       the High Income Child Benefit Charge, Child Benefit, Universal Credit, Tax-Free Childcare and
-      funded childcare hours for 2026-27, and more than this page asks for (see the repository README).</p>
+      funded childcare hours for 2026-27 (or for the figures you enter), and more than this page asks for (see the repository README).</p>
     <ul>
       <li>Out of scope on this page: other benefits the model has (PIP, Carer's Allowance, Pension Credit,
         Housing Benefit, Council Tax Reduction…), self-employment, property income, capital gains, Stamp Duty.</li>

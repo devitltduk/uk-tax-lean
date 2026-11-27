@@ -748,6 +748,24 @@ from the figures. The 2026-27 numbers quoted below are corollaries
 (`maxStep_y2026`, `Regime.minGain_y2026`, `paStep_y2026`, `hicbcStep_y2026`,
 `valid_y2026`).
 
+**Checking a set of figures.** `checkParams` (`UkTax/CheckParams.lean`) passes
+exactly when a set meets `TaxParams.Valid` (`checkParams_ok_iff`), and otherwise
+names each broken condition with the figures, e.g. "the higher rate (35%) is below
+the basic rate (40%)" (`violations_eq_nil_iff`: none are missed). `uktax` takes a
+set as `params` in its JSON input, returns the check as `params_check`, and with
+`cliff_map` returns the cliff map for the household computed from those figures;
+`drops_complete` proves every drop is in it when the check passes. The web page
+lets you edit the main figures and shows both (see
+[In the browser](#in-the-browser-webassembly-prototype)).
+
+**What the guarantees mean for your figures.** If the check passes: income tax
+never falls as income rises, the allowance is placed to give the least tax, net
+income falls only at the listed steps, between them it keeps at least the stated
+share of each extra penny, and the cliff map lists every drop. If it fails, the
+model still computes with your figures, but those results are not proved; the
+page says which condition is broken. Either way the golden cases and the
+PolicyEngine comparison are for 2026-27 only.
+
 Only figures can change, not structure (the £1-per-£2 taper and its rounding, the
 1 % HICBC steps, three UK and six Scottish bands). Figures outside the set (benefit
 amounts, the Marriage Allowance and married couple's allowance, Class 4 and
@@ -986,7 +1004,16 @@ python3 tests/golden.py       # hand-checked golden cases against the binary
 
 `uktax` reads JSON on stdin (one object or an array) and prints JSON.
 `liability_pence` is rounded down to the penny, and
-`tax_exact_ten_thousandths_pence` is the exact tax before rounding. Optional
+`tax_exact_ten_thousandths_pence` is the exact tax before rounding. An optional
+`params` object replaces any of the 2026-27 figures and adds `params_check`; an
+optional `cliff_map` adds the household's cliff map (see the top of `Main.lean`):
+
+```sh
+$ echo '{"non_savings_pence": 5000000, "savings_pence": 0, "dividends_pence": 0,
+    "params": {"higher_rate_bp": 3500, "basic_rate_bp": 4000}}' | .lake/build/bin/uktax
+{..., "params_check": {"ok": false, "violations": [{"condition": "higher_rate",
+  "message": "the higher rate (35%) is below the basic rate (40%)"}, ...]}}
+``` Optional
 inputs `employment_pence`, `nic_earnings_period` and `child_benefit_pence` give
 `nic_exact_ten_thousandths_pence` (and `nic_pence`, rounded down for display) and
 `hicbc_pence`; see `Main.lean`.
@@ -1444,8 +1471,20 @@ A prototype: `web/` is a static page that runs the model in the browser, with no
 server, from a WebAssembly build of `uktax`. Enter pay, savings, dividends,
 children and childcare, where you live and a few benefit inputs; it shows
 take-home pay with its breakdown and a take-home-against-pay chart swept live
-by the model, with each cliff found to the penny. It has a button to run the
-golden cases in the page.
+by the model, with the cliffs from the model's cliff map. It has a button to run
+the golden cases in the page.
+
+**Your own figures.** The "Figures" panel loads the 2026-27 rates and thresholds
+from the model (personal allowance and its taper threshold, the rate limits, the
+income tax, dividend and NIC rates, the HICBC threshold and step, the childcare
+income limit, the UC taper; savings follow the main rates). Edit any of them and
+the take-home, chart and cliff table are recomputed with yours. Under the panel
+the page shows "The guarantees hold for these figures" or each broken condition
+by name, from `checkParams`. The cliff table lists every one-off cliff to the
+penny and the runs of small steps (the HICBC, the personal allowance taper) with
+their range and size; when the guarantees hold it says the list is proved
+complete. Only figures can change: the rules (bands, tapers, which benefits
+exist) are the model's.
 
 **Route: Lean → C → Emscripten** (`wasm/build.sh`). `lake build` leaves the
 model's C in `.lake/build/ir`. Toolchains ship no C for the Lean core modules,
@@ -1475,28 +1514,31 @@ Serve the repository root, not `web/`, so the page's golden-case check can read
 1000` runs the golden inputs, 1,000 random variations of them (every whole
 number in an input rescaled, so some are rejected) and 1,000 random households
 through both builds and requires identical JSON text, and the same error message
-where the model rejects an input. It runs in CI (the `wasm` job). On 2026-11-27:
-2,215 inputs, 0 mismatches. In Chrome, the golden inputs give output whose
+where the model rejects an input. About 40 % of the households carry a parameter
+set other than 2026-27 (fixed sets, including ones that break the conditions, and
+random edits), and about 10 % ask for the cliff map. It runs in CI (the `wasm` job). On 2026-11-27:
+2,285 inputs, 0 mismatches. In Chrome, the golden inputs give output whose
 SHA-256 equals the native binary's.
 
 **Measured** (2026-11-27, `-O2`, a desktop machine, Chrome and Node 26):
 
 | | |
 |---|---|
-| `uktax.wasm` | 1.96 MB, 338 KB gzipped |
+| `uktax.wasm` | 2.54 MB, 386 KB gzipped (2.07 MB, 356 KB before parameter sets) |
 | `uktax.mjs` (Emscripten's loader) | 61 KB, 17 KB gzipped |
 | load (fetch, compile, initialise) | about 105–120 ms from localhost |
 | one calculation | about 1 ms in Chrome (median of 200), 0.3 ms warm in Node; native 0.2 ms |
-| the chart's sweep, 601 cases in one call | about 0.7 s in Chrome on first draw |
+| the chart's sweep, 601 cases in one call | about 0.7 to 0.8 s in Chrome |
+| the cliff map (one call, the allowance band summarised) | about 65 ms in Chrome |
 | build from nothing | about 4 minutes on 6 cores, then about 2 minutes after a model change |
 
 `WASM_OPT=-Oz wasm/build.sh` gives 0.89 MB (252 KB gzipped) and runs about 1.6
 times slower.
 
-**Limits.** It is a prototype for trying the model, not a product. It uses the
-built-in 2026-27 figures: every call in `web/model.js` takes a `params`
-argument, and anything other than the built-in set is refused until the model
-takes a parameter set as JSON. The page asks only for the inputs above; the rest
+**Limits.** It is a prototype for trying the model, not a product. The figures
+you can edit are those of `TaxParams`; everything else (benefit amounts, Scottish
+rates, NIC thresholds on the page, and the rest) stays 2026-27, and the golden
+cases and PolicyEngine comparisons check 2026-27 only. The page asks only for the inputs above; the rest
 of the model (self-employment, disability and carer benefits, Pension Credit,
 Housing Benefit, council tax, CGT, the land taxes and so on) is reachable through
 `calculate` with the CLI's JSON but has no form. Upstream Lean does not test its

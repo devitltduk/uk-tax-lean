@@ -268,4 +268,171 @@ theorem cliffMap_complete (p : EarningsPeriod) (cb : Nat) {rg : Regime} (hP : rg
     simp only [hcb, ↓reduceIte]
     exact List.mem_map.2 ⟨g, mem_hicbcPennies ha hA, rfl⟩
 
+/-! ## Evaluating the map
+
+Net income is evaluated at the listed pennies: every one-off penny, and the
+personal allowance band either in full or at its two ends (12,570 pennies for
+2026-27, each a small drop of about 39p, so a summary is usually enough). -/
+
+/-- How much net income falls when pay goes from `g` to `g + 1`, 1/1 000 000 pence
+(negative if it rises). -/
+def dropAt (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (s d g : Nat) : Int :=
+  netAll p cb rg c s d g - netAll p cb rg c s d (g + 1)
+
+/-- A drop: the pay `g` at which a penny more lowers net income, what steps there,
+and by how much (1/1 000 000 pence). -/
+structure Drop where
+  pay : Nat
+  kind : StepKind
+  size : Int
+  deriving Repr
+
+/-- Insert by pay, keeping the first of equal pays. -/
+def insertDrop (x : Drop) : List Drop → List Drop
+  | [] => [x]
+  | y :: ys =>
+    if x.pay < y.pay then x :: y :: ys
+    else if x.pay = y.pay then y :: ys
+    else y :: insertDrop x ys
+
+/-- The drops at the one-off pennies below `maxPay`, by pay. -/
+def oneOffDrops (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (s d maxPay : Nat) :
+    List Drop :=
+  let found := (oneOffPennies cb rg s d maxPay).filterMap fun (g, k) =>
+    if g < maxPay then
+      let x := dropAt p cb rg c s d g
+      if 0 < x then some ⟨g, k, x⟩ else none
+    else none
+  found.foldr insertDrop []
+
+/-- Remove adjacent repeats, keeping the order. Tail-recursive: the band has
+12,570 pennies for 2026-27, too many for the WebAssembly stack otherwise. -/
+def dedupAdj.go : List Nat → List Nat → List Nat
+  | [], acc => acc
+  | a :: l, [] => dedupAdj.go l [a]
+  | a :: l, b :: acc => if a = b then dedupAdj.go l (b :: acc) else dedupAdj.go l (a :: b :: acc)
+
+def dedupAdj (l : List Nat) : List Nat := (dedupAdj.go l []).reverse
+
+/-- The personal allowance band's pennies below `maxPay`, from the highest pay down. -/
+def bandPennies (rg : Regime) (s d maxPay : Nat) : List Nat :=
+  dedupAdj ((paPennies rg s d).filter (· < maxPay))
+
+/-- The band in summary: the lowest and highest pay, how many pennies, and the drop
+at each end. -/
+structure BandSummary where
+  first : Nat
+  last : Nat
+  count : Nat
+  firstDrop : Int
+  lastDrop : Int
+  deriving Repr
+
+def bandSummary (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (s d maxPay : Nat) :
+    Option BandSummary :=
+  let l := bandPennies rg s d maxPay
+  match l.head?, l.getLast? with
+  | some hi, some lo => some ⟨lo, hi, l.length, dropAt p cb rg c s d lo, dropAt p cb rg c s d hi⟩
+  | _, _ => none
+
+/-- Every drop in the band, by pay (all of it evaluated). -/
+def bandDrops (p : EarningsPeriod) (cb : Nat) (rg : Regime) (c : Claims) (s d maxPay : Nat) :
+    List Drop :=
+  ((bandPennies rg s d maxPay).filterMap fun g =>
+    let x := dropAt p cb rg c s d g
+    if 0 < x then some ⟨g, .personalAllowance, x⟩ else none).reverse
+
+theorem mem_insertDrop (x : Drop) (l : List Drop) :
+    ∀ y ∈ x :: l, ∃ z ∈ insertDrop x l, z.pay = y.pay := by
+  induction l with
+  | nil => intro y hy; exact ⟨y, by simp_all [insertDrop], rfl⟩
+  | cons w ws ih =>
+    intro y hy
+    unfold insertDrop
+    split
+    · exact ⟨y, hy, rfl⟩
+    · split
+      · rename_i heq
+        rcases List.mem_cons.1 hy with rfl | hy
+        · exact ⟨w, List.mem_cons_self .., heq.symm⟩
+        · exact ⟨y, hy, rfl⟩
+      · rcases List.mem_cons.1 hy with rfl | hy
+        · obtain ⟨z, hz, hz'⟩ := ih y (List.mem_cons_self ..)
+          exact ⟨z, List.mem_cons_of_mem _ hz, hz'⟩
+        · rcases List.mem_cons.1 hy with rfl | hy
+          · exact ⟨y, List.mem_cons_self .., rfl⟩
+          · obtain ⟨z, hz, hz'⟩ := ih y (List.mem_cons_of_mem _ hy)
+            exact ⟨z, List.mem_cons_of_mem _ hz, hz'⟩
+
+theorem mem_foldr_insertDrop (l : List Drop) :
+    ∀ y ∈ l, ∃ z ∈ l.foldr insertDrop [], z.pay = y.pay := by
+  induction l with
+  | nil => intro y hy; simp at hy
+  | cons x xs ih =>
+    intro y hy
+    simp only [List.foldr_cons]
+    rcases List.mem_cons.1 hy with rfl | hy
+    · exact mem_insertDrop y _ y (List.mem_cons_self ..)
+    · obtain ⟨z, hz, hz'⟩ := ih y hy
+      obtain ⟨w, hw, hw'⟩ := mem_insertDrop x _ z (List.mem_cons_of_mem _ hz)
+      exact ⟨w, hw, hw'.trans hz'⟩
+
+theorem mem_dedupAdj_go (a : Nat) : ∀ (l acc : List Nat), a ∈ l ∨ a ∈ acc → a ∈ dedupAdj.go l acc
+  | [], _, h => by
+    unfold dedupAdj.go
+    rcases h with h | h
+    · exact absurd h List.not_mem_nil
+    · exact h
+  | x :: l, [], h => by
+    unfold dedupAdj.go
+    apply mem_dedupAdj_go a l [x]
+    rcases h with h | h
+    · rcases List.mem_cons.1 h with h | h
+      · exact Or.inr (List.mem_singleton.2 h)
+      · exact Or.inl h
+    · exact absurd h List.not_mem_nil
+  | x :: l, y :: acc, h => by
+    unfold dedupAdj.go
+    split
+    · rename_i hxy
+      apply mem_dedupAdj_go a l (y :: acc)
+      rcases h with h | h
+      · rcases List.mem_cons.1 h with h | h
+        · exact Or.inr (List.mem_cons.2 (Or.inl (h.trans hxy)))
+        · exact Or.inl h
+      · exact Or.inr h
+    · apply mem_dedupAdj_go a l (x :: y :: acc)
+      rcases h with h | h
+      · rcases List.mem_cons.1 h with h | h
+        · exact Or.inr (List.mem_cons.2 (Or.inl h))
+        · exact Or.inl h
+      · exact Or.inr (List.mem_cons_of_mem _ h)
+
+theorem mem_dedupAdj (l : List Nat) (a : Nat) (h : a ∈ l) : a ∈ dedupAdj l := by
+  unfold dedupAdj
+  rw [List.mem_reverse]
+  exact mem_dedupAdj_go a l [] (Or.inl h)
+
+/-- **What `uktax` reports is complete.** Every pay below `maxPay` at which a penny
+more lowers net income is in the personal allowance band, or is reported, with
+its size, among the one-off drops. -/
+theorem drops_complete (p : EarningsPeriod) (cb : Nat) {rg : Regime} (hP : rg.params.Valid)
+    (c : Claims) {s d : Nat} (hS : CliffScope rg s d) {maxPay g : Nat} (hg : g < maxPay)
+    (h : netAll p cb rg c s d (g + 1) < netAll p cb rg c s d g) :
+    g ∈ bandPennies rg s d maxPay ∨ ∃ x ∈ oneOffDrops p cb rg c s d maxPay, x.pay = g := by
+  rcases cliffMap_complete p cb hP c hS hg h with hp | ho
+  · left
+    exact mem_dedupAdj _ _ (List.mem_filter.2 ⟨hp, by simp [hg]⟩)
+  · right
+    obtain ⟨⟨g', k⟩, hk, rfl⟩ := List.mem_map.1 ho
+    have hd : 0 < dropAt p cb rg c s d g' := by unfold dropAt; simp only at h; omega
+    have hm : (⟨g', k, dropAt p cb rg c s d g'⟩ : Drop) ∈ (oneOffPennies cb rg s d maxPay).filterMap
+        fun (g, k) => if g < maxPay then
+          (let x := dropAt p cb rg c s d g; if 0 < x then some (⟨g, k, x⟩ : Drop) else none)
+          else none := by
+      rw [List.mem_filterMap]
+      exact ⟨(g', k), hk, by simp [hg, hd]⟩
+    obtain ⟨z, hz, hz'⟩ := mem_foldr_insertDrop _ _ hm
+    exact ⟨z, hz, hz'⟩
+
 end UkTax

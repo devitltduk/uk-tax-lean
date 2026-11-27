@@ -29,4 +29,5 @@ import UkTax.Misc
 import UkTax.Ved
 import UkTax.StudentSupport
 import UkTax.CliffMap
+import UkTax.CheckParams
 import UkTax.Axioms
