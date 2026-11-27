@@ -542,6 +542,18 @@ Input `company_car`: `list_price_pence`, `capital_contributions_pence`,
 | Car fuel benefit | the appropriate percentage of £29,200, less the share for days unavailable; nil for a car that cannot emit CO2 | ss 149-152 |
 | TV licence | £180; half for a blind holder; nil for a holder of 75 or over with Pension Credit (the BBC's concession) | SI 2004/692 Sch 1, reg 5; Communications Act 2003 s365A |
 
+### ISAs, the minimum wage and the Warm Home Discount (`UkTax/Misc.lean`)
+
+Inputs `isa` (`age`, `subscriptions_pence`, `lifetime_isa_payments_pence`),
+`minimum_wage` (`age`, `apprentice`) and `warm_home_discount`
+(`qualifying_benefit`, `bill_holder`, default true; England and Wales only).
+Subscriptions over £20,000 a year are over the limit; the Lifetime ISA bonus is
+25 % of up to £4,000 of payments from 18 to 49 (SI 1998/1870 regs 4ZA, 10A,
+Schedule para 1), in quarter pence; the minimum wage is £12.71 an hour from 21,
+£10.85 from 18, £8.00 under 18 and for apprentices (SI 2015/621 as amended by SI
+2026/357); the Warm Home Discount is £150 (SI 2026/389) for a household on Pension
+Credit, income-related ESA, Housing Benefit or Universal Credit.
+
 ### Capital Gains Tax (`UkTax/Cgt.lean`)
 
 | Figure | 2026-27 | Source |
@@ -819,6 +831,10 @@ relief-at-source contributions.
   37 %, never falls as CO2 rises or rises as the electric range grows, and jumps
   from 4 % to 17 % between 50 and 51 g/km for a long-range hybrid (£5,200 more
   benefit on a £40,000 car).
+- `lisaBonus_le`, `lisa_age_cliff`, `minimumWage_mono` (`UkTax/Misc.lean`): the
+  Lifetime ISA bonus is at most £1,000 a year and stops at 50 (£1,000 on £4,000 at
+  49, nothing at 50); the minimum wage never falls with age outside
+  apprenticeships.
 - `ctr_step`, `ctr_full`, `councilTax_discount` (`UkTax/CouncilTax.lean`): each
   extra unit of weekly income above the applicable amount costs exactly 20 % of it
   for 365/7 weeks of Council Tax Reduction, never more; with no excess and no
@@ -1238,6 +1254,13 @@ Payment (findings #41).
 edge and electric range edge, petrol and diesel, with contributions, days
 unavailable, payments and fuel, and the TV licence for blind and older holders.
 Latest local run: 1,033 of 1,033 and 16 of 16 agree (findings #43).
+
+### ISAs, the minimum wage and the Warm Home Discount against PolicyEngine
+
+`uv run python compare_p9e.py` compares subscriptions and Lifetime ISA payments
+around the limits at ages 16 to 60, the minimum wage at 15 to 30 with and without
+an apprenticeship, and the Warm Home Discount in England, Wales and Scotland on
+each qualifying benefit. Latest local run: 1,036 of 1,036 agree (findings #44).
 
 ### Council tax and Council Tax Reduction against PolicyEngine
 

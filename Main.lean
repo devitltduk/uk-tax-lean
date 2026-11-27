@@ -318,6 +318,12 @@ structure Case where
   car : Option (Nat × Nat × Nat × Nat × Bool × Nat × Nat × Bool) := none
   /-- The TV licence: required, blind holder, over 75 with Pension Credit (P9d). -/
   tv : Option (Bool × Bool × Bool) := none
+  /-- ISAs: age, subscriptions, Lifetime ISA payments (P9e). -/
+  isa : Option (Nat × Nat × Nat) := none
+  /-- The minimum wage: age, apprentice (P9e). -/
+  mw : Option (Nat × Bool) := none
+  /-- The Warm Home Discount: in England or Wales, qualifying benefit, bill holder (P9e). -/
+  whdIn : Option (Bool × Bool × Bool) := none
   /-- Carer Support Payment: weekly overlapping benefits and additional cared for
   people (P9b). -/
   csp : Option (Nat × Nat) := none
@@ -756,6 +762,16 @@ def parseCase (j : Json) : Except String Case := do
     | some o => pure (some ((o.getObjValAs? Bool "required").toOption.getD true, subB o "blind",
         subB o "over_75_with_pension_credit"))
     | none => pure none
+  let isa ← match obj "isa" with
+    | some o => pure (some (← sub o "age", ← sub o "subscriptions_pence", ← sub o "lifetime_isa_payments_pence"))
+    | none => pure none
+  let mw ← match obj "minimum_wage" with
+    | some o => pure (some (← sub o "age", subB o "apprentice"))
+    | none => pure none
+  let whdIn ← match obj "warm_home_discount" with
+    | some o => pure (some (england || (j.getObjValAs? String "country").toOption == some "wales",
+        subB o "qualifying_benefit", (o.getObjValAs? Bool "bill_holder").toOption.getD true))
+    | none => pure none
   let nation : Nation := if scottish then .scotland else if england then .england else .wales
   let ctr ← match obj "council_tax_reduction" with
     | some o => do
@@ -808,7 +824,7 @@ def parseCase (j : Json) : Except String Case := do
     ucProfit := (tr : Int) - te, mif := mif, hbWa := hbWa, ctrWa := ctrWa, ctrLocal := ctrLocal, land := land, reliefs := reliefs,
     studentLoan := studentLoan, wfp := wfp, scp := scp, csp := csp,
     targetedOther := (j.getObjValAs? Bool "targeted_other_benefit").toOption.getD false,
-    car := car, tv := tv }
+    car := car, tv := tv, isa := isa, mw := mw, whdIn := whdIn }
   return res
 
 def result (c : Case) : Json :=
@@ -1036,6 +1052,17 @@ def result (c : Case) : Json :=
       | none => [])
     ++ (match c.tv with
       | some (req, blind, aged) => [("tv_licence_pence", toJson (tvLicence req blind aged))]
+      | none => [])
+    ++ (match c.isa with
+      | some (age, subs, lp) =>
+        [("isa_subscriptions_above_limit_pence", toJson (isaExcess subs)),
+         ("lifetime_isa_bonus_quarter_pence", toJson (lisaBonusQuarters age lp))]
+      | none => [])
+    ++ (match c.mw with
+      | some (age, ap) => [("minimum_wage_pence", toJson (minimumWage age ap))]
+      | none => [])
+    ++ (match c.whdIn with
+      | some (ew, q, b) => [("warm_home_discount_pence", toJson (whd ew q b))]
       | none => [])
     ++ (match c.scp with
       | some (n, other) =>
