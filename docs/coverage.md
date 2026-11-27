@@ -14,11 +14,11 @@ inventory follows it and adds what the list leaves out (components it counts
 under a bigger programme, and variables with no entry). The variable tree has
 1,517 variables, 1,001 with formulas.
 
-**Status**
+**Status** (final: every programme row is done or out of scope; the PR plan below
+records the order they were built in)
 
 - **done**: modelled in Lean with every figure cited, properties proved where
   they mean something, golden cases, and a harness comparison with PolicyEngine;
-- **planned (Pn)**: to be built, in the order of the PR plan below;
 - **out of scope**: with the reason.
 
 Legal sources are the main ones; the Lean files cite each figure to the section,
@@ -34,7 +34,7 @@ regulation or GOV.UK page it comes from, checked when that part is built.
 | P4 | Universal Credit in full (**done**; self-employment and the minimum income floor in P4b) | every element, housing costs, childcare costs element, capital and unearned income, minimum income floor, the benefit cap |
 | P5 | Other means-tested and disability benefits | Child Benefit, PIP, DLA, Attendance Allowance, Carer's Allowance, contributory JSA and ESA, Maternity Allowance, Sure Start Maternity Grant (P5a, **done**); Housing Benefit for pensioners (P5b, **done**); working-age Housing Benefit and legacy benefits still in payment (P5c, **done**: IS and income-based JSA abolished, income-related ESA an input) |
 | P6 | Pensions | State Pension (new and basic), Pension Credit (**done**; the State Pension as an input, findings #25) |
-| P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes; working-age schemes planned, P7b) |
+| P7 | Council tax | council tax, Council Tax Reduction (**done**: liability and the pensioner schemes, P7; the Welsh and Scottish working-age schemes and the English local schemes PolicyEngine models, P7b) |
 | P8 | CGT, property taxes and the remaining income tax reliefs (CGT **done**, P8a; SDLT **done**, P8b; LBTT, LTT, leases and non-residents **done**, P8c; reliefs **done**, area 6) | Capital Gains Tax, SDLT, LBTT, LTT; losses, capital allowances, property finance costs, the pension annual allowance charge and relief cap, salary sacrifice, gifts of shares and land, employment expenses |
 | P9 | The rest (P9a **done**: student loans, the Winter Fuel Payment and its charge; P9b **done**: Scotland's devolved benefits; P9c **done**: the targeted 2-year-old hours, the other childcare schemes scoped; P9d **done**: company cars, car fuel and the TV licence, consumption duties scoped; P9e **done**: ISAs, the minimum wage, the Warm Home Discount; P9f **done**: Vehicle Excise Duty for cars; P9g **done**: the maintenance loan, its household income and the dependants' grants, the cost-based schemes scoped) | consumption duties, student loans, TV licence, ISAs, devolved benefits, other childcare schemes, energy and winter payments, student support |
 
