@@ -82,7 +82,8 @@ def checks (P : TaxParams) : List (Bool × Violation) :=
     rateCheck "scottish_top_rate" "Scottish top rate" "Scottish advanced rate"
       P.scTopRate P.scAdvancedRate,
     (decide (P.brl ≤ P.hrl), ⟨"higher_rate_limit",
-      s!"the higher rate limit ({fmtPence P.hrl}) is below the basic rate limit ({fmtPence P.brl})"⟩),
+      s!"the higher rate limit ({fmtPence P.hrl}, twice the personal allowance plus the income " ++
+      s!"limit) is below the basic rate limit ({fmtPence P.brl})"⟩),
     (decide (P.psaHigher ≤ P.psaBasic), ⟨"savings_allowance_higher",
       s!"the savings allowance for higher-rate taxpayers ({fmtPence P.psaHigher}) is above the one " ++
       s!"for basic-rate taxpayers ({fmtPence P.psaBasic})"⟩),
@@ -144,7 +145,12 @@ def firstMessage (P : TaxParams) : String :=
 #guard firstMessage { nsRates := ⟨4000, 3500, 4500⟩ } ==
   "higher_rate: the higher rate (35%) is below the basic rate (40%)"
 #guard firstMessage { brl := 13_000_000 } ==
-  "higher_rate_limit: the higher rate limit (£125,140) is below the basic rate limit (£130,000)"
+  "higher_rate_limit: the higher rate limit (£125,140, twice the personal allowance plus the income " ++
+  "limit) is below the basic rate limit (£130,000)"
+-- Lowering the allowance lowers the higher rate limit with it (s10(5A)).
+#guard firstMessage { pa := 1_000_000, brl := 12_100_000 } ==
+  "higher_rate_limit: the higher rate limit (£120,000, twice the personal allowance plus the income " ++
+  "limit) is below the basic rate limit (£121,000)"
 #guard firstMessage { divRates := ⟨1075, 3575, 3500⟩ } ==
   "dividend_additional_rate: the dividend additional rate (35%) is below the dividend upper rate (35.75%)"
 #guard firstMessage { ucTaper := 101 } == "uc_taper: the Universal Credit taper (101%) is above 100%"

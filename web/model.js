@@ -7,7 +7,8 @@
 // Parameter sets: `params` is null for the 2026-27 figures built into the model,
 // or an object of figures (the CLI's `params` field: pence, basis points, the UC
 // taper in per cent) replacing some of them. The model checks the set against the
-// conditions its theorems need and returns the result as `params_check`.
+// conditions its theorems need and returns the result as `params_check`, and the
+// figures worked out from the set (the higher rate limit) as `params_derived`.
 
 import createUkTax from "./dist/uktax.mjs";
 
@@ -35,8 +36,11 @@ export async function loadModel() {
     return JSON.parse(calculateText(JSON.stringify(cases)));
   }
 
-  // The built-in figures, read from the model itself.
-  const defaults = calculate({ non_savings_pence: 0, savings_pence: 0, dividends_pence: 0 }, {}).params;
+  // The built-in figures, and those worked out from them (the higher rate limit),
+  // read from the model itself.
+  const builtin = calculate({ non_savings_pence: 0, savings_pence: 0, dividends_pence: 0 }, {});
+  const defaults = builtin.params;
+  const derived = builtin.params_derived;
 
-  return { loadMs, calculateText, calculate, defaults };
+  return { loadMs, calculateText, calculate, defaults, derived };
 }

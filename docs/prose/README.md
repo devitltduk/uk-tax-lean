@@ -20,6 +20,7 @@ drafting:
 | Block | Meaning (`eval`) | Plain English | Statute |
 | --- | --- | --- | --- |
 | figure | a sum from `TaxParams`, e.g. `P.pa` | "£12,570" | "£12,570" |
+| derived figure | a figure the Act works out from others, e.g. the higher rate limit; its listed parts are proved to add up to it | "it is twice the personal allowance (£12,570) plus …" | "equal to— (a) twice the amount specified in …, plus (b) …" |
 | input | a fact about the taxpayer, e.g. adjusted net income | "your adjusted net income" | "adjusted net income", with a definition subsection |
 | threshold test | `threshold < input` | "If your adjusted net income is more than £100,000" | "For an individual whose adjusted net income exceeds £100,000" |
 | taper | `a − excess × per ÷ every`, exact | "take off half of the amount by which it is more than £100,000 (£1 for every £2 over …)" | "is reduced by one-half of the excess" (or "£1 for every £2 of the excess") |
@@ -59,7 +60,7 @@ lines, mostly `omega`.
   meaning, the proof breaks. If someone changes it in a way that changes its
   wording, the CI diff breaks.
 - **Checked once by reading, not by proof.** Whether each block's fixed wording
-  means what its `eval` does. There are eight blocks, so this is a one-off review
+  means what its `eval` does. There are nine blocks, so this is a one-off review
   of the table above, not a per-section review. The plain taper step needed care
   here: "£1 for every £2" could be read as whole £2 steps, but the law and the
   model halve exactly. The plain text therefore says "worked out exactly rather
@@ -93,7 +94,7 @@ licensed under the
 | --- | --- |
 | s10(1) Income tax is charged on an individual's taxable income— (a) at the basic rate, on so much of it as does not exceed the basic rate limit, (b) at the higher rate, on so much of it as exceeds the basic rate limit but does not exceed the higher rate limit, and (c) at the additional rate, on so much of it as exceeds the higher rate limit. | s10(2) Income tax on an individual's income up to the basic rate limit is charged at the basic rate …. (3) Income tax is charged at the higher rate on an individual's income above the basic rate limit and up to the higher rate limit. (3A) Income tax is charged at the additional rate on an individual's income above the higher rate limit. |
 | s10(2) The basic rate limit is £37,700. | s10(5) The basic rate limit is £37,700. |
-| s10(3) The higher rate limit is £125,140. | s10(5A) The higher rate limit for a tax year is equal to— (a) twice the amount specified in subsection (1) of section 35 (personal allowance) for the tax year, plus (b) the amount specified in subsection (2) of that section (amount at which personal allowance starts to be withdrawn). |
+| s10(3) The higher rate limit is equal to— (a) twice the amount specified in subsection (1) of section 35 (personal allowance), plus (b) the amount specified in subsection (2) of that section (the income limit); that is, £25,140 plus £100,000, £125,140. | s10(5A) The higher rate limit for a tax year is equal to— (a) twice the amount specified in subsection (1) of section 35 (personal allowance) for the tax year, plus (b) the amount specified in subsection (2) of that section (amount at which personal allowance starts to be withdrawn). |
 | s10(4) In this section “taxable income” means the income remaining after allowances are deducted at Step 3 of the calculation in section 23. | (no equivalent: s10 says "income" and relies on s23 for the order of steps) |
 | (nothing) | s10(4) This section is subject to— … section 11A (Scottish rates), … section 11D (savings …), section 12 (starting rate for savings), section 12A (savings nil rate), section 13 (dividend …) … |
 | (nothing) | s10(6) The basic rate limit and higher rate limit are increased in some circumstances: see— (a) section 414(2) (gift aid relief), and (b) section 192(4) of FA 2004 (relief for pension contributions). |
@@ -120,13 +121,16 @@ the "(a) … (b) … and (c)" style of a charge.
   below nil", has no counterpart in the Act. The Act leaves it implicit that an
   allowance cannot be negative, but the code has to say it, so the text does too.
   The "subject to" opener is an ordinary drafting device, but s35 does not use it.
-- **Where the model differs in structure from the Act.** The Act defines the
-  higher rate limit as twice the personal allowance plus the income limit
-  (s10(5A)). In `TaxParams` it is a separate figure, so the generated s10(3) just
-  states £125,140. The proof holds for any value, including ones that break
-  s10(5A). If that link matters, it belongs in `TaxParams.Valid` or as a derived
-  figure. It is a modelling choice the generated text makes visible, which is
-  useful in itself.
+- **Where the model differed in structure from the Act (now fixed).** The Act
+  defines the higher rate limit as twice the personal allowance plus the income
+  limit (s10(5A)). When this spike was written, `TaxParams` held it as a separate
+  figure, so the generated s10(3) just stated £125,140 and the proof held for
+  values that broke s10(5A). The model now follows the Act: `TaxParams.hrl` is
+  worked out from the allowance and the income limit, so no parameter set can
+  break the link, and the generated s10(3) prints the derivation. The parts it
+  lists are proved to add up to the limit the model uses
+  (`higherRateLimitFigure_derived`). The one thing still left out is s10(5B), the
+  Treasury order that states the resulting figure each year from 2028-29.
 - **What is missing.** Definitions, cross-references and the "subject to" lists.
   The text has no s10(4) list of overriding sections (Scottish, savings, dividend
   rates), no s10(6) gift aid and pension increases (the proof assumes relief is

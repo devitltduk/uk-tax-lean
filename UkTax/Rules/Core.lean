@@ -27,6 +27,18 @@ def perPenny : Int := 10_000
 /-- An amount in whole pence as money. -/
 def ofPence (n : Nat) : Int := n * perPenny
 
+/-- One part of a figure that the legislation works out from others: `times` the
+figure `get` ("twice the amount specified in section 35(1)"). Data, not a
+function to text, so that a rule's meaning stays free of the printing code. -/
+structure Part where
+  times : Nat
+  /-- Statute words for the figure: "the amount specified in subsection (1) of
+  section 35 (personal allowance)". -/
+  statute : String
+  /-- Plain words: "the personal allowance". -/
+  plain : String
+  get : TaxParams → Nat
+
 /-- A sum of money fixed by the legislation for the year, read from the parameter
 set: "the income limit", £100,000. -/
 structure Figure where
@@ -34,6 +46,15 @@ structure Figure where
   name : Option String := none
   /-- The figure, in pence. -/
   get : TaxParams → Nat
+  /-- If the legislation works the figure out from others rather than stating it,
+  the parts it adds up (`Figure.Derived` says they add up to `get`). -/
+  parts : List Part := []
+  /-- A plain-English remark after the parts, if any. -/
+  plainNote : String := ""
+
+/-- The figure is the sum of its parts, for every parameter set. -/
+def Figure.Derived (f : Figure) : Prop :=
+  ∀ P, f.get P = (f.parts.map fun p => p.times * p.get P).sum
 
 /-- A rate of tax, in basis points, read from the parameter set. -/
 structure Rate where

@@ -68,7 +68,7 @@ const PARAM_SETS = [
   {},
   { personal_allowance_income_limit_pence: 11_000_000 },
   { basic_rate_bp: 4000, higher_rate_bp: 3500, savings_basic_rate_bp: 4000, savings_higher_rate_bp: 3500 },
-  { personal_allowance_pence: 1_500_000, basic_rate_limit_pence: 4_000_000, higher_rate_limit_pence: 13_000_000,
+  { personal_allowance_pence: 1_500_000, basic_rate_limit_pence: 4_000_000,
     uc_taper_percent: 50, hicbc_threshold_pence: 8_000_000, hicbc_step_pence: 40_000,
     childcare_income_limit_pence: 12_000_000 },
   { scottish_higher_rate_bp: 4500, scottish_top_rate_bp: 5000, dividend_upper_rate_bp: 3375,
@@ -77,7 +77,7 @@ const PARAM_SETS = [
 ];
 const EDITABLE = [
   ["personal_allowance_pence", 0, 3_000_000], ["personal_allowance_income_limit_pence", 0, 20_000_000],
-  ["basic_rate_limit_pence", 0, 8_000_000], ["higher_rate_limit_pence", 0, 20_000_000],
+  ["basic_rate_limit_pence", 0, 8_000_000],
   ["basic_rate_bp", 0, 6000], ["higher_rate_bp", 0, 7000], ["dividend_allowance_pence", 0, 500_000],
   ["nic_main_rate_bp", 0, 2000], ["hicbc_threshold_pence", 0, 12_000_000], ["hicbc_step_pence", 0, 100_000],
   ["uc_taper_percent", 0, 100], ["childcare_income_limit_pence", 0, 20_000_000],

@@ -17,7 +17,9 @@ property taxes, student support, free school meals and the Childcare Grant, and 
 
 ## What is in the set
 
-Personal allowance and its income limit; basic and higher rate limits; the
+Personal allowance and its income limit; the basic rate limit (the higher rate
+limit is not in the set: as in ITA 2007 s10(5A), `TaxParams.hrl` is twice the
+personal allowance plus the income limit); the
 starting rate limit for savings; the three personal savings allowances; the
 dividend allowance; basic, higher and additional rates for non-savings income,
 savings and dividends; the five Scottish limits and six Scottish rates; the
@@ -33,7 +35,7 @@ Each is used by a proof; nothing else is assumed.
 |---|---|
 | UK non-savings, savings and dividend rates do not fall from band to band | monotonicity (`sliceTax_mono`), the marginal bound (`G_succ_le`) |
 | the six Scottish rates do not fall from band to band | the marginal bound, the annual allowance charge bound |
-| basic rate limit ≤ higher rate limit | everything that splits income into bands, including the optimal allowance placement |
+| basic rate limit ≤ higher rate limit (2 × personal allowance + income limit) | everything that splits income into bands, including the optimal allowance placement |
 | personal savings allowance: additional ≤ higher ≤ basic | monotonicity (`savingsAllowanceFor_anti`) |
 | UC taper ≤ 100 % | `netAll_succ_ge`, `earned_plus_uc_mono` |
 | `maxStep + 0.05p + NIC step ≤ 1p`, for a Scottish taxpayer and anyone else | the cliff theorems: between steps net income does not fall |

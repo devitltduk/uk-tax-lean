@@ -276,8 +276,11 @@ pounds, by s681C(3)).
 (`UkTax/TaxParams.lean`; field names in `paramFields`: money in pence, rates in
 basis points, `uc_taper_percent` in per cent), e.g.
 `{"params": {"higher_rate_bp": 3500, "personal_allowance_income_limit_pence": 11000000}}`.
-Unknown fields are refused. With `params` the output adds `params` (the whole set
-used) and `params_check`: `{"ok": true, "violations": []}` exactly when the set
+Unknown fields are refused, and so is `higher_rate_limit_pence`: ITA 2007 s10(5A)
+makes the higher rate limit twice the personal allowance plus the income limit, so
+it moves with those two. With `params` the output adds `params` (the whole set
+used), `params_derived` (the figures worked out from it:
+`higher_rate_limit_pence`) and `params_check`: `{"ok": true, "violations": []}` exactly when the set
 meets the conditions the parametric theorems need (`checkParams_ok_iff`), and
 otherwise each broken condition, e.g. `{"condition": "higher_rate", "message":
 "the higher rate (35%) is below the basic rate (40%)"}`. Everything is computed
@@ -392,7 +395,6 @@ def paramFields : List (String × (TaxParams → Nat) × (TaxParams → Nat → 
     ("personal_allowance_pence", fun P => P.pa, fun P v => { P with pa := v }),
     ("personal_allowance_income_limit_pence", fun P => P.paLimit, fun P v => { P with paLimit := v }),
     ("basic_rate_limit_pence", fun P => P.brl, fun P v => { P with brl := v }),
-    ("higher_rate_limit_pence", fun P => P.hrl, fun P v => { P with hrl := v }),
     ("starting_rate_limit_savings_pence", fun P => P.srls, fun P v => { P with srls := v }),
     ("savings_allowance_basic_pence", fun P => P.psaBasic, fun P v => { P with psaBasic := v }),
     ("savings_allowance_higher_pence", fun P => P.psaHigher, fun P v => { P with psaHigher := v }),
@@ -439,6 +441,9 @@ def parseParams (j : Json) : Except String TaxParams := do
     | .obj kvs => pure kvs.keys
     | _ => throw "params must be an object"
   for k in keys do
+    if k == "higher_rate_limit_pence" then
+      throw "params: higher_rate_limit_pence cannot be set: ITA 2007 s10(5A) makes it twice \
+        personal_allowance_pence plus personal_allowance_income_limit_pence"
     unless paramFields.any (·.1 == k) do throw s!"params: unknown field \"{k}\""
   paramFields.foldlM (init := ({} : TaxParams)) fun P (k, _, set) =>
     match j.getObjVal? k with
@@ -449,6 +454,10 @@ def parseParams (j : Json) : Except String TaxParams := do
 
 def paramsJson (P : TaxParams) : Json :=
   Json.mkObj (paramFields.map fun (k, get, _) => (k, toJson (get P)))
+
+/-- The figures worked out from a parameter set rather than set in it. -/
+def paramsDerivedJson (P : TaxParams) : Json :=
+  Json.mkObj [("higher_rate_limit_pence", toJson P.hrl)]
 
 def violationJson (v : Violation) : Json :=
   Json.mkObj [("condition", toJson v.condition), ("message", toJson v.message)]
@@ -1358,6 +1367,7 @@ def result (c : Case) : Json :=
       | none => [])
     ++ (if c.paramsGiven then
         [("params", paramsJson P),
+         ("params_derived", paramsDerivedJson P),
          ("params_check", Json.mkObj [("ok", toJson (decide (violations P = []))),
            ("violations", Json.arr ((violations P).map violationJson).toArray)])]
       else [])
