@@ -69,22 +69,33 @@ inductive Adj where
   | taper (per every : Nat) (t : Test)
   | notBelowNil
   | roundUpPound
+  | roundDownPound
+  | less (i : Input)
+  | percentOf (p : Pct)
 
 /-- An amount as its innermost block and the adjustments made to it, in order. -/
 def Amt.chain : Amt → Amt × List Adj
   | .taper a per every t => let c := a.chain; (c.1, c.2 ++ [.taper per every t])
   | .notBelowNil a => let c := a.chain; (c.1, c.2 ++ [.notBelowNil])
   | .roundUpPound a => let c := a.chain; (c.1, c.2 ++ [.roundUpPound])
+  | .roundDownPound a => let c := a.chain; (c.1, c.2 ++ [.roundDownPound])
+  | .less a i => let c := a.chain; (c.1, c.2 ++ [.less i])
+  | .percentOf p a => let c := a.chain; (c.1, c.2 ++ [.percentOf p])
   | a => (a, [])
+
+/-- Add an input to a list unless it is there. -/
+def addInput (is : List Input) (i : Input) : List Input :=
+  if is.any (·.key == i.key) then is else is ++ [i]
 
 /-- The inputs an amount reads, without repeats, in the order they appear. -/
 def Amt.inputs : Amt → List Input
   | .fig _ => []
   | .input i => [i]
-  | .taper a _ _ t =>
-    let is := a.inputs
-    if is.any (·.key == t.measure.key) then is else is ++ [t.measure]
-  | .notBelowNil a | .roundUpPound a => a.inputs
+  | .taper a _ _ t => addInput a.inputs t.measure
+  | .less a i => addInput a.inputs i
+  | .percentOf (.steps t _ _) a => addInput a.inputs t.measure
+  | .percentOf (.rate _) a => a.inputs
+  | .notBelowNil a | .roundUpPound a | .roundDownPound a => a.inputs
 
 /-- A section of an Act that gives an amount: "An individual is entitled to a
 personal allowance of ...". -/
@@ -102,8 +113,16 @@ structure AmountSection where
   /-- Heading of the plain-English version, with the sections it covers. -/
   plainHeading : String
   rule : Amt
-  /-- Values of the rule's first input to work examples for, in pence. -/
+  /-- Values of an input to work examples for, in pence: the input `exampleKey`
+  (the rule's first input if none), with the others as in `exampleEnv`. -/
   examples : List Nat := []
+  exampleKey : Option String := none
+  exampleEnv : Env := fun _ => 0
+  /-- A sentence before the examples saying what the other inputs are. -/
+  exampleNote : String := ""
+  /-- Plain text after the steps (context that is not part of the rule, such as
+  a table of figures the rule's inputs take). -/
+  extra : TaxParams → String := fun _ => ""
 
 /-- A section of an Act that charges tax in bands. -/
 structure BandsSection where
@@ -114,6 +133,17 @@ structure BandsSection where
   plainHeading : String
   /-- Taxable incomes to work examples for, in pence. -/
   examples : List Nat := []
+  /-- What is charged: "Income tax". -/
+  what : String := "Income tax"
+  /-- Statute opening of the charge, before the dash. -/
+  statuteOpen : String := "Income tax is charged on an individual's taxable income"
+  /-- Paragraphs "(a) the main primary percentage of so much of ... as" (SSCBA
+  1992 s8) rather than "(a) at the basic rate, on so much of it as" (ITA 2007 s10). -/
+  ofStyle : Bool := false
+  /-- A subsection after (1) stating the rates (SSCBA 1992 s8(2)). -/
+  ratesSubsection : Bool := false
+  /-- Plain text after the table. -/
+  extra : TaxParams → String := fun _ => ""
 
 /-! ## Statute layout -/
 
@@ -151,6 +181,16 @@ def Adj.statute (s : AmountSection) (P : TaxParams) (k : Nat) (prev : Option Adj
     s!"If the amount of {s.short} that remains after the operation of \
       {subsections 2 (k - 1)} would otherwise not be a multiple of £1, it is to be \
       rounded up to the nearest amount which is a multiple of £1."
+  | .roundDownPound =>
+    s!"If the amount under {subsections 1 (k - 1)} is not a whole number of pounds, \
+      it is to be rounded down to the nearest whole number."
+  | .less i => s!"{s.short.capitalize} under {subsections 1 (k - 1)} is reduced by {i.noun}."
+  | .percentOf (.rate r) =>
+    s!"{s.short.capitalize} is {r.name} of the amount under {subsections 1 (k - 1)}."
+  | .percentOf (.steps t every cap) =>
+    s!"{s.short.capitalize} is the appropriate percentage of the amount under \
+      {subsections 1 (k - 1)}, that is {cap}%, or if less, 1% for every whole \
+      {money (every.get P)} by which {t.measure.noun} exceeds {money (t.threshold.get P)}."
 
 /-- An amount section in statute layout. -/
 def AmountSection.statute (s : AmountSection) (P : TaxParams) : String := Id.run do
@@ -171,12 +211,17 @@ def AmountSection.statute (s : AmountSection) (P : TaxParams) : String := Id.run
   return out
 
 /-- The paragraphs (a), (b), ... of a charge in bands. -/
-def bandParagraphs (P : TaxParams) (bands : List Band) : List String := Id.run do
+def bandParagraphs (P : TaxParams) (bands : List Band) (ofStyle : Bool := false)
+    (noun : String := "") : List String := Id.run do
   let letters := "abcdefghijklmnopqrstuvwxyz".toList
   let mut out := []
   let mut prev : Option Figure := none
   let mut i := 0
+  let shown := bands.filter (!·.silent)
   for b in bands do
+    if b.silent then
+      prev := b.upTo
+      continue
     let lower := match prev with
       | some l => s!"exceeds {l.name.getD (money (l.get P))}"
       | none => ""
@@ -188,9 +233,14 @@ def bandParagraphs (P : TaxParams) (bands : List Band) : List String := Id.run d
       | "", u => s!"on so much of it as {u}"
       | l, "" => s!"on so much of it as {l}"
       | l, u => s!"on so much of it as {l} but {u}"
-    let last := i + 1 = bands.length
-    let sep := if last then "." else if i + 2 = bands.length then ", and" else ","
-    out := out ++ [s!"({letters.getD i 'z'}) at {b.rate.name}, {part}{sep}"]
+    let last := i + 1 = shown.length
+    let sep := if last then "." else if i + 2 = shown.length then "; and" else ";"
+    let sep := if ofStyle then sep else sep.replace ";" ","
+    let text := if ofStyle then
+        s!"{b.rate.name} of so much of {if i = 0 then noun ++ (if noun.contains ',' then "," else "") else "those earnings"} as \
+          {(part.replace "on so much of it as " "").replace "on all of it" "all of it"}"
+      else s!"at {b.rate.name}, {part}"
+    out := out ++ [s!"({letters.getD i 'z'}) {text}{sep}"]
     prev := b.upTo
     i := i + 1
   return out
@@ -213,9 +263,16 @@ def BandsSection.statuteRates (s : BandsSection) (number heading year : String)
 def BandsSection.statute (s : BandsSection) (P : TaxParams) : String := Id.run do
   let sch := s.schedule
   let mut out := s!"**{s.number} {s.heading}**\n\n" ++
-    subsection 1 (s!"Income tax is charged on {sch.income.noun}—\n\n" ++
-      "\n\n".intercalate (bandParagraphs P sch.bands))
+    subsection 1 (s!"{s.statuteOpen}—\n\n" ++
+      "\n\n".intercalate (bandParagraphs P sch.bands s.ofStyle sch.income.noun))
   let mut k := 2
+  if s.ratesSubsection then
+    let shown := sch.bands.filter (!·.silent)
+    let letters := "abcdefghijklmnopqrstuvwxyz".toList
+    let paras := shown.zipIdx.map fun (b, i) => s!"({letters.getD i 'z'}) {b.rate.name} is {percent (b.rate.get P)}"
+    out := out ++ subsection k (s!"For the purposes of this section—\n\n" ++
+      ";\n\n".intercalate paras ++ ".")
+    k := k + 1
   for b in sch.bands do
     match b.upTo with
     | some l =>
@@ -249,6 +306,14 @@ def Adj.plain (P : TaxParams) : Adj → String
   | .notBelowNil => "If that leaves less than £0, use £0."
   | .roundUpPound =>
     "If the result is not a whole number of pounds, round it up to the next whole pound."
+  | .roundDownPound =>
+    "If that is not a whole number of pounds, round it down to the whole pound (drop the pence)."
+  | .less i => s!"Take off {i.plain}."
+  | .percentOf (.rate r) => s!"Take {percent (r.get P)} of that ({r.name})."
+  | .percentOf (.steps t every cap) =>
+    s!"Take a percentage of that: 1% for every whole {money (every.get P)} by which \
+      {t.measure.plain} is more than {money (t.threshold.get P)}, up to {cap}%. \
+      Only whole steps of {money (every.get P)} count, so the percentage is a whole number."
 
 /-- A markdown table. -/
 def table (head : List String) (rows : List (List String)) : String :=
@@ -264,15 +329,18 @@ def AmountSection.plain (s : AmountSection) (P : TaxParams) : String :=
   let (base, adjs) := s.rule.chain
   let steps := s!"Start with {base.plainBase P}." :: adjs.map (·.plain P)
   let numbered := (steps.zipIdx.map fun (t, i) => s!"{i + 1}. {t}\n").foldl (· ++ ·) ""
-  let ex := match s.rule.inputs with
-    | i :: _ =>
+  let varied := match s.exampleKey with
+    | some k => s.rule.inputs.find? fun (i : Input) => i.key == k
+    | none => s.rule.inputs.head?
+  let ex := match varied with
+    | some i =>
       if s.examples.isEmpty then "" else
-      s!"For example:\n\n" ++ table [i.term.capitalize, s.plainName.capitalize]
+      s!"For example{s.exampleNote}:\n\n" ++ table [i.term.capitalize, s.plainName.capitalize]
         (s.examples.map fun v =>
-          [money v, moneyOf (s.rule.eval P fun k => if k = i.key then v else 0)]) ++ "\n"
-    | [] => ""
+          [money v, moneyOf (s.rule.eval P fun k => if k = i.key then v else s.exampleEnv k)]) ++ "\n"
+    | none => ""
   s!"## {s.plainHeading}\n\n\
-    To work out {s.plainName}:\n\n{numbered}\n" ++ glossary s.rule.inputs ++ ex
+    To work out {s.plainName}:\n\n{numbered}\n" ++ glossary s.rule.inputs ++ s.extra P ++ ex
 
 /-- A charge in bands in plain English, with worked examples. -/
 def BandsSection.plain (s : BandsSection) (P : TaxParams) : String := Id.run do
@@ -288,15 +356,15 @@ def BandsSection.plain (s : BandsSection) (P : TaxParams) : String := Id.run do
     rows := rows ++ [[part, s!"{percent (b.rate.get P)} ({b.rate.name.replace "the " ""})"]]
     prev := b.upTo.map (·.get P)
   let ex := if s.examples.isEmpty then "" else
-    s!"For example:\n\n" ++ table [sch.income.term.capitalize, "Income tax"]
+    s!"For example:\n\n" ++ table [sch.income.term.capitalize, s.what]
       (s.examples.map fun v =>
         [money v, moneyOf (sch.eval P fun k => if k = sch.income.key then v else 0)]) ++ "\n"
   return s!"## {s.plainHeading}\n\n\
-    Income tax on {sch.income.plain} is charged in bands. Each rate applies only to \
+    {s.what} on {sch.income.plain} is charged in bands. Each rate applies only to \
     the part of {sch.income.plain} that falls in its band:\n\n" ++
     table [s!"Part of {sch.income.plain}", "Rate"] rows ++ "\n" ++
     String.join (sch.bands.filterMap fun b => b.upTo.bind fun u =>
       if u.parts.isEmpty then none else some (u.plainParts P ++ "\n\n")) ++
-    glossary [sch.income] ++ ex
+    glossary [sch.income] ++ s.extra P ++ ex
 
 end UkTax.Rules
