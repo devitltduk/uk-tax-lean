@@ -33,3 +33,6 @@ import UkTax.SchoolMeals
 import UkTax.CheckParams
 import UkTax.Axioms
 import UkTax.Rules.Prose
+import UkTax.Rules.Hicbc
+import UkTax.Rules.UcTaper
+import UkTax.Rules.Class1

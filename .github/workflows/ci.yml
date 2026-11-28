@@ -20,8 +20,9 @@ jobs:
       # fails on it) and the axiom guard in UkTax/Axioms.lean, and builds uktax.
       - name: Build and check proofs
         run: lake build --wfail
-      # Print ITA 2007 s35 (and the s6/s10 bands) from the rules in UkTax/Rules/
-      # as plain English and statute text; fail if docs/prose no longer matches.
+      # Print ITA 2007 s35 (and the s6/s10 bands), the HICBC, the UC taper and
+      # Class 1 NICs from the rules in UkTax/Rules/ as plain English (and s35,
+      # s10 and s8 as statute text); fail if docs/prose no longer matches.
       - name: Rules printed as prose
         run: |
           lake env lean --run Prose.lean

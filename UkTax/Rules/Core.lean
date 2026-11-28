@@ -94,6 +94,20 @@ def Test.holds (t : Test) (P : TaxParams) (env : Env) : Bool :=
 def Test.excess (t : Test) (P : TaxParams) (env : Env) : Int :=
   if t.holds P env then ofPence (env t.measure.key) - ofPence (t.threshold.get P) else 0
 
+/-- A percentage, in basis points. -/
+inductive Pct where
+  /-- A rate from the parameter set. -/
+  | rate (r : Rate)
+  /-- **Whole steps**: 1 % for every whole `every` of the excess in the threshold
+  test (any part of a step left over counts for nothing), up to `cap` %. -/
+  | steps (t : Test) (every : Figure) (cap : Nat)
+
+/-- What a percentage comes to, in basis points. -/
+def Pct.eval (P : TaxParams) (env : Env) : Pct → Nat
+  | .rate r => r.get P
+  | .steps t every cap =>
+    100 * min cap ((if t.holds P env then env t.measure.key - t.threshold.get P else 0) / every.get P)
+
 /-- An amount, built from blocks. Every block but the first two wraps exactly one
 amount, so each amount reads as a starting figure and a list of adjustments, the
 way a section of an Act states an amount in subsection (1) and adjusts it in
@@ -110,6 +124,14 @@ inductive Amt where
   | notBelowNil (a : Amt)
   /-- **Rounded up** to a multiple of £1. -/
   | roundUpPound (a : Amt)
+  /-- **Rounded down** to a multiple of £1. -/
+  | roundDownPound (a : Amt)
+  /-- **Less** an input: "the amount by which earned income exceeds the work
+  allowance" is earned income less the work allowance, not below nil. -/
+  | less (a : Amt) (i : Input)
+  /-- **A percentage of** an amount (rounded down to the unit, which never bites
+  for whole pence and whole basis points). -/
+  | percentOf (p : Pct) (a : Amt)
 
 /-- What an amount comes to. -/
 def Amt.eval (P : TaxParams) (env : Env) : Amt → Int
@@ -118,12 +140,18 @@ def Amt.eval (P : TaxParams) (env : Env) : Amt → Int
   | .taper a per every t => a.eval P env - t.excess P env * per / every
   | .notBelowNil a => max 0 (a.eval P env)
   | .roundUpPound a => (a.eval P env + (100 * perPenny - 1)) / (100 * perPenny) * (100 * perPenny)
+  | .roundDownPound a => a.eval P env / (100 * perPenny) * (100 * perPenny)
+  | .less a i => a.eval P env - ofPence (env i.key)
+  | .percentOf p a => a.eval P env * p.eval P env / perPenny
 
 /-- One band of a rate schedule: a rate, charged up to a limit (or without limit,
 for the top band). -/
 structure Band where
   rate : Rate
   upTo : Option Figure
+  /-- A nil-rate band the statute layout leaves unsaid (the Act charges only
+  "so much ... as exceeds" its limit); the plain table still shows it. -/
+  silent : Bool := false
 
 /-- **Rate bands**: a list of bands from the lowest; each band starts where the
 one below ends, the first at nil. -/
