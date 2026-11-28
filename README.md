@@ -111,7 +111,7 @@ Checked against legislation.gov.uk and GOV.UK on 2026-11-26. Each one is in
 | Personal allowance | £12,570 | [ITA 2007 s35(1)](https://www.legislation.gov.uk/ukpga/2007/3/section/35); frozen for 2026-27 by FA 2021 s5 as amended by [FA 2023 s5](https://www.legislation.gov.uk/ukpga/2023/1/section/5) |
 | Taper | above £100,000, half the excess, round up to £1 | ITA 2007 s35(2)-(3) |
 | Basic rate limit | £37,700 | [ITA 2007 s10(5)](https://www.legislation.gov.uk/ukpga/2007/3/section/10) |
-| Higher rate limit | £125,140 (2 × PA + £100,000) | ITA 2007 s10(5A) |
+| Higher rate limit | £125,140 (2 × PA + £100,000), worked out from the allowance and its income limit, not set separately | ITA 2007 s10(5A) |
 | Basic / higher / additional rate | 20 / 40 / 45 % | [Finance Act 2026 s2](https://www.legislation.gov.uk/ukpga/2026/11) |
 | Savings rates | 20 / 40 / 45 % | Finance Act 2026 s3 |
 | Starting rate for savings | 0 % up to £5,000 | [ITA 2007 s12](https://www.legislation.gov.uk/ukpga/2007/3/section/12); FA 2026 s9 |
@@ -782,7 +782,10 @@ a condition hold for **every parameter set meeting `TaxParams.Valid`**:
 
 - each schedule's rates (UK non-savings, savings, dividends, and the six Scottish
   rates) do not fall from band to band;
-- the basic rate limit is at most the higher rate limit;
+- the basic rate limit is at most the higher rate limit (which is not a figure of
+  its own: like ITA 2007 s10(5A), `TaxParams.hrl` works it out as twice the
+  personal allowance plus the income limit, so no set of figures can break that
+  link);
 - the personal savings allowance does not rise from band to band;
 - the UC taper is at most 100 %;
 - the worst-case marginal rate between steps is at most 100 %:
@@ -1669,10 +1672,13 @@ model is the one the proofs are about; the proofs cover the properties listed in
 says "No cliffs in this range" only where the list is proved complete.
 
 **Your own figures.** The "Figures" panel loads the 2026-27 rates and thresholds
-from the model (personal allowance and its taper threshold, the rate limits, the
-income tax, dividend and NIC rates, the HICBC threshold and step, the childcare
+from the model (personal allowance and its taper threshold, the basic rate limit,
+the income tax, dividend and NIC rates, the HICBC threshold and step, the childcare
 income limit, the UC taper; savings follow the main rates). Edit any of them and
-the take-home, chart and cliff table are recomputed with yours. Under the panel
+the take-home, chart and cliff table are recomputed with yours. The higher rate
+limit is shown but cannot be edited: it is worked out from the allowance and the
+taper threshold (twice the one plus the other, ITA 2007 s10(5A)), as the model
+returns it in `params_derived`, and moves when either changes. Under the panel
 the page shows "The guarantees hold for these figures" or each broken condition
 by name, from `checkParams`. The cliff table lists every one-off cliff to the
 penny and the runs of small steps (the HICBC, the personal allowance taper) with

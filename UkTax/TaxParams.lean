@@ -10,6 +10,10 @@ headline theorems are about. Each field defaults to its 2026-27 value in
 `UkTax/Params.lean`, so `TaxParams.y2026 = {}` is the 2026-27 set, and a
 `Regime` carries one (`Regime.params`, default 2026-27).
 
+The higher rate limit is not a figure of its own: ITA 2007 s10(5A) defines it as
+twice the personal allowance plus the income limit, and `TaxParams.hrl` works it
+out that way, so a parameter set cannot break that link.
+
 Only figures can change, not structure: the personal allowance still tapers by
 £1 for every £2 and is rounded up to a whole pound, the HICBC still rises 1 % per
 step to 100 %, there are still three UK bands and six Scottish ones, and so on.
@@ -22,7 +26,9 @@ nothing more; each is used by some proof. They are:
 
 * each schedule's rates do not fall from band to band (UK non-savings, savings,
   dividends, and the six Scottish rates);
-* the basic rate limit is at most the higher rate limit;
+* the basic rate limit is at most the higher rate limit (twice the personal
+  allowance plus the income limit: a basic rate limit above that would leave the
+  higher rate band empty, so this cannot be dropped);
 * the personal savings allowance does not rise from band to band;
 * the UC taper is at most 100 %;
 * the worst-case marginal rate between steps is at most 100 %: the most a penny
@@ -42,8 +48,6 @@ structure TaxParams where
   paLimit : Nat := paIncomeLimit
   /-- Basic rate limit (s10(5)). -/
   brl : Nat := basicRateLimit
-  /-- Higher rate limit (s10(5A)). -/
-  hrl : Nat := higherRateLimit
   /-- Starting rate limit for savings (s12(3)). -/
   srls : Nat := startingRateLimitSavings
   /-- Personal savings allowance: no higher-rate income, higher-rate income, and
@@ -92,6 +96,16 @@ structure TaxParams where
 
 /-- The 2026-27 figures. -/
 abbrev TaxParams.y2026 : TaxParams := {}
+
+/-- **The higher rate limit** (ITA 2007 s10(5A)): "twice the amount specified in
+subsection (1) of section 35 (personal allowance) for the tax year, plus the
+amount specified in subsection (2) of that section (amount at which personal
+allowance starts to be withdrawn)". With the 2026-27 figures, £125,140, the
+income at which the allowance has tapered to nil. Worked out, not set: change the
+allowance or the income limit and it moves with them. -/
+def TaxParams.hrl (P : TaxParams) : Nat := 2 * P.pa + P.paLimit
+
+#guard TaxParams.y2026.hrl == 12_514_000
 
 
 /-- A rate in a schedule by band: 0 basic, 1 higher, 2 additional. -/

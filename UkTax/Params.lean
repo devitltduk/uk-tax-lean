@@ -40,11 +40,9 @@ s5(1) as amended by FA 2023 s5. With the full personal allowance the higher rate
 total income (GOV.UK <https://www.gov.uk/income-tax-rates>). -/
 def basicRateLimit : Nat := 3_770_000
 
-/-- Higher rate limit, £125,140. ITA 2007 s10(5A) defines it as twice the personal
-allowance plus £100,000, i.e. the income at which the personal allowance has
-tapered to nil. Additional rate applies above it (GOV.UK
-<https://www.gov.uk/income-tax-rates>). -/
-def higherRateLimit : Nat := 2 * personalAllowance + 10_000_000
+/- The higher rate limit is not a figure here: ITA 2007 s10(5A) defines it from the
+personal allowance and the income limit, and `TaxParams.hrl` works it out
+(£125,140 for 2026-27; GOV.UK <https://www.gov.uk/income-tax-rates>). -/
 
 /-- Starting rate limit for savings, £5,000, charged at the 0 % starting rate for
 savings. ITA 2007 s12(3) <https://www.legislation.gov.uk/ukpga/2007/3/section/12>

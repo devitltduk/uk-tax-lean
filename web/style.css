@@ -108,6 +108,7 @@ details { margin-top: 10px; }
 .params { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
 .params h3 { grid-column: 1 / -1; margin: 8px 0 6px; font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; }
 .params label.changed input { outline: 2px solid var(--series-1); }
+.params .derived { grid-column: 1 / -1; margin: 2px 0 8px; font-size: 0.92rem; color: var(--text-secondary); }
 .check-status { margin: 10px 0 0; font-size: 0.92rem; }
 .check-status ul { margin: 4px 0 0; padding-left: 18px; }
 .band { fill: var(--series-2); opacity: 0.12; }

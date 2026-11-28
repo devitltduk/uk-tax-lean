@@ -52,6 +52,29 @@ def personalAllowanceRule : Amt :=
     .taper (.fig { get := (·.pa) }) 1 2
       { measure := adjustedNetIncome, threshold := { name := "the income limit", get := (·.paLimit) } }
 
+/-- The higher rate limit, worked out as ITA 2007 s10(5A) does (`TaxParams.hrl`). -/
+def higherRateLimitFigure : Figure where
+  name := "the higher rate limit"
+  get := (·.hrl)
+  parts := [
+    { times := 2, get := (·.pa),
+      statute := "the amount specified in subsection (1) of section 35 (personal allowance)",
+      plain := "the personal allowance" },
+    { times := 1, get := (·.paLimit),
+      statute := "the amount specified in subsection (2) of that section (the income limit)",
+      plain := "the income at which the allowance starts to be taken away" }]
+  plainNote := "So it is the income at which the allowance has all gone, and it moves \
+    whenever either of those changes."
+
+/-- **The printed derivation is the figure**: the parts the text lists add up to
+the higher rate limit the model uses, for every parameter set. -/
+theorem higherRateLimitFigure_derived : higherRateLimitFigure.Derived := by
+  intro P; simp [higherRateLimitFigure, TaxParams.hrl]
+
+/-- What the figure reads (a lemma, so that proofs need not unfold the wording). -/
+@[simp] theorem higherRateLimitFigure_get (P : TaxParams) :
+    higherRateLimitFigure.get P = P.hrl := rfl
+
 /-- **ITA 2007 s10 and s6**: the main rates and their bands. -/
 def mainRates : Schedule where
   income := taxableIncome
@@ -59,7 +82,7 @@ def mainRates : Schedule where
     { rate := { name := "the basic rate", get := (·.nsRates.basic) },
       upTo := some { name := "the basic rate limit", get := (·.brl) } },
     { rate := { name := "the higher rate", get := (·.nsRates.higher) },
-      upTo := some { name := "the higher rate limit", get := (·.hrl) } },
+      upTo := some higherRateLimitFigure },
     { rate := { name := "the additional rate", get := (·.nsRates.additional) },
       upTo := none }]
 
@@ -89,7 +112,7 @@ theorem mainRates_eval (rg : Regime) (h : rg.relief = 0) (env : Env) :
       = ((bandTax rg.params.nsRates rg (env taxableIncome.key) : Nat) : Int) := by
   have hb : rg.brl = rg.params.brl := by simp [Regime.brl, h]
   have hh : rg.hrl = rg.params.hrl := by simp [Regime.hrl, h]
-  simp only [Schedule.eval, mainRates, Schedule.evalFrom, bandTax, hb, hh]
+  simp only [Schedule.eval, mainRates, higherRateLimitFigure_get, Schedule.evalFrom, bandTax, hb, hh]
   generalize env taxableIncome.key = x
   have e1 : max 0 (min (ofPence x) (ofPence rg.params.brl) - 0)
       = ofPence (min x rg.params.brl) := by simp only [ofPence, perPenny]; omega
@@ -113,3 +136,7 @@ beyond the two it uses today. -/
 /-- info: 'UkTax.Rules.mainRates_eval' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms UkTax.Rules.mainRates_eval
+
+/-- info: 'UkTax.Rules.higherRateLimitFigure_derived' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms UkTax.Rules.higherRateLimitFigure_derived

@@ -14,12 +14,14 @@ let model;
 // The main figures, as the model's `params` fields. "£" fields are pence shown as
 // pounds, "%" fields basis points shown as per cent, "pc" whole per cent. `also`
 // lists fields set to the same value (savings income is taxed at the main rates).
+// A "derived" row is not editable: the model works it out from other figures and
+// returns it as `params_derived`.
 const FIELDS = [
   ["Income tax"],
   ["personal_allowance_pence", "Personal allowance", "£"],
   ["personal_allowance_income_limit_pence", "Allowance taper starts at (income)", "£"],
   ["basic_rate_limit_pence", "Basic rate limit (above the allowance)", "£"],
-  ["higher_rate_limit_pence", "Higher rate limit", "£"],
+  ["higher_rate_limit_pence", "Higher rate limit", "derived"],
   ["basic_rate_bp", "Basic rate", "%", ["savings_basic_rate_bp"]],
   ["higher_rate_bp", "Higher rate", "%", ["savings_higher_rate_bp"]],
   ["additional_rate_bp", "Additional rate", "%", ["savings_additional_rate_bp"]],
@@ -49,6 +51,13 @@ function buildEditor() {
       box.append(h);
       continue;
     }
+    if (unit === "derived") {
+      const p = document.createElement("p");
+      p.className = "derived";
+      p.id = `d_${key}`;
+      box.append(p);
+      continue;
+    }
     const l = document.createElement("label");
     l.dataset.key = key;
     l.textContent = `${label} (${unit === "£" ? "£" : "%"})`;
@@ -59,7 +68,7 @@ function buildEditor() {
     box.append(l);
   }
   $("resetParams").addEventListener("click", () => {
-    for (const [key, label, unit] of FIELDS) if (label) form[`p_${key}`].value = shown(unit, model.defaults[key]);
+    for (const [key, label, unit] of FIELDS) if (label && unit !== "derived") form[`p_${key}`].value = shown(unit, model.defaults[key]);
     update();
   });
 }
@@ -68,7 +77,7 @@ function buildEditor() {
 function editedParams() {
   const out = {};
   for (const [key, label, unit, also = []] of FIELDS) {
-    if (!label) continue;
+    if (!label || unit === "derived") continue;
     const v = stored(unit, form[`p_${key}`].value);
     form[`p_${key}`].parentElement.classList.toggle("changed", v !== model.defaults[key]);
     if (v === model.defaults[key]) continue;
@@ -78,7 +87,19 @@ function editedParams() {
   return Object.keys(out).length ? out : BUILTIN_PARAMS;
 }
 
+// The higher rate limit is not a figure of its own: ITA 2007 s10(5A) makes it twice
+// the personal allowance plus the income limit, and the model returns it.
+function showDerived(r) {
+  const d = r.params_derived ?? model.derived;
+  const p = r.params ?? model.defaults;
+  $("d_higher_rate_limit_pence").textContent =
+    `Higher rate limit: ${gbp0.format(d.higher_rate_limit_pence / 100)}, worked out from the allowance and ` +
+    `the taper threshold (2 × ${gbp0.format(p.personal_allowance_pence / 100)} + ` +
+    `${gbp0.format(p.personal_allowance_income_limit_pence / 100)}, ITA 2007 s10(5A)).`;
+}
+
 function showCheck(r, params) {
+  showDerived(r);
   const el = $("paramsStatus");
   el.replaceChildren();
   if (!params) {

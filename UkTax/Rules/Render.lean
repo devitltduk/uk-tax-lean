@@ -41,6 +41,27 @@ def percent (bp : Nat) : String :=
 def fraction (per every : Nat) : Option String :=
   if per * 2 = every then some "one-half" else none
 
+/-- "twice ", "three times ", or nothing. -/
+def times : Nat → String
+  | 1 => ""
+  | 2 => "twice "
+  | n => s!"{n} times "
+
+/-- A figure worked out from others, in statute words: "equal to— (a) twice the
+amount specified in ..., plus (b) ...; that is, £25,140 plus £100,000, £125,140". -/
+def Figure.statuteParts (f : Figure) (P : TaxParams) : String :=
+  let letters := "abcdefghijklmnopqrstuvwxyz".toList
+  let paras := f.parts.zipIdx.map fun (p, i) => s!"({letters.getD i 'z'}) {times p.times}{p.statute}"
+  let sums := f.parts.map fun p => money (p.times * p.get P)
+  "equal to— " ++ ", plus ".intercalate paras ++ "; that is, " ++ " plus ".intercalate sums ++
+    s!", {money (f.get P)}"
+
+/-- A figure worked out from others, in plain words. -/
+def Figure.plainParts (f : Figure) (P : TaxParams) : String :=
+  let parts := f.parts.map fun p => s!"{times p.times}{p.plain} ({money (p.get P)})"
+  s!"The {money (f.get P)} limit is not a figure of its own: it is " ++ " plus ".intercalate parts ++
+    "." ++ (if f.plainNote.isEmpty then "" else " " ++ f.plainNote)
+
 /-! ## An amount as a starting figure and its adjustments -/
 
 /-- One adjustment of an amount: a block that wraps another. -/
@@ -198,8 +219,8 @@ def BandsSection.statute (s : BandsSection) (P : TaxParams) : String := Id.run d
   for b in sch.bands do
     match b.upTo with
     | some l =>
-      out := out ++ subsection k
-        s!"{(l.name.getD "the limit").capitalize} is {money (l.get P)}."
+      let is := if l.parts.isEmpty then money (l.get P) else l.statuteParts P
+      out := out ++ subsection k s!"{(l.name.getD "the limit").capitalize} is {is}."
       k := k + 1
     | none => pure ()
   out := out ++ subsection k sch.income.defn
@@ -274,6 +295,8 @@ def BandsSection.plain (s : BandsSection) (P : TaxParams) : String := Id.run do
     Income tax on {sch.income.plain} is charged in bands. Each rate applies only to \
     the part of {sch.income.plain} that falls in its band:\n\n" ++
     table [s!"Part of {sch.income.plain}", "Rate"] rows ++ "\n" ++
+    String.join (sch.bands.filterMap fun b => b.upTo.bind fun u =>
+      if u.parts.isEmpty then none else some (u.plainParts P ++ "\n\n")) ++
     glossary [sch.income] ++ ex
 
 end UkTax.Rules

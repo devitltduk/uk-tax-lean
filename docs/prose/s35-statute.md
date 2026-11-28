@@ -34,7 +34,7 @@ Figures: 2026-27. The rules this text is printed from are proved equal to the mo
 
 (2) The basic rate limit is £37,700.
 
-(3) The higher rate limit is £125,140.
+(3) The higher rate limit is equal to— (a) twice the amount specified in subsection (1) of section 35 (personal allowance), plus (b) the amount specified in subsection (2) of that section (the income limit); that is, £25,140 plus £100,000, £125,140.
 
 (4) In this section “taxable income” means the income remaining after allowances are deducted at Step 3 of the calculation in section 23.
 
